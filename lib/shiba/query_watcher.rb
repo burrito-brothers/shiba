@@ -1,4 +1,6 @@
 require 'shiba/query'
+require 'json'
+require 'logger'
 
 module Shiba
   # TO use, put this line in config/initializers: Shiba::QueryWatcher.watch
@@ -6,6 +8,14 @@ module Shiba
     FINGERPRINTS = {}
     IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
     ROOT = Rails.root.to_s
+
+    def self.logger
+      @logger ||= Logger.new('shiba.log').tap do |l|
+        l.formatter = proc do |severity, datetime, progname, msg|
+          "#{msg}\n"
+        end
+      end
+    end
 
     def self.cleaned_explain(h)
       h.except("id", "select_type", "table", "partitions", "type")
@@ -21,8 +31,8 @@ module Shiba
           if sql.start_with?("SELECT") && !line.nil?
             explain = query.explain
             if explain.cost > 0
-              Rails.logger.info("shiba: #{sql}")
-              Rails.logger.info("shiba: #{explain.to_log}")
+              json = JSON.dump(sql: sql, explain: explain.to_log, line: app_line)
+              logger.info(json)
             end
           end
 
