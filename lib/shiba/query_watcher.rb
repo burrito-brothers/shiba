@@ -7,6 +7,10 @@ module Shiba
     IGNORE = /\.rvm|gem|vendor\/|slow_query_logger|rbenv|test|spec|seed|db/
     ROOT = Rails.root.to_s
 
+    def self.cleaned_explain(h)
+      h.except("id", "select_type", "table", "partitions", "type")
+    end
+
     def self.watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         line = app_line
@@ -15,12 +19,13 @@ module Shiba
         query = Shiba::Query.new(sql)
         if !FINGERPRINTS[query.fingerprint]
           if sql.start_with?("SELECT")
-            r = ActiveRecord::Base.connection.execute("EXPLAIN #{sql}")
-            index = r.to_a.last[5]
+            r = ActiveRecord::Base.connection.select_all("EXPLAIN #{sql}")
+            index = r.first["key"]
             if !index
-              explain = r.to_a.flatten.join("|")
-              if !explain.end_with?("no matching row in const table")
-                Rails.logger.info("shiba: #{sql} #{explain}")
+              extra = r.first["Extra"]
+              if extra && !extra.end_with?("no matching row in const table")
+                Rails.logger.info("shiba: #{sql}")
+                Rails.logger.info("shiba: #{cleaned_explain(r.first.as_json)}")
               end
             end
           end
