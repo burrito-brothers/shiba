@@ -1,4 +1,4 @@
-#!/opt/local/bin/perl5.26
+#!/usr/bin/env perl
 
 # This program is part of Percona Toolkit: http://www.percona.com/software/
 # See "COPYRIGHT, LICENSE, AND WARRANTY" at the end of this file for legal
