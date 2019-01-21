@@ -4,7 +4,7 @@ module Shiba
   # TO use, put this line in config/initializers: Shiba::QueryWatcher.watch
   module QueryWatcher
     FINGERPRINTS = {}
-    IGNORE = /\.rvm|gem|vendor\/|slow_query_logger|rbenv|test|spec|seed|db/
+    IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
     ROOT = Rails.root.to_s
 
     def self.cleaned_explain(h)
