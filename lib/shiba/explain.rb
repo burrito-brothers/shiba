@@ -20,6 +20,21 @@ module Shiba
     def to_log
       "possible: '%{possible_keys}', rows: %{rows}, filtered: %{filtered}, '%{Extra}'" % first.symbolize_keys
     end
+
+    def cost
+      if first_key
+        return 0
+      elsif first_extra
+        if first_extra =~ /no matching row in const table/
+          return 0
+        elsif first_extra =~ /No tables used/
+          return 0
+        elsif first_extra =~ /Impossible WHERE/
+          return 0
+        end
+      end
+      return 1
+    end
   end
 end
 

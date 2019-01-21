@@ -20,11 +20,9 @@ module Shiba
         if !FINGERPRINTS[query.fingerprint]
           if sql.start_with?("SELECT")
             explain = query.explain
-            if !explain.first_key
-              if explain.first_extra && !explain.first_extra.end_with?("no matching row in const table")
-                Rails.logger.info("shiba: #{sql}")
-                Rails.logger.info("shiba: #{explain.to_log}")
-              end
+            if explain.cost > 0
+              Rails.logger.info("shiba: #{sql}")
+              Rails.logger.info("shiba: #{explain.to_log}")
             end
           end
 
