@@ -13,12 +13,12 @@ module Shiba
 
     def self.watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
-        line = app_line
-
         sql = payload[:sql]
         query = Shiba::Query.new(sql)
+
         if !FINGERPRINTS[query.fingerprint]
-          if sql.start_with?("SELECT")
+          line = app_line
+          if sql.start_with?("SELECT") && !line.nil?
             explain = query.explain
             if explain.cost > 0
               Rails.logger.info("shiba: #{sql}")
