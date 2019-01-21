@@ -1,4 +1,5 @@
 require 'open3'
+require 'shiba/explain'
 
 module Shiba
   class Query
@@ -19,6 +20,10 @@ module Shiba
 
     def fingerprint
       @fingerprint ||= self.class.get_fingerprint(@sql)
+    end
+
+    def explain
+      Explain.new(@sql)
     end
   end
 end

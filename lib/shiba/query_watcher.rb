@@ -19,13 +19,11 @@ module Shiba
         query = Shiba::Query.new(sql)
         if !FINGERPRINTS[query.fingerprint]
           if sql.start_with?("SELECT")
-            r = ActiveRecord::Base.connection.select_all("EXPLAIN #{sql}")
-            index = r.first["key"]
-            if !index
-              extra = r.first["Extra"]
-              if extra && !extra.end_with?("no matching row in const table")
+            explain = query.explain
+            if !explain.first_key
+              if explain.first_extra && !explain.first_extra.end_with?("no matching row in const table")
                 Rails.logger.info("shiba: #{sql}")
-                Rails.logger.info("shiba: #{cleaned_explain(r.first.as_json)}")
+                Rails.logger.info("shiba: #{explain.to_log}")
               end
             end
           end
