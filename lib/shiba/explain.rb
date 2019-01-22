@@ -21,6 +21,10 @@ module Shiba
       "possible: '%{possible_keys}', rows: %{rows}, filtered: %{filtered}, '%{Extra}'" % first.symbolize_keys
     end
 
+    def to_h
+      first.merge(cost: cost)
+    end
+
     def cost
       if first_key
         return 0

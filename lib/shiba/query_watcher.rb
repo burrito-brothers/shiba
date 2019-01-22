@@ -18,7 +18,7 @@ module Shiba
     end
 
     def self.cleaned_explain(h)
-      h.except("id", "select_type", "table", "partitions", "type")
+      h.except("id", "select_type", "partitions", "type")
     end
 
     def self.watch
@@ -31,7 +31,7 @@ module Shiba
           if sql.start_with?("SELECT") && !line.nil?
             explain = query.explain
             if explain.cost > 0
-              json = JSON.dump(sql: sql, explain: explain.to_log, line: app_line)
+              json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line)
               logger.info(json)
             end
           end
