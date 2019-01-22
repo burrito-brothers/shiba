@@ -23,21 +23,20 @@ func init() {
 }
 
 func main() {
-	r := bufio.NewReader(os.Stdin)
-	parseQueries(r)
+	parseQueries(os.Stdin)
 }
 
 func parseQueries(r io.Reader) {
-	tokens := sqlparser.NewTokenizer(r)
+	scanner := bufio.NewScanner(r)
+
 	enc := json.NewEncoder(os.Stdout)
 
-	for {
-		stmt, err := sqlparser.ParseNext(tokens)
-		if err == io.EOF {
-			break
-		}
+	for scanner.Scan() {
+		sql := scanner.Text()
+		stmt, err := sqlparser.Parse(sql)
 
 		if err != nil {
+			fmt.Println("Unable to parse line", sql)
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -51,11 +50,16 @@ func parseQueries(r io.Reader) {
 			os.Exit(1)
 		}
 	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "reading standard input:", err)
+	}
 }
 
 func parse(q *sqlparser.Select) query {
 	// fixme: assume simple table from
-	table := sqlparser.String(q.From[0])
+	//tables := sqlparser.String(q.From[0])
+	table := sqlparser.String(q.From)
 	columns := []string{}
 	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
 		switch node.(type) {
