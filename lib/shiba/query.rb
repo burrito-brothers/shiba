@@ -14,8 +14,9 @@ module Shiba
       @stdout.readline.chomp
     end
 
-    def initialize(sql)
+    def initialize(sql, table_sizes)
       @sql = sql
+      @table_sizes = table_sizes
     end
 
     def fingerprint
@@ -23,7 +24,7 @@ module Shiba
     end
 
     def explain
-      Explain.new(@sql)
+      Explain.new(@sql, @table_sizes)
     end
   end
 end

@@ -10,6 +10,7 @@ module Shiba
     ROOT = Rails.root.to_s
 
     def self.make_logger(fname)
+      FileUtils.touch fname
       Logger.new(fname).tap do |l|
         l.formatter = proc do |severity, datetime, progname, msg|
           "#{msg}\n"
@@ -32,14 +33,14 @@ module Shiba
     def self.watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         sql = payload[:sql]
-        query = Shiba::Query.new(sql)
+        query = Shiba::Query.new(sql, self.table_sizes)
 
         if !FINGERPRINTS[query.fingerprint]
           line = app_line
           if sql.start_with?("SELECT") && !line.nil?
             explain = query.explain
             if explain.cost > 0
-              json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line)
+              json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line, cost: explain.cost)
               json_logger.info(json)
 
               logger.info(sql)
@@ -63,5 +64,26 @@ module Shiba
       last_line
     end
 
+    class TableConfigurator
+      def initialize(hash)
+        @hash = hash
+      end
+
+      [:small, :medium, :large].each do |size|
+        define_method(size) do |*tables|
+          tables.each do |t|
+            @hash[t.to_s] = size
+          end
+        end
+      end
+    end
+
+    def self.table_sizes
+      @table_sizes ||= {}
+    end
+
+    def self.configure_tables(&block)
+      yield(TableConfigurator.new(table_sizes))
+    end
   end
 end
