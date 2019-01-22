@@ -9,8 +9,8 @@ module Shiba
     IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
     ROOT = Rails.root.to_s
 
-    def self.logger
-      @logger ||= Logger.new('shiba.log').tap do |l|
+    def self.make_logger(fname)
+      Logger.new(fname).tap do |l|
         l.formatter = proc do |severity, datetime, progname, msg|
           "#{msg}\n"
         end
@@ -19,6 +19,14 @@ module Shiba
 
     def self.cleaned_explain(h)
       h.except("id", "select_type", "partitions", "type")
+    end
+
+    def self.logger
+      @logger ||= make_logger('shiba.log')
+    end
+
+    def self.json_logger
+      @json_logger ||= make_logger('shiba.log.json')
     end
 
     def self.watch
@@ -32,7 +40,12 @@ module Shiba
             explain = query.explain
             if explain.cost > 0
               json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line)
-              logger.info(json)
+              json_logger.info(json)
+
+              logger.info(sql)
+              logger.info(explain.to_log)
+              logger.info(app_line)
+              logger.info("")
             end
           end
 
