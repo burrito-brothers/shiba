@@ -12,6 +12,14 @@ Add this line to your application's Gemfile:
 gem 'shiba'
 ```
 
+## Stats collection
+
+ssh production
+
+mysql -u <USER> -p<PASSWORD> -ABe 'use information_schema; select * from statistics where table_schema = "<DATABASE>";' > schema_stats.tsv
+mkdir .shiba
+scp production_host/schema_stats.tsv .shiba/
+
 And then execute:
 
     $ bundle
