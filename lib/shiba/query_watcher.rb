@@ -32,6 +32,8 @@ module Shiba
 
     def self.watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
+        Shiba.configure(ActiveRecord::Base.configurations["test"])
+
         sql = payload[:sql]
         query = Shiba::Query.new(sql, self.table_sizes)
 
@@ -53,6 +55,10 @@ module Shiba
           FINGERPRINTS[query.fingerprint] = true
         end
       end
+    end
+
+    def self.analyze_query_file(file)
+
     end
 
     def self.app_line

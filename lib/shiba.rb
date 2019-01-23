@@ -1,6 +1,14 @@
 require "shiba/version"
+require "mysql2"
 
 module Shiba
   class Error < StandardError; end
-  # Your code goes here...
+
+  def self.configure(connection_hash)
+    @connection_hash = connection_hash
+  end
+
+  def self.connection
+    @connection ||= Mysql2::Client.new(@connection_hash)
+  end
 end
