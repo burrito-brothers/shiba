@@ -1,7 +1,7 @@
 module Shiba
   class Explain
     def initialize(sql, table_sizes)
-      @rows = ActiveRecord::Base.connection.select_all("EXPLAIN #{sql}")
+      @rows = Shiba.connection.query("EXPLAIN #{sql}").to_a
       @sizes = table_sizes
       run_checks!
     end
