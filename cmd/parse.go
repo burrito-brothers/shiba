@@ -45,6 +45,8 @@ func parseQueries(r io.Reader) {
 		case *sqlparser.Select:
 			parsed := parse(q)
 			enc.Encode(parsed)
+		case *sqlparser.Insert:
+			enc.Encode(parseTable(q))
 		default:
 			fmt.Fprintln(os.Stderr, "Only Select queries are supported", sqlparser.String(stmt))
 			os.Exit(1)
@@ -54,6 +56,10 @@ func parseQueries(r io.Reader) {
 	if err := scanner.Err(); err != nil {
 		fmt.Fprintln(os.Stderr, "reading standard input:", err)
 	}
+}
+
+func parseTable(q *sqlparser.Insert) string {
+	return sqlparser.String(q.Table)
 }
 
 func parse(q *sqlparser.Select) query {
