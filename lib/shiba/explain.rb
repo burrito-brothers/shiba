@@ -9,7 +9,7 @@ module Shiba
     attr_reader :cost
 
     def first
-      @rows.first.as_json
+      @rows.first
     end
 
     def first_key
@@ -41,7 +41,8 @@ module Shiba
       /no matching row in const table/,
       /No tables used/,
       /Impossible WHERE/,
-      /Select tables optimized away/
+      /Select tables optimized away/,
+      /No matching min\/max row/
     ]
 
 

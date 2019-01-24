@@ -19,6 +19,8 @@ module Shiba
       @table_sizes = table_sizes
     end
 
+    attr_reader :sql
+
     def fingerprint
       @fingerprint ||= self.class.get_fingerprint(@sql)
     end
