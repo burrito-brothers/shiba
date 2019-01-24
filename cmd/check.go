@@ -71,14 +71,14 @@ func readTableIndexes(path string) tableStats {
 }
 
 func analyzeQueries(r io.Reader, stats tableStats) {
-	tokens := sqlparser.NewTokenizer(r)
-	for {
-		stmt, err := sqlparser.ParseNext(tokens)
-		if err == io.EOF {
-			break
-		}
+	scanner := bufio.NewScanner(r)
+
+	for scanner.Scan() {
+		sql := scanner.Text()
+		stmt, err := sqlparser.Parse(sql)
 
 		if err != nil {
+			fmt.Println("Unable to parse line", sql)
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -86,12 +86,16 @@ func analyzeQueries(r io.Reader, stats tableStats) {
 		switch q := stmt.(type) {
 		case *sqlparser.Select:
 			if !hasIndex(q, stats) {
-				fmt.Println(sqlparser.String(q))
+				fmt.Println(sql)
 			}
 		default:
 			fmt.Fprintln(os.Stderr, "Only Select queries are supported", sqlparser.String(stmt))
 			os.Exit(1)
 		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "reading standard input:", err)
 	}
 }
 
@@ -110,9 +114,11 @@ func hasIndex(q *sqlparser.Select, stats tableStats) bool {
 	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
 		switch node.(type) {
 		case *sqlparser.ColName:
+			// we're getting fully qualified column back
 			c := sqlparser.String(node)
 			for _, v := range indexed {
-				if v == c {
+				// quick hack because I'm parsing columns wrong somehow
+				if v == c || (table+"."+v) == c {
 					found = true
 					return false, nil
 				}
