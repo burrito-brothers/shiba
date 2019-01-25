@@ -30,6 +30,7 @@ module Shiba
       @json_logger ||= make_logger('shiba.log.json')
     end
 
+    # Logs ActiveRecord SELECT queries that originate from application code.
     def self.watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         Shiba.configure(ActiveRecord::Base.configurations["test"])
@@ -39,17 +40,16 @@ module Shiba
 
         if !FINGERPRINTS[query.fingerprint]
           line = app_line
+
           if sql.start_with?("SELECT") && !line.nil?
             explain = query.explain
-            if explain.cost > 0
-              json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line, cost: explain.cost)
-              json_logger.info(json)
+            json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line, cost: explain.cost)
+            json_logger.info(json)
 
-              logger.info(sql)
-              logger.info(explain.to_log)
-              logger.info(app_line)
-              logger.info("")
-            end
+            logger.info(sql)
+            logger.info(explain.to_log)
+            logger.info(app_line)
+            logger.info("")
           end
 
           FINGERPRINTS[query.fingerprint] = true
