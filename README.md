@@ -1,9 +1,5 @@
 # Shiba
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/shiba`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -16,9 +12,12 @@ gem 'shiba'
 
 ssh production
 
-mysql -u <USER> -p<PASSWORD> -ABe 'use information_schema; select * from statistics where table_schema = "<DATABASE>";' > schema_stats.tsv
+```
+ssh produciton_host
+mysql -u <USER> -p<PASSWORD> -ABe 'select * from information_schema.statistics where table_schema = "<DATABASE>";' > schema_stats.tsv
 mkdir .shiba
-scp production_host/schema_stats.tsv .shiba/
+scp production_host:schema_stats.tsv .shiba/
+```
 
 And then execute:
 
