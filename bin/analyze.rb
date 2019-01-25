@@ -7,7 +7,7 @@ require 'optionparser'
 
 options = {}
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: analyze.rb --host=HOST --database=DB --user=USER --password=PASS"
+  opts.banner = "Usage: analyze.rb --host=HOST --database=DB --user=USER --password=PASS [-f FILE]"
 
   opts.on("-h","--host HOST") do |h|
     options["host"] = h
@@ -24,7 +24,12 @@ parser = OptionParser.new do |opts|
   opts.on("-p","--password PASSWORD") do |p|
     options["password"] = p
   end
+
+  opts.on("-f", "--file FILE") do |f|
+    options["file"] = f
+  end
 end
+
 parser.parse!
 
 ["host", "database", "username", "password"].each do |opt|
@@ -34,5 +39,8 @@ parser.parse!
   end
 end
 
+file = options.delete("file")
+file = File.open(file, "r") if file
+
 Shiba.configure(options)
-Shiba::Cli.analyze
+Shiba::Cli.analyze(file)

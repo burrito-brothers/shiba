@@ -1,6 +1,7 @@
 module Shiba
   class Explain
     def initialize(sql, table_sizes)
+      @sql = sql
       @rows = Shiba.connection.query("EXPLAIN #{sql}").to_a
       @sizes = table_sizes
       run_checks!
@@ -53,21 +54,55 @@ module Shiba
       nil => 0.9
     }
 
+    def table_size
+      10_000
+    end
+
     def extra_in_ignore?
       first_extra && IGNORE_PATTERNS.any? { |p| first_extra =~ p }
+    end
+
+    def derived?
+      first['table'] =~ /<derived.*?>/
+    end
+
+    # TODO: need to parse SQL here I think
+    def no_condition_table_scan?
+      @rows.size == 1 && !(@sql =~ /where/i) || @sql =~ /where\s*1=1/i
     end
 
     def check_missing_key
       return if first_key
       return if extra_in_ignore?
 
-      addl_cost = COST_FOR_SIZE[size]
+      if no_condition_table_scan?
+        if @sql =~ /limit\s*(\d+)/i
+          limit = $1.to_i
+        else
+          limit = 1_000_000_000
+        end
+        rows_scanned = [table_size, limit].min
+        # seems like we want to actually garner a row-scan estimate
+        return [rows_scanned, 100_000].max / 100_000.0
+      end
+
+      if derived?
+        @rows.shift
+        return check_missing_key
+      end
+
       if first['possible_keys']
-        addl_cost *= 0.5
+        # TODO: for now we're downgrading these to a minor problem.
+        #
+        # In the future need to transform these into a best of either table-scan
+        # or key-check
         msg = "MySQL dedicded to not use these keys for this query: [" + first["possible_keys"] + "].  "
         msg += "Depending on data shape, this may or may not be fine."
         messages << msg
+        return
       end
+
+      addl_cost = COST_FOR_SIZE[size]
       @cost += addl_cost
     end
 

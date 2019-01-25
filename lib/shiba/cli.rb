@@ -36,8 +36,10 @@ module Shiba
       puts json
     end
 
-    def self.analyze
-      while sql = gets
+    def self.analyze(file)
+      file = $stdin if file.nil?
+
+      while sql = file.gets
         sql.chomp!
 
         query = Shiba::Query.new(sql, {})
