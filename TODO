@@ -1,0 +1,12 @@
+===
+this query is throwing the optimizer for a serious loop;
+it says it can use an index on `ipb_address` but when we force key it
+still table scans.  Not clear on whether the OR in there is fucking us over or
+if it's a test-data issue.
+
+
+# SELECT  ipb_id,ipb_address,ipb_timestamp,ipb_auto,ipb_anon_only,ipb_create_account,ipb_enable_autoblock,ipb_expiry,ipb_deleted,ipb_block_email,ipb_allow_usertalk,ipb_parent_block_id,ipb_sitewide,comment_ipb_reason.comment_text AS `ipb_reason_text`,comment_ipb_reason.comment_data AS `ipb_reason_data`,comment_ipb_reason.comment_id AS `ipb_reason_cid`,ipb_by,ipb_by_text,NULL AS `ipb_by_actor`  FROM `ipblocks` FORCE KEY(`ipb_address`) JOIN `comment` `comment_ipb_reason` ON ((comment_ipb_reason.comment_id = ipb_reason_id))   WHERE ipb_address = '127.0.0.1' OR ((ipb_range_start  LIKE '7F00%' ESCAPE '`' ) AND (ipb_range_start <= '7F000001') AND (ipb_range_end >= '7F000001'));
+
+===
+need to use format=json and see how much of an index we're using.
+
