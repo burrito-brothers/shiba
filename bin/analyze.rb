@@ -3,6 +3,7 @@
 require 'bundler/setup'
 require 'shiba'
 require 'shiba/cli'
+require 'shiba/index'
 require 'optionparser'
 
 options = {}
@@ -42,5 +43,11 @@ end
 file = options.delete("file")
 file = File.open(file, "r") if file
 
+schema_stats_fname = Dir.pwd + "/.shiba/schema_stats.tsv"
+if File.exist?(schema_stats_fname)
+  schema_stats = Shiba::Index.parse(schema_stats_fname)
+end
+
+
 Shiba.configure(options)
-Shiba::Cli.analyze(file)
+Shiba::Cli.analyze(file, schema_stats)

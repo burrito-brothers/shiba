@@ -29,6 +29,7 @@ module Shiba
         explain = query.explain
       rescue StandardError => e
         puts "got exception trying to explain: #{e}"
+        puts e.backtrace.join("\n")
       end
       return unless explain
 
@@ -36,13 +37,13 @@ module Shiba
       puts json
     end
 
-    def self.analyze(file)
+    def self.analyze(file, stats)
       file = $stdin if file.nil?
 
       while sql = file.gets
         sql.chomp!
 
-        query = Shiba::Query.new(sql, {})
+        query = Shiba::Query.new(sql, stats)
 
         if !FINGERPRINTS[query.fingerprint]
           if sql.downcase.start_with?("select")

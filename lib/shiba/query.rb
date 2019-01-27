@@ -14,9 +14,9 @@ module Shiba
       @stdout.readline.chomp
     end
 
-    def initialize(sql, table_sizes)
+    def initialize(sql, stats)
       @sql = sql
-      @table_sizes = table_sizes
+      @stats = stats
     end
 
     attr_reader :sql
@@ -26,7 +26,7 @@ module Shiba
     end
 
     def explain
-      Explain.new(@sql, @table_sizes)
+      Explain.new(@sql, @stats)
     end
   end
 end
