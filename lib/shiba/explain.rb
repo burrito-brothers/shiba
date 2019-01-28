@@ -101,10 +101,11 @@ module Shiba
         else
           if @options[:force_key]
             # we were asked to force a key, but mysql still told us to fuck ourselves.
-            # let's bail out of this case for now and not recurse infinitely
+            # (no index used)
             #
-            # unclear whether this is our problem or mysql is giving us bad possible_keys
-            return nil
+            # there seems to be cases where mysql lists `possible_key` values
+            # that it then cannot use, seen this in OR queries.
+            return Shiba::Index.count(first_table, @stats)
           end
 
           messages << "possible_key_check"
