@@ -28,9 +28,9 @@ module Shiba
       begin
         explain = query.explain
       rescue StandardError => e
-        puts "got exception trying to explain: #{e}"
+        puts "got exception trying to explain: #{e.message}"
+        puts "query: #{query.sql}"
         puts e.backtrace.join("\n")
-        raise e
       end
       return unless explain
 

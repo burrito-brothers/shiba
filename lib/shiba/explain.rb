@@ -157,6 +157,12 @@ module Shiba
 
     def estimate_row_count_with_key(key)
       Explain.new(@sql, @stats, force_key: key).estimate_row_count
+    rescue Mysql2::Error => e
+      if /Key .+? doesn't exist in table/ =~ e.message
+        return nil
+      end
+
+      raise e
     end
 
     def run_checks!
