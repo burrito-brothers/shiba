@@ -53,6 +53,11 @@ module Shiba
 
         if !FINGERPRINTS[query.fingerprint]
           if sql.downcase.start_with?("select")
+            if options['debug']
+              require 'byebug'
+              debugger
+            end
+
             analyze_query(query)
           end
         end

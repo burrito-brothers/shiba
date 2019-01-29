@@ -33,6 +33,10 @@ parser = OptionParser.new do |opts|
   opts.on("-f", "--file FILE") do |f|
     options["file"] = f
   end
+
+  opts.on("--debug") do
+    options["debug"] = true
+  end
 end
 
 parser.parse!
