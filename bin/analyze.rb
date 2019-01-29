@@ -61,7 +61,7 @@ else
   schema_stats = Shiba::Index.query(Shiba.connection)
 
   if Shiba::Index.insufficient_stats?(schema_stats)
-    puts "insufficient stats available, guessing"
+    $stderr.puts "insufficient stats available, guessing"
     Shiba::Index.fuzz!(schema_stats)
   end
 end
