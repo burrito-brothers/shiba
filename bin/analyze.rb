@@ -26,6 +26,10 @@ parser = OptionParser.new do |opts|
     options["password"] = p
   end
 
+  opts.on("-i","--index INDEX") do |i|
+    options["index"] = i.to_i
+  end
+
   opts.on("-f", "--file FILE") do |f|
     options["file"] = f
   end
@@ -54,4 +58,4 @@ else
 end
 
 
-Shiba::Cli.analyze(file, schema_stats)
+Shiba::Cli.analyze(file, schema_stats, options)

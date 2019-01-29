@@ -126,8 +126,6 @@ module Shiba
       # pick the best key from the list of possibilities.
       #
 
-      #require 'byebug'
-      #debugger
       if first_key
         Shiba::Index.estimate_key(first_table, first_key, first['used_key_parts'], @stats)
       else

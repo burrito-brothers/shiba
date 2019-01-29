@@ -34,14 +34,19 @@ module Shiba
       end
       return unless explain
 
-      json = JSON.dump(sql: query.sql, explain: cleaned_explain(explain.to_h), cost: explain.cost)
+      json = JSON.dump(sql: query.sql, idx: query.index, explain: cleaned_explain(explain.to_h), cost: explain.cost)
       puts json
     end
 
-    def self.analyze(file, stats)
+    def self.analyze(file, stats, options = {})
       file = $stdin if file.nil?
-
+      idx = 0
       while sql = file.gets
+        idx += 1
+        if options['index']
+          next unless idx == options['index']
+        end
+
         sql.chomp!
 
         query = Shiba::Query.new(sql, stats)
