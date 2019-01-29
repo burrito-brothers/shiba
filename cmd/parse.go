@@ -38,7 +38,6 @@ func parseQueries(r io.Reader) {
 		if err != nil {
 			fmt.Println("Unable to parse line", sql)
 			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
 		}
 
 		switch q := stmt.(type) {
@@ -48,8 +47,7 @@ func parseQueries(r io.Reader) {
 		case *sqlparser.Insert:
 			enc.Encode(parseTable(q))
 		default:
-			fmt.Fprintln(os.Stderr, "Only Select queries are supported", sqlparser.String(stmt))
-			os.Exit(1)
+			fmt.Fprintln(os.Stderr, "Query not supported: ", sqlparser.String(stmt))
 		}
 	}
 
