@@ -33,6 +33,10 @@ parser = OptionParser.new do |opts|
   opts.on("-f", "--file FILE") do |f|
     options["file"] = f
   end
+
+  opts.on("--debug") do
+    options["debug"] = true
+  end
 end
 
 parser.parse!
@@ -57,7 +61,7 @@ else
   schema_stats = Shiba::Index.query(Shiba.connection)
 
   if Shiba::Index.insufficient_stats?(schema_stats)
-    puts "insufficient stats available, guessing"
+    $stderr.puts "insufficient stats available, guessing"
     Shiba::Index.fuzz!(schema_stats)
   end
 end

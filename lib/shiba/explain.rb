@@ -37,6 +37,8 @@ module Shiba
 
       if json['ordering_operation']
         return transform_json(json['ordering_operation'])
+      elsif json['duplicates_removal']
+        return transform_json(json['duplicates_removal'])
       elsif !json['nested_loop'] && !json['table']
         return [{'Extra' => json['message']}]
       elsif !json['nested_loop']
