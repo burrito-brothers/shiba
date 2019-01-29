@@ -1,3 +1,5 @@
+require 'json'
+
 module Shiba
   class Explain
     def initialize(sql, stats, options = {})
@@ -8,9 +10,32 @@ module Shiba
       end
 
       @options = options
-      @rows = Shiba.connection.query("EXPLAIN #{@sql}").to_a
+      ex = Shiba.connection.query("EXPLAIN FORMAT=JSON #{@sql}").to_a
+      @rows = self.class.transform_json(ex.first["EXPLAIN"])
       @stats = stats
       run_checks!
+    end
+
+    def self.transform_table(table)
+      res = table['table']
+      res['table'] = res.delete('table_name')
+      res
+    end
+
+    def self.transform_json(json)
+      json = JSON.parse(json)
+      json = json["query_block"]
+      rows = []
+
+      if !json['nested_loop'] && !json['table']
+        return [{'Extra' => json['message']}]
+      elsif !json['nested_loop']
+        json['nested_loop'] = [{'table' => json['table']}]
+      end
+
+      json['nested_loop'].map do |o|
+        transform_table(o)
+      end
     end
 
     # [{"id"=>1, "select_type"=>"SIMPLE", "table"=>"interwiki", "partitions"=>nil, "type"=>"const", "possible_keys"=>"PRIMARY", "key"=>"PRIMARY", "key_len"=>"34", "ref"=>"const", "rows"=>1, "filtered"=>100.0, "Extra"=>nil}]
@@ -91,8 +116,10 @@ module Shiba
       # pick the best key from the list of possibilities.
       #
 
+      #require 'byebug'
+      #debugger
       if first_key
-        Shiba::Index.estimate_key(first_table, first_key, @stats)
+        Shiba::Index.estimate_key(first_table, first_key, first['used_key_parts'], @stats)
       else
         if first['possible_keys'].nil?
           # if no possibile we're table scanning, use PRIMARY to indicate that cost.
@@ -110,7 +137,7 @@ module Shiba
 
           messages << "possible_key_check"
           possibilities = [Shiba::Index.count(first_table, @stats)]
-          possibilities += first['possible_keys'].split(/,/).map do |key|
+          possibilities += first['possible_keys'].map do |key|
             estimate_row_count_with_key(key)
           end
           possibilities.compact.min

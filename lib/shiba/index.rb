@@ -35,11 +35,14 @@ module Shiba
       primary['cardinality'].to_i
     end
 
-    def self.estimate_key(table, key, schema)
+    def self.estimate_key(table, key, parts, schema)
       table_count = count(table, schema)
       return nil unless table_count
 
-      key_stat = schema[table].detect { |i| i["index_name"] == key }
+      key_stat = schema[table].detect do |i|
+        i["index_name"] == key && i["column_name"] == parts.last
+      end
+
       return nil unless key_stat
 
       table_count / key_stat['cardinality']
