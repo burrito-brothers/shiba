@@ -55,6 +55,11 @@ if File.exist?(schema_stats_fname)
   schema_stats = Shiba::Index.parse(schema_stats_fname)
 else
   schema_stats = Shiba::Index.query(Shiba.connection)
+
+  if Shiba::Index.insufficient_stats?(schema_stats)
+    puts "insufficient stats available, guessing"
+    Shiba::Index.fuzz!(schema_stats)
+  end
 end
 
 

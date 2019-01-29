@@ -72,6 +72,41 @@ module Shiba
       tables
     end
 
+    FUZZ_SIZE = 6_001
+
+    # Up the cardinality on our indexes.
+    # Non uniques have a little less cardinality.
+    def self.fuzz!(stats)
+      stats.each do |_,indexes|
+        indexes.each do |idx|
+          idx['cardinality'] = FUZZ_SIZE
+
+          if idx['non_unique'] == 1
+            idx['cardinality'] = (idx['cardinality'] * 0.7).round
+          end
+        end
+      end
+    end
+
+    MINIMUM_TABLE_SIZE = 500
+
+    # Approximate median size of the tables is less than 500.
+    def self.insufficient_stats?(stats)
+      if stats.length == 0
+        return true
+      end
+
+      # Calculate a rough median.
+      primary_keys = stats.map do |_,indexes|
+        indexes.detect { |idx| idx['index_name'] == 'PRIMARY' } || {}
+      end
+
+      table_counts = primary_keys.map { |pk| pk['cardinality'].to_i }
+      median = table_counts[table_counts.size/2]
+
+      return median < MINIMUM_TABLE_SIZE
+    end
+
     protected
 
     def self.read(path)
