@@ -32,7 +32,18 @@ module Shiba
     def self.count(table, schema)
       return nil unless schema[table]
       primary = schema[table].detect { |index| index['index_name'] == "PRIMARY" }
-      primary['cardinality'].to_i
+      if primary.nil?
+        # find the highest cardinality of a unique index, if it exists
+        schema[table].map do |index|
+          if index['non_unique'].to_i == 0
+            index['cardinality']
+          else
+            nil
+          end
+        end.compact.max
+      else
+        primary['cardinality'].to_i
+      end
     end
 
     def self.estimate_key(table, key, parts, schema)
@@ -45,7 +56,20 @@ module Shiba
 
       return nil unless key_stat
 
+      return 0 if key_stat['cardinality'] == 0
       table_count / key_stat['cardinality']
+    end
+
+    def self.query(connection)
+      records = connection.query("select * from information_schema.statistics where table_schema = DATABASE()")
+      tables = {}
+      records.each do |h|
+        h.keys.each { |k| h[k.downcase] = h.delete(k) }
+        h["cardinality"] = h["cardinality"].to_i
+        table = tables[h['table_name']] ||= []
+        table.push(h)
+      end
+      tables
     end
 
     protected

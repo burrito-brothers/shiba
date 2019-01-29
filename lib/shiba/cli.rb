@@ -30,6 +30,7 @@ module Shiba
       rescue StandardError => e
         puts "got exception trying to explain: #{e}"
         puts e.backtrace.join("\n")
+        raise e
       end
       return unless explain
 

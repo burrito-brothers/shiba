@@ -43,11 +43,15 @@ end
 file = options.delete("file")
 file = File.open(file, "r") if file
 
+Shiba.configure(options)
+
 schema_stats_fname = Dir.pwd + "/.shiba/schema_stats.tsv"
+
 if File.exist?(schema_stats_fname)
   schema_stats = Shiba::Index.parse(schema_stats_fname)
+else
+  schema_stats = Shiba::Index.query(Shiba.connection)
 end
 
 
-Shiba.configure(options)
 Shiba::Cli.analyze(file, schema_stats)
