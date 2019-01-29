@@ -11,23 +11,33 @@ module Shiba
 
       @options = options
       ex = Shiba.connection.query("EXPLAIN FORMAT=JSON #{@sql}").to_a
-      @rows = self.class.transform_json(ex.first["EXPLAIN"])
+      json = JSON.parse(ex.first['EXPLAIN'])
+      @rows = self.class.transform_json(json['query_block'])
       @stats = stats
       run_checks!
     end
 
     def self.transform_table(table)
-      res = table['table']
-      res['table'] = res.delete('table_name')
+      t = table['table']
+      res = {}
+      res['table'] = t['table_name']
+      res['access_type'] = t['access_type']
+      res['key'] = t['key']
+      res['used_key_parts'] = t['used_key_parts'] if t['used_key_parts']
+
+      if t['possible_keys'] && t['possible_keys'] != [res['key']]
+        res['possible_keys'] = t['possible_keys']
+      end
+      res['using_index'] = t['using_index'] if t['using_index']
       res
     end
 
     def self.transform_json(json)
-      json = JSON.parse(json)
-      json = json["query_block"]
       rows = []
 
-      if !json['nested_loop'] && !json['table']
+      if json['ordering_operation']
+        return transform_json(json['ordering_operation'])
+      elsif !json['nested_loop'] && !json['table']
         return [{'Extra' => json['message']}]
       elsif !json['nested_loop']
         json['nested_loop'] = [{'table' => json['table']}]
