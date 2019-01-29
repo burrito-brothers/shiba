@@ -101,14 +101,14 @@ module Shiba
     end
 
     # TODO: need to parse SQL here I think
-    def no_condition_table_scan?
-      @rows.size == 1 && !(@sql =~ /where/i) || @sql =~ /where\s*1=1/i
+    def simple_table_scan?
+      @rows.size == 1 && (@sql !~ /where/i || @sql =~ /where\s*1=1/i) && (@sql !~ /order by/i)
     end
 
     def estimate_row_count
       return 0 if ignore_explain?
 
-      if no_condition_table_scan?
+      if simple_table_scan?
         if @sql =~ /limit\s*(\d+)/i
           return $1.to_i
         else
