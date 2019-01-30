@@ -23,26 +23,48 @@ module Shiba
       end
     end
 
+    def self.dump_error(e, query)
+      $stderr.puts "got exception trying to explain: #{e.message}"
+      $stderr.puts "query: #{query.sql} (index #{query.index})"
+      $stderr.puts e.backtrace.join("\n")
+    end
+
     def self.analyze_query(query)
       explain = nil
       begin
         explain = query.explain
+      rescue Mysql2::Error => e
+        # we're picking up crap on the command-line that's not good SQL.  ignore it.
+        if !(e.message =~ /You have an error in your SQL syntax/)
+          dump_error(e, query)
+        end
       rescue StandardError => e
-        puts "got exception trying to explain: #{e.message}"
-        puts "query: #{query.sql}"
-        puts e.backtrace.join("\n")
+        dump_error(e, query)
       end
-      return unless explain
+      return false unless explain
 
       json = JSON.dump(sql: query.sql, idx: query.index, explain: cleaned_explain(explain.to_h), cost: explain.cost)
       puts json
+      true
     end
 
     def self.analyze(file, stats, options = {})
       file = $stdin if file.nil?
       idx = 0
-      while sql = file.gets
-        idx += 1
+      while line = file.gets
+        # strip out colors
+        begin
+          line.gsub!(/\e\[?.*?[\@-~]/, '')
+        rescue ArgumentError => e
+          next
+        end
+
+        if line =~ /(select.*from.*)/i
+          sql = $1
+        else
+          next
+        end
+
         if options['index']
           next unless idx == options['index']
         end
@@ -58,7 +80,9 @@ module Shiba
               debugger
             end
 
-            analyze_query(query)
+            if analyze_query(query)
+              idx += 1
+            end
           end
         end
 

@@ -1,6 +1,55 @@
 # Shiba
 
+Shiba is a tool that helps you to understand and write better SQL.  Integrate
+the gem into your test suite, give Shiba a bit of data about your indexes, and Shiba
+will let you know the impact of your queries on production, with the goal of catching
+poorly performing queries before they hit production.
+
 ## Installation
+
+You can run shiba either as a gem in your test suite, or as a standalone utility.
+
+### Standalone:
+
+```
+
+local:$ git clone git@github.com:burrito-brothers/shiba.git
+
+# get index statistics from a production database, or a staging database with
+# that resembles production:
+
+local:$ ssh production_host
+
+# dump index statistics from DATABASE
+production_host:$ mysql -ABe "select * from information_schema.statistics where table_schema = 'DATABASE'" > shiba_schema_stats.tsv
+
+local:$ scp production_host:shiba_schema_stats.tsv shiba/
+
+# set shiba loose on your queries!
+
+
+local:$ cd myproject
+local:$ cat development.log |
+
+
+cd shiba
+bin/analyze.rb
+
+```
+
+
+There's two main ways to run Shiba, either as a gem integrated into your
+environment, or as a standalone application.
+
+### Standalone
+
+```
+cd shiba
+
+
+
+
+
 
 Add this line to your application's Gemfile:
 
@@ -10,13 +59,10 @@ gem 'shiba'
 
 ## Stats collection
 
+In order to get the most out of Shiba,
 ssh production
 
 ```
-ssh produciton_host
-mysql -u <USER> -p<PASSWORD> -ABe 'select * from information_schema.statistics where table_schema = "<DATABASE>";' > schema_stats.tsv
-mkdir .shiba
-scp production_host:schema_stats.tsv .shiba/
 ```
 
 And then execute:
