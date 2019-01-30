@@ -61,7 +61,7 @@ Shiba.configure(options)
 
 schema_stats_fname = options["stats_file"]
 
-if !File.exist?(schema_stats_fname)
+if schema_stats_fname && !File.exist?(schema_stats_fname)
   $stderr.puts "No such file: #{schema_stats_fname}"
   exit 1
 end
