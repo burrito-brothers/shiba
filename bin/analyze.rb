@@ -61,8 +61,19 @@ Shiba.configure(options)
 
 schema_stats_fname = options["stats_file"]
 
-if schema_stats_fname && File.exist?(schema_stats_fname)
+if !File.exist?(schema_stats_fname)
+  $stderr.puts "No such file: #{schema_stats_fname}"
+  exit 1
+end
+
+if schema_stats_fname
   schema_stats = Shiba::Index.parse(schema_stats_fname)
+
+  local_db_stats = Shiba::Index.query(Shiba.connection)
+  Shiba::Index.fuzz!(local_db_stats)
+  local_db_stats.each do |table, values|
+    schema_stats[table] = values unless schema_stats[table]
+  end
 else
   schema_stats = Shiba::Index.query(Shiba.connection)
 
