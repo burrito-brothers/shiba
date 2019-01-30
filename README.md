@@ -41,20 +41,16 @@ bin/analyze.rb
 There's two main ways to run Shiba, either as a gem integrated into your
 environment, or as a standalone application.
 
-### Standalone
+### Gem
 
 ```
-cd shiba
-
-
-
-
-
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'shiba'
+group :test do
+  gem 'shiba'
+end
 ```
 
 ## Stats collection
