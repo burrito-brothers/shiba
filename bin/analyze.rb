@@ -45,7 +45,7 @@ end
 
 parser.parse!
 
-["host", "database", "username", "password"].each do |opt|
+["host", "database", "username"].each do |opt|
   if !options[opt]
     $stderr.puts "Required: #{opt}"
     $stderr.puts parser.banner
