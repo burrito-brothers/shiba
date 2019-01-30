@@ -26,6 +26,7 @@ module Shiba
       res['key'] = t['key']
       res['used_key_parts'] = t['used_key_parts'] if t['used_key_parts']
       res['rows'] = t['rows_examined_per_scan']
+      res['filtered'] = t['filtered']
 
       if t['possible_keys'] && t['possible_keys'] != [res['key']]
         res['possible_keys'] = t['possible_keys']
@@ -77,7 +78,8 @@ module Shiba
 
     # shiba: {"possible_keys"=>nil, "key"=>nil, "key_len"=>nil, "ref"=>nil, "rows"=>6, "filtered"=>16.67, "Extra"=>"Using where"}
     def to_log
-      "possible: '%{possible_keys}', rows: %{rows}, filtered: %{filtered}, cost: #{self.cost},'%{Extra}'" % first.symbolize_keys
+      plan = first.symbolize_keys
+      "possible: #{plan[:possible_keys]}, rows: #{plan[:rows]}, filtered: #{plan[:filtered]}, cost: #{self.cost}, access: #{plan[:access_type]}"
     end
 
     def to_h
