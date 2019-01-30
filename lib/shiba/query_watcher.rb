@@ -33,16 +33,16 @@ module Shiba
 
     # Logs ActiveRecord SELECT queries that originate from application code.
     def self.watch
-      ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
-        Shiba.configure(ActiveRecord::Base.configurations["test"])
+      Shiba.configure(ActiveRecord::Base.configurations["test"])
 
+      ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         sql = payload[:sql]
         query = Shiba::Query.new(sql, self.table_sizes)
 
-        if !FINGERPRINTS[query.fingerprint]
+        if sql.start_with?("SELECT") && !FINGERPRINTS[query.fingerprint]
           line = app_line
 
-          if sql.start_with?("SELECT") && !line.nil?
+          if !line.nil?
             explain = query.explain
             json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line, cost: explain.cost)
             json_logger.info(json)
