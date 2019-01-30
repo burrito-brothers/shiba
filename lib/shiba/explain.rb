@@ -111,15 +111,28 @@ module Shiba
       @rows.size == 1 && (@sql !~ /where/i || @sql =~ /where\s*1=1/i) && (@sql !~ /order by/i)
     end
 
+    def limit
+      if @sql =~ /limit\s*(\d+)\s*(offset \d+)?$/i
+        $1.to_i
+      else
+        nil
+      end
+    end
+
+    def tag_query_type
+      access_type = first['access_type']
+
+      return unless access_type
+      access_type = 'tablescan' if access_type == 'ALL'
+      messages << "access_type_" + access_type
+    end
+
     def estimate_row_count
       return 0 if ignore_explain?
 
       if simple_table_scan?
-        if @sql =~ /limit\s*(\d+)/i
-          return $1.to_i
-        else
-          return table_size
-        end
+        messages << 'simple_table_scan'
+        return limit || table_size
       end
 
       if derived?
@@ -127,6 +140,8 @@ module Shiba
         @rows.shift
         return estimate_row_count
       end
+
+      tag_query_type
 
       # TODO: if possible_keys but mysql chooses NULL, this could be a test-data issue,
       # pick the best key from the list of possibilities.
