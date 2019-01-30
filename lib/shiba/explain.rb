@@ -130,6 +130,8 @@ module Shiba
       # pick the best key from the list of possibilities.
       #
 
+      messages << "fuzzed_data" if Shiba::Index.fuzzed?(first_table, @stats)
+
       if first_key
         Shiba::Index.estimate_key(first_table, first_key, first['used_key_parts'], @stats)
       else

@@ -46,6 +46,11 @@ module Shiba
       end
     end
 
+    def self.fuzzed?(table, schema)
+      return nil unless schema[table]
+      schema[table].first['fuzzed']
+    end
+
     def self.estimate_key(table, key, parts, schema)
       table_count = count(table, schema)
       return nil unless table_count
@@ -84,6 +89,8 @@ module Shiba
           if idx['non_unique'] == 1
             idx['cardinality'] = (idx['cardinality'] * 0.7).round
           end
+
+          idx['fuzzed'] = true
         end
       end
     end
