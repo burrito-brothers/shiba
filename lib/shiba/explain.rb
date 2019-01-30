@@ -1,4 +1,5 @@
 require 'json'
+require 'shiba/index'
 
 module Shiba
   class Explain
@@ -24,6 +25,7 @@ module Shiba
       res['access_type'] = t['access_type']
       res['key'] = t['key']
       res['used_key_parts'] = t['used_key_parts'] if t['used_key_parts']
+      res['rows'] = t['rows_examined_per_scan']
 
       if t['possible_keys'] && t['possible_keys'] != [res['key']]
         res['possible_keys'] = t['possible_keys']

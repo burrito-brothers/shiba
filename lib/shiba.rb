@@ -16,3 +16,6 @@ module Shiba
     File.dirname(__dir__)
   end
 end
+
+# This goes at the end so that Shiba.root is defined.
+require "shiba/railtie" if defined?(Rails)

@@ -1,6 +1,7 @@
 require 'shiba/query'
 require 'json'
 require 'logger'
+require 'rails'
 
 module Shiba
   # TO use, put this line in config/initializers: Shiba::QueryWatcher.watch
@@ -55,10 +56,6 @@ module Shiba
           FINGERPRINTS[query.fingerprint] = true
         end
       end
-    end
-
-    def self.analyze_query_file(file)
-
     end
 
     def self.app_line
