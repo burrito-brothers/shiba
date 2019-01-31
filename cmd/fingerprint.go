@@ -3,20 +3,26 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/percona/go-mysql/query"
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	r := bufio.NewReader(os.Stdin)
 
-	for scanner.Scan() {
-		sql := scanner.Text()
-		fmt.Println(query.Fingerprint(sql))
+	for {
+		sql, err := r.ReadString('\n')
+
+		switch err {
+		case nil:
+			fmt.Println(query.Fingerprint(sql))
+		case io.EOF:
+			os.Exit(0)
+		default:
+			fmt.Fprintln(os.Stderr, "reading standard input:", err)
+		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "reading standard input:", err)
-	}
 }

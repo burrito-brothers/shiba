@@ -8,7 +8,7 @@ module Shiba
 
     def self.get_fingerprint(query)
       if !@stdin
-        @stdin, @stdout, _, _ = Open3.popen3(FINGERPRINTER)
+        @stdin, @stdout, _ = Open3.popen2(FINGERPRINTER)
       end
       @stdin.puts(query.gsub(/\n/, ' '))
       @stdout.readline.chomp
