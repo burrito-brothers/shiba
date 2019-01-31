@@ -9,6 +9,19 @@ poorly performing queries before they hit production.
 
 You can run shiba either as a gem in your test suite, or as a standalone utility.
 
+### Gem
+
+Add this line to your application's Gemfile:
+
+```ruby
+group :test do
+  gem 'shiba'
+end
+
+bundle
+bundle exec shiba analyze 
+```
+
 ### Standalone:
 
 ```
@@ -35,14 +48,4 @@ local:$ bin/analyze.rb -h 127.0.0.1 -d TESTDB -u MYSQLUSER -p MYSQLPASS -s shiba
 
 local:$ jq -C -s 'sort_by(.cost) | reverse' results.json | less -R
 
-```
-
-### Gem
-
-Add this line to your application's Gemfile:
-
-```ruby
-group :test do
-  gem 'shiba'
-end
 ```

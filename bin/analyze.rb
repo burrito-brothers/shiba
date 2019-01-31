@@ -4,6 +4,7 @@ require 'bundler/setup'
 require 'shiba'
 require 'shiba/cli'
 require 'shiba/index'
+require 'shiba/configure'
 require 'optionparser'
 
 options = {}
@@ -45,7 +46,29 @@ end
 
 parser.parse!
 
-["host", "database", "username"].each do |opt|
+
+# Automagic configuration goes here
+
+if !options["database"]
+  config = Shiba::Configure.activerecord_configuration
+  
+  if tc = config['test']
+    $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]"
+    $stderr.puts "See -help to manually configure the database connection."
+    options['database'] ||= tc['database']
+    options['username'] ||= tc['username']
+    options['password'] ||= tc['password']
+    options['host']     ||= tc['hostname']
+  end
+end
+
+if !options["file"]
+  path = "#{Dir.pwd}/log/test.log"
+  $stderr.puts "Reading SQL queries from #{path}. To check other queries, use the -file option."
+  options["file"] = path
+end
+
+["database", "username"].each do |opt|
   if !options[opt]
     $stderr.puts "Required: #{opt}"
     $stderr.puts parser.banner
@@ -78,8 +101,8 @@ else
   schema_stats = Shiba::Index.query(Shiba.connection)
 
   if Shiba::Index.insufficient_stats?(schema_stats)
-    $stderr.puts "WARN: insufficient stats available in #{options["database"]}, guessing at numbers."
-    $stderr.puts "To get better data please specify an index statistics file."
+    $stderr.puts "WARN: insufficient stats available in the #{options["database"]} database, guessing at numbers."
+    $stderr.puts "To get better analysis please specify an index statistics file."
     sleep 0.5
     Shiba::Index.fuzz!(schema_stats)
   end
