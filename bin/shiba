@@ -8,7 +8,6 @@ commands = {
     "analyze" => { :bin => "analyze.rb", :description => "Analyze logged SQL queries" }
 }
 
-options = {}
 global = OptionParser.new do |opts|
   opts.banner = "usage: #{APP} [--help] <command> [<args>]"
   opts.separator ""
@@ -24,6 +23,11 @@ end
 global.order!
 
 command = ARGV.shift
+
+if command.nil?
+  puts global.to_s
+  exit
+end
 
 if !commands.key?(command)
     puts "#{APP}: '#{command}' is not a '#{APP}' command. See '#{APP} --help'."
