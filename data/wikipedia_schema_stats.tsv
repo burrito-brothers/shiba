@@ -1,0 +1,137 @@
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
+def	wikidb	category	0	wikidb	PRIMARY	1	cat_id	A	1807526	NULL	NULL		BTREE		
+def	wikidb	category	0	wikidb	cat_title	1	cat_title	A	1807526	NULL	NULL		BTREE		
+def	wikidb	category	1	wikidb	cat_pages	1	cat_pages	A	6415	NULL	NULL		BTREE		
+def	wikidb	categorylinks	0	wikidb	PRIMARY	1	cl_from	A	26332180	NULL	NULL		BTREE		
+def	wikidb	categorylinks	0	wikidb	PRIMARY	2	cl_to	A	130744112	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_timestamp	1	cl_to	A	2434120	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_timestamp	2	cl_timestamp	A	108224648	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_sortkey	1	cl_to	A	4301058	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_sortkey	2	cl_type	A	5079990	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_sortkey	3	cl_sortkey	A	121547224	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_sortkey	4	cl_from	A	120869896	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_collation_ext	1	cl_collation	A	1	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_collation_ext	2	cl_to	A	1731771	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_collation_ext	3	cl_type	A	2280583	NULL	NULL		BTREE		
+def	wikidb	categorylinks	1	wikidb	cl_collation_ext	4	cl_from	A	130744112	NULL	NULL		BTREE		
+def	wikidb	change_tag	0	wikidb	PRIMARY	1	ct_id	A	56803004	NULL	NULL		BTREE		
+def	wikidb	change_tag	0	wikidb	change_tag_rc_tag_id	1	ct_rc_id	A	39076136	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	0	wikidb	change_tag_rc_tag_id	2	ct_tag_id	A	56806612	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	0	wikidb	change_tag_log_tag_id	1	ct_log_id	A	500535	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	0	wikidb	change_tag_log_tag_id	2	ct_tag_id	A	19749	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	0	wikidb	change_tag_rev_tag_id	1	ct_rev_id	A	34442120	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	0	wikidb	change_tag_rev_tag_id	2	ct_tag_id	A	56806612	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id	1	ct_tag	A	22907	NULL	NULL		BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id	2	ct_rc_id	A	53671048	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id	3	ct_rev_id	A	52309312	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id	4	ct_log_id	A	56806612	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id_id	1	ct_tag_id	A	18819	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id_id	2	ct_rc_id	A	54781728	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id_id	3	ct_rev_id	A	56806612	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_tag_id_id	4	ct_log_id	A	51949572	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_rc_tag_nonuniq	1	ct_rc_id	A	39833304	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_rc_tag_nonuniq	2	ct_tag	A	56806612	NULL	NULL		BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_log_tag_nonuniq	1	ct_log_id	A	587241	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_log_tag_nonuniq	2	ct_tag	A	1013243	NULL	NULL		BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_rev_tag_nonuniq	1	ct_rev_id	A	35305452	NULL	NULL	YES	BTREE		
+def	wikidb	change_tag	1	wikidb	change_tag_rev_tag_nonuniq	2	ct_tag	A	53302120	NULL	NULL		BTREE		
+def	wikidb	externallinks	0	wikidb	PRIMARY	1	el_id	A	119092112	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_from	1	el_from	A	12287307	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_from	2	el_to	A	75771736	40	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_to	1	el_to	A	56588716	60	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_to	2	el_from	A	89674392	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_index	1	el_index	A	75707088	60	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_index_60	1	el_index_60	A	71877616	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_index_60	2	el_id	A	119092280	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_from_index_60	1	el_from	A	12166115	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_from_index_60	2	el_index_60	A	119092280	NULL	NULL		BTREE		
+def	wikidb	externallinks	1	wikidb	el_from_index_60	3	el_id	A	119092280	NULL	NULL		BTREE		
+def	wikidb	flaggedpages	0	wikidb	PRIMARY	1	fp_page_id	A	3629	NULL	NULL		BTREE		
+def	wikidb	flaggedpages	1	wikidb	fp_reviewed_page	1	fp_reviewed	A	2	NULL	NULL		BTREE		
+def	wikidb	flaggedpages	1	wikidb	fp_reviewed_page	2	fp_page_id	A	3629	NULL	NULL		BTREE		
+def	wikidb	flaggedpages	1	wikidb	fp_quality_page	1	fp_quality	A	1	NULL	NULL	YES	BTREE		
+def	wikidb	flaggedpages	1	wikidb	fp_quality_page	2	fp_page_id	A	3629	NULL	NULL		BTREE		
+def	wikidb	flaggedpages	1	wikidb	fp_pending_since	1	fp_pending_since	A	25	NULL	NULL	YES	BTREE		
+def	wikidb	flaggedrevs	0	wikidb	PRIMARY	1	fr_rev_id	A	1589904	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	fr_img_sha1	1	fr_img_sha1	A	1	NULL	NULL	YES	BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_qal_rev	1	fr_page_id	A	10745	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_qal_rev	2	fr_quality	A	10745	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_qal_rev	3	fr_rev_id	A	1507155	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_rev	1	fr_page_id	A	13849	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_rev	2	fr_rev_id	A	1508300	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_time	1	fr_page_id	A	13405	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_time	2	fr_rev_timestamp	A	1589904	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_qal_time	1	fr_page_id	A	9206	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_qal_time	2	fr_quality	A	14010	NULL	NULL		BTREE		
+def	wikidb	flaggedrevs	1	wikidb	page_qal_time	3	fr_rev_timestamp	A	1589904	NULL	NULL		BTREE		
+def	wikidb	geo_tags	0	wikidb	PRIMARY	1	gt_id	A	1900314	NULL	NULL		BTREE		
+def	wikidb	geo_tags	1	wikidb	gt_page_primary	1	gt_page_id	A	1016464	NULL	NULL		BTREE		
+def	wikidb	geo_tags	1	wikidb	gt_page_primary	2	gt_primary	A	1482632	NULL	NULL		BTREE		
+def	wikidb	geo_tags	1	wikidb	gt_page_id_id	1	gt_page_id	A	991365	NULL	NULL		BTREE		
+def	wikidb	geo_tags	1	wikidb	gt_page_id_id	2	gt_id	A	1844622	NULL	NULL		BTREE		
+def	wikidb	image	0	wikidb	PRIMARY	1	img_name	A	761539	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_size	1	img_size	A	232981	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_timestamp	1	img_timestamp	A	761539	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_usertext_timestamp	1	img_user_text	A	142718	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_usertext_timestamp	2	img_timestamp	A	761539	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_media_mime	1	img_media_type	A	5	NULL	NULL	YES	BTREE		
+def	wikidb	image	1	wikidb	img_media_mime	2	img_major_mime	A	7	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_media_mime	3	img_minor_mime	A	16	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_user_timestamp	1	img_user	A	135202	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_user_timestamp	2	img_timestamp	A	761539	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_actor_timestamp	1	img_actor	A	1003	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_actor_timestamp	2	img_timestamp	A	728910	NULL	NULL		BTREE		
+def	wikidb	image	1	wikidb	img_sha1	1	img_sha1	A	712134	10	NULL		BTREE		
+def	wikidb	imagelinks	0	wikidb	PRIMARY	1	il_from	A	26630976	NULL	NULL		BTREE		
+def	wikidb	imagelinks	0	wikidb	PRIMARY	2	il_to	A	86700848	NULL	NULL		BTREE		
+def	wikidb	imagelinks	1	wikidb	il_to	1	il_to	A	13496592	NULL	NULL		BTREE		
+def	wikidb	imagelinks	1	wikidb	il_to	2	il_from	A	86700920	NULL	NULL		BTREE		
+def	wikidb	imagelinks	1	wikidb	il_backlinks_namespace	1	il_from_namespace	A	4035	NULL	NULL		BTREE		
+def	wikidb	imagelinks	1	wikidb	il_backlinks_namespace	2	il_to	A	10514347	NULL	NULL		BTREE		
+def	wikidb	imagelinks	1	wikidb	il_backlinks_namespace	3	il_from	A	86700920	NULL	NULL		BTREE		
+def	wikidb	iwlinks	0	wikidb	PRIMARY	1	iwl_from	A	5599841	NULL	NULL		BTREE		
+def	wikidb	iwlinks	0	wikidb	PRIMARY	2	iwl_prefix	A	7666535	NULL	NULL		BTREE		
+def	wikidb	iwlinks	0	wikidb	PRIMARY	3	iwl_title	A	19667738	NULL	NULL		BTREE		
+def	wikidb	iwlinks	1	wikidb	iwl_prefix_title_from	1	iwl_prefix	A	19486	NULL	NULL		BTREE		
+def	wikidb	iwlinks	1	wikidb	iwl_prefix_title_from	2	iwl_title	A	8520662	NULL	NULL		BTREE		
+def	wikidb	iwlinks	1	wikidb	iwl_prefix_title_from	3	iwl_from	A	17802824	NULL	NULL		BTREE		
+def	wikidb	iwlinks	1	wikidb	iwl_prefix_from_title	1	iwl_prefix	A	18415	NULL	NULL		BTREE		
+def	wikidb	iwlinks	1	wikidb	iwl_prefix_from_title	2	iwl_from	A	4314027	NULL	NULL		BTREE		
+def	wikidb	iwlinks	1	wikidb	iwl_prefix_from_title	3	iwl_title	A	19668138	NULL	NULL		BTREE		
+def	wikidb	langlinks	0	wikidb	PRIMARY	1	ll_from	A	5431452	NULL	NULL		BTREE		
+def	wikidb	langlinks	0	wikidb	PRIMARY	2	ll_lang	A	33205924	NULL	NULL		BTREE		
+def	wikidb	langlinks	1	wikidb	ll_lang	1	ll_lang	A	25509	NULL	NULL		BTREE		
+def	wikidb	langlinks	1	wikidb	ll_lang	2	ll_title	A	27028762	NULL	NULL		BTREE		
+def	wikidb	page	0	wikidb	PRIMARY	1	page_id	A	44732456	NULL	NULL		BTREE		
+def	wikidb	page	0	wikidb	name_title	1	page_namespace	A	4225	NULL	NULL		BTREE		
+def	wikidb	page	0	wikidb	name_title	2	page_title	A	44034452	NULL	NULL		BTREE		
+def	wikidb	page	1	wikidb	page_random	1	page_random	A	44732744	NULL	NULL		BTREE		
+def	wikidb	page	1	wikidb	page_len	1	page_len	A	59319	NULL	NULL		BTREE		
+def	wikidb	page	1	wikidb	page_redirect_namespace_len	1	page_is_redirect	A	500	NULL	NULL		BTREE		
+def	wikidb	page	1	wikidb	page_redirect_namespace_len	2	page_namespace	A	9000	NULL	NULL		BTREE		
+def	wikidb	page	1	wikidb	page_redirect_namespace_len	3	page_len	A	110411	NULL	NULL		BTREE		
+def	wikidb	page_props	0	wikidb	PRIMARY	1	pp_page	A	16837376	NULL	NULL		BTREE		
+def	wikidb	page_props	0	wikidb	PRIMARY	2	pp_propname	A	26230360	NULL	NULL		BTREE		
+def	wikidb	page_props	0	wikidb	pp_propname_page	1	pp_propname	A	5896	NULL	NULL		BTREE		
+def	wikidb	page_props	0	wikidb	pp_propname_page	2	pp_page	A	23865214	NULL	NULL		BTREE		
+def	wikidb	page_props	0	wikidb	pp_propname_sortkey_page	1	pp_propname	A	5583	NULL	NULL		BTREE		
+def	wikidb	page_props	0	wikidb	pp_propname_sortkey_page	2	pp_sortkey	A	7301	NULL	NULL	YES	BTREE		
+def	wikidb	page_props	0	wikidb	pp_propname_sortkey_page	3	pp_page	A	24600438	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	0	wikidb	PRIMARY	1	pr_page	A	80384	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	0	wikidb	PRIMARY	2	pr_type	A	141934	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	0	wikidb	pr_id	1	pr_id	A	141934	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	1	wikidb	pr_page	1	pr_page	A	81593	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	1	wikidb	pr_typelevel	1	pr_type	A	2	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	1	wikidb	pr_typelevel	2	pr_level	A	9	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	1	wikidb	pr_level	1	pr_level	A	3	NULL	NULL		BTREE		
+def	wikidb	page_restrictions	1	wikidb	pr_cascade	1	pr_cascade	A	1	NULL	NULL		BTREE		
+def	wikidb	pagelinks	0	wikidb	PRIMARY	1	pl_from	A	18563812	NULL	NULL		BTREE		
+def	wikidb	pagelinks	0	wikidb	PRIMARY	2	pl_namespace	A	18563812	NULL	NULL		BTREE		
+def	wikidb	pagelinks	0	wikidb	PRIMARY	3	pl_title	A	499864544	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_namespace	1	pl_namespace	A	1	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_namespace	2	pl_title	A	11280857	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_namespace	3	pl_from	A	423081120	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_backlinks_namespace	1	pl_from_namespace	A	1	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_backlinks_namespace	2	pl_namespace	A	1	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_backlinks_namespace	3	pl_title	A	16078364	NULL	NULL		BTREE		
+def	wikidb	pagelinks	1	wikidb	pl_backlinks_namespace	4	pl_from	A	489196640	NULL	NULL		BTREE		
