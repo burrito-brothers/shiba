@@ -51,8 +51,8 @@ parser.parse!
 
 if !options["database"]
   config = Shiba::Configure.activerecord_configuration
-  
-  if tc = config['test']
+
+  if tc = config && config['test']
     $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]"
     $stderr.puts "See -help to manually configure the database connection."
     options['database'] ||= tc['database']
