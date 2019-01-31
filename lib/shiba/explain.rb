@@ -21,12 +21,23 @@ module Shiba
     def as_json
       {
         sql: @sql,
-        table: first_table,
+        table: get_table,
         key: first_key,
         tags: messages,
         cost: @cost,
         used_key_parts: first['used_key_parts']
       }
+    end
+
+    def get_table
+      @sql =~ /\s+from\s*([^\s,]+)/i
+      table = $1
+      return nil unless table
+
+      table = table.downcase
+      table.gsub!('`', '')
+      table.gsub!(/.*\.(.*)/, '\1')
+      table
     end
 
     def self.transform_table(table)
