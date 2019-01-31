@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+for cmd in ["fingerprint"]; do
+    GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o cmd/builds/fingerprint.linux-amd64 cmd/fingerprint.go
+    GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w"  -o cmd/builds/fingerprint.darwin-amd64 cmd/fingerprint.go
+done
