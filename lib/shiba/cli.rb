@@ -17,12 +17,6 @@ module Shiba
       end
     end
 
-    def self.cleaned_explain(h)
-      h.reject do |k, v|
-        ["id", "select_type", "partitions", "type"].include?(k)
-      end
-    end
-
     def self.dump_error(e, query)
       $stderr.puts "got exception trying to explain: #{e.message}"
       $stderr.puts "query: #{query.sql} (index #{query.index})"
@@ -43,7 +37,7 @@ module Shiba
       end
       return false unless explain
 
-      json = JSON.dump(sql: query.sql, idx: query.index, explain: cleaned_explain(explain.to_h), cost: explain.cost)
+      json = JSON.dump(explain.as_json)
       puts json
       true
     end

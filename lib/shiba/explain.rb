@@ -18,6 +18,17 @@ module Shiba
       run_checks!
     end
 
+    def as_json
+      {
+        sql: @sql,
+        table: first_table,
+        key: first_key,
+        tags: messages,
+        cost: @cost,
+        used_key_parts: first['used_key_parts']
+      }
+    end
+
     def self.transform_table(table)
       t = table['table']
       res = {}
