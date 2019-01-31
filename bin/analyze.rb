@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'shiba'
-require 'shiba/cli'
+require 'shiba/analyzer'
 require 'shiba/index'
 require 'shiba/configure'
 require 'optionparser'
@@ -108,4 +108,4 @@ else
   end
 end
 
-Shiba::Cli.analyze(file, schema_stats, options)
+Shiba::Analyzer.analyze(file, schema_stats, options)

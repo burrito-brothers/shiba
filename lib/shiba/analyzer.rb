@@ -5,7 +5,7 @@ require 'logger'
 
 module Shiba
   # TO use, put this line in config/initializers: Shiba::QueryWatcher.watch
-  module Cli
+  module Analyzer
     FINGERPRINTS = {}
 
     def self.make_logger(fname)
