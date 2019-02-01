@@ -29,6 +29,16 @@ module Shiba
       @queries = queries
     end
 
+    def remote_url
+      url = `git config --get remote.origin.url` rescue nil
+      return nil unless url
+      return nil if url =~ %r{burrito-brothers/shiba}
+      url.chomp!
+      url.gsub!('git@github.com', 'https://github.com')
+      url.gsub!(/\.git$/, '')
+      url + '/blob/master/'
+    end
+
     def make_web!
       FileUtils.mkdir_p(JS_PATH)
 
@@ -40,11 +50,11 @@ module Shiba
       data = {
         js: js,
         queries: @queries,
-        tags: self.class.tags
+        tags: self.class.tags,
+        url: remote_url
       }
 
       system("cp #{WEB_PATH}/*.css #{OUTPUT_PATH}")
-
 
       erb = ERB.new(File.read(WEB_PATH + "/../web/results.html.erb"))
       File.open(OUTPUT_PATH + "/results.html", "w+") do |f|

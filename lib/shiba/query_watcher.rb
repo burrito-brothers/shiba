@@ -21,8 +21,8 @@ module Shiba
     def watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         sql = payload[:sql]
-        
-        if sql.start_with?("SELECT") 
+
+        if sql.start_with?("SELECT")
           lines = app_backtrace
           if lines && !@queries[sql]
             @file.puts("#{sql} /*shiba#{lines}*/" )
@@ -58,7 +58,7 @@ module Shiba
         paths.compact!
         # match and replace longest path first
         paths.sort_by!(&:size).reverse!
-        
+
         Regexp.new(paths.map {|r| Regexp.escape(r) }.join("|"))
       end
     end
@@ -72,7 +72,6 @@ module Shiba
           root = root.chomp
         end
       }
-
       root
     end
 
