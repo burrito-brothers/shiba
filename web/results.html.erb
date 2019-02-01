@@ -34,55 +34,54 @@
         queriesByTable = queriesByTable.concat(byTable[table]);
       });
     </script>
-      <script type="text/x-template" id="query-template">
-        <div class="query">
-          <div class="row">
-              <div class="col">{{ query.table }}</div>
-              <div class="col-6">{{ truncate(query.sql, 60) }}</div>
-              <div class="col">{{ query.loc }}</div>
-              <div class="col-1">{{ severity(query) }}</div>
-              <div class="col-1">
-                <a href="#" v-on:click="expandToggle(query, $event)">
-                  <span v-if="query.expanded">-</span>
-                  <span v-else>+</span>
-                </a>
+    <script type="text/x-template" id="query-template">
+      <div class="query">
+        <div class="row">
+          <div class="col">
+            <a href="#" v-on:click="expandToggle">
+              <span stlye="text-align: right">{{ expandText }}</span>
+            </a>
+            {{ query.table }}
+          </div>
+          <div class="col-6">{{ truncate(query.sql, 60) }}</div>
+          <div class="col">{{ query.loc }}</div>
+          <div class="col-1">{{ severity(query) }}</div>
+        </div>
+        <div class="row" v-if="expanded">
+          <div class="col-12">
+            <div style="border: 1px solid black; padding: 10px; margin: 20px; ">
+              <pre style="white-space: pre-wrap;">{{ query.sql }}</pre>
+              Stack Trace:
+              <pre>
+foo.rb:123
+bar.rb:1313</pre>
+              Key: {{ castNull(query.key) }}<br>
+              Possible keys: {{ castNull(query.possible_keys) }}<br>
+              <div v-if="query.costAvailable">
+                Cost: {{ query.cost }}<br>
               </div>
-            </div>
-            <div class="row" v-if="query.expanded">
-              <div class="col-12">
-                <div style="border: 1px solid black; padding: 10px; margin: 20px; ">
-                  <pre style="white-space: pre-wrap;">{{ query.sql }}</pre>
-                  Stack Trace:
-                  <pre>
-  foo.rb:123
-  bar.rb:1313</pre>
-                  Key: {{ castNull(query.key) }}<br>
-                  Possible keys: {{ castNull(query.possible_keys) }}<br>
-                  <div v-if="query.costAvailable">
-                    Cost: {{ query.cost }}<br>
-                  </div>
-                  <ul>
-                    <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ titles[tag] }}</a></li>
-                  </ul>
-                </div>
-              </div>
+              <ul>
+                <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ titles[tag] }}</a></li>
+              </ul>
             </div>
           </div>
-      </script>
+        </div>
+      </div>
+    </script>
 
     <div id="app">
       <v-dialog :width="600"></v-dialog>
-      <div class="container">
+      <div class="container" style="">
         <div class="row">
           <div class="col">Table</div>
           <div class="col-6">Query</div>
           <div class="col">Source</div>
           <div class="col-1">Severity</div>
-          <div class="col-1"></div>
         </div>
         <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:titles="titles"></query>
       </div>
     </div>
+
   <script>
     Vue.component('query', {
       template: '#query-template',
@@ -112,21 +111,27 @@
           })
           event.preventDefault();
         },
-        expandToggle: function(query, event) {
+        expandToggle: function(event) {
           if (event) event.preventDefault()
-          query.expanded = !query.expanded;
+          this.expanded = !this.expanded;
         },
         severity: function(query) {
           if ( query.cost > 1 )
             return "high";
           else
             return "low";
-        }, castNull: function (string) {
+        },
+        castNull: function (string) {
           if ( !string )
             return "(none)";
           else
             return string;
         },
+      },
+      computed: {
+        expandText: function() {
+          return this.expanded ? "-" : "+";
+        }
       }
     });
 
