@@ -110,7 +110,6 @@ module Shiba
     end
 
     IGNORE_PATTERNS = [
-      /no matching row in const table/,
       /No tables used/,
       /Impossible WHERE/,
       /Select tables optimized away/,
@@ -119,6 +118,10 @@ module Shiba
 
     def table_size
       Shiba::Index.count(first["table"], @stats)
+    end
+
+    def no_matching_row_in_const_table?
+      first_extra && first_extra =~ /no matching row in const table/
     end
 
     def ignore_explain?
@@ -151,6 +154,12 @@ module Shiba
     end
 
     def estimate_row_count
+      if no_matching_row_in_const_table?
+        messages << "access_type_const"
+        first['key'] = 'PRIMARY'
+        return 0
+      end
+
       return 0 if ignore_explain?
 
       if simple_table_scan?
@@ -189,7 +198,6 @@ module Shiba
             return Shiba::Index.count(first_table, @stats)
           end
 
-          messages << "possible_key_check"
           possibilities = [Shiba::Index.count(first_table, @stats)]
           possibilities += first['possible_keys'].map do |key|
             estimate_row_count_with_key(key)

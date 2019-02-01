@@ -34,8 +34,44 @@
         queriesByTable = queriesByTable.concat(byTable[table]);
       });
     </script>
+      <script type="text/x-template" id="query-template">
+        <div class="query">
+          <div class="row">
+              <div class="col">{{ query.table }}</div>
+              <div class="col-6">{{ truncate(query.sql, 60) }}</div>
+              <div class="col">{{ query.loc }}</div>
+              <div class="col-1">{{ severity(query) }}</div>
+              <div class="col-1">
+                <a href="#" v-on:click="expandToggle(query, $event)">
+                  <span v-if="query.expanded">-</span>
+                  <span v-else>+</span>
+                </a>
+              </div>
+            </div>
+            <div class="row" v-if="query.expanded">
+              <div class="col-12">
+                <div style="border: 1px solid black; padding: 10px; margin: 20px; ">
+                  <pre style="white-space: pre-wrap;">{{ query.sql }}</pre>
+                  Stack Trace:
+                  <pre>
+  foo.rb:123
+  bar.rb:1313</pre>
+                  Key: {{ castNull(query.key) }}<br>
+                  Possible keys: {{ castNull(query.possible_keys) }}<br>
+                  <div v-if="query.costAvailable">
+                    Cost: {{ query.cost }}<br>
+                  </div>
+                  <ul>
+                    <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ titles[tag] }}</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+      </script>
 
     <div id="app">
+      <v-dialog :width="600"></v-dialog>
       <div class="container">
         <div class="row">
           <div class="col">Table</div>
@@ -44,56 +80,19 @@
           <div class="col-1">Severity</div>
           <div class="col-1"></div>
         </div>
-        <div v-for="query in queries">
-          <div class="row">
-            <div class="col">{{ query.table }}</div>
-            <div class="col-6">{{ truncate(query.sql, 60) }}</div>
-            <div class="col">{{ query.loc }}</div>
-            <div class="col-1">{{ severity(query) }}</div>
-            <div class="col-1">
-              <a href="#" v-on:click="expandToggle(query, $event)">
-                <span v-if="query.expanded">-</span>
-                <span v-else>+</span>
-              </a>
-            </div>
-          </div>
-          <div class="row" v-if="query.expanded">
-            <div class="col-12">
-              <div style="border: 1px solid black; padding: 10px; margin: 20px; ">
-                <pre>{{ query.sql }}</pre>
-                Stack Trace:
-                <pre>
-foo.rb:123
-bar.rb:1313</pre>
-                Key chosen: {{ castNull(query.key) }}<br>
-                Possible keys: {{ castNull(query.possible_keys) }}<br>
-                <div v-if="query.costAvailable">
-                  Cost: {{ query.cost }}<br>
-                </div>
-                <ul>
-                  <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(query, tag, $event)">{{ titles[tag] }}</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+        <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:titles="titles"></query>
       </div>
     </div>
   <script>
-    var app = new Vue({
-      el: '#app',
-      data: {
-        queries: queriesByTable,
-        messages: data.messages,
-        titles: data.titles
+    Vue.component('query', {
+      template: '#query-template',
+      props: ['query', 'titles'],
+      data: function () {
+        return {
+          expanded: false
+        };
       },
       methods: {
-        castNull: function (string) {
-          if ( !string )
-            return "(none)";
-          else
-            return string;
-        },
         truncate: function (string, len) {
           if ( string.length > len ) {
             return string.substring(0, len - 3) + "...";
@@ -101,19 +100,49 @@ bar.rb:1313</pre>
             return string;
           }
         },
+        expandInfo: function(tag, event) {
+          this.$modal.show('dialog', {
+            title: data.titles[tag],
+            text: data.messages[tag],
+            buttons: [
+              {
+                title: 'Close'
+              }
+            ]
+          })
+          event.preventDefault();
+        },
         expandToggle: function(query, event) {
           if (event) event.preventDefault()
           query.expanded = !query.expanded;
-          return false;
         },
         severity: function(query) {
           if ( query.cost > 1 )
             return "high";
           else
             return "low";
-        }
+        }, castNull: function (string) {
+          if ( !string )
+            return "(none)";
+          else
+            return string;
+        },
       }
-    })
+    });
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        queries: queriesByTable,
+        messages: data.messages,
+        titles: data.titles,
+        tags: Object.keys(data.titles)
+      },
+      methods: {
+      }
+    });
+
+
     </script>
   </body>
 </html>

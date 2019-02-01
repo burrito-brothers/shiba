@@ -33,17 +33,19 @@ EOL
 
 TITLES['access_type_tablescan'] = "Table Scan"
 MESSAGES['access_type_tablescan'] = <<-EOL
-This query doesn't use any indexes to find data.  You should be scared here.
-This *can* be utterly fine if, say, you're querying a tiny table (less than ~500 rows),
+This query doesn't use any indexes to find data, meaning this query will need to evaluate
+every single row in the table.  This is about the worst of all possible worlds.
+
+This *can* be fine if, say, you're querying a tiny table (less than ~500 rows),
 but be aware that if this table is not effectively tiny or constant-sized you're entering
 a world of pain.
 EOL
 
-TITLES['fuzzed_data'] = "Estimated Data Size"
+TITLES['fuzzed_data'] = "Guessed Table Size"
 MESSAGES['fuzzed_data'] = <<-EOL
-There wasn't enough data in your environment to adequately measure this query, so we
-pretended that there were rows in the table.  To improve results, please dump your
-index statistics into Shiba.
+There wasn't enough data in your local environment to adequately measure this query, so we
+pretended this table had a bunch of data in it. To improve results, please dump your
+production index statistics into Shiba.
 EOL
 
 res = []
