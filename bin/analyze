@@ -45,6 +45,18 @@ parser = OptionParser.new do |opts|
     options["output"] = f
   end
 
+  opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
+    options["test"] = true
+  end
+
+end
+
+parser.parse!
+
+if options["test"] && !options["file"]
+  $stderr.puts "--file <query log> is required for test mode"
+  $stderr.puts parser.banner
+  exit 1
 end
 
 # Automagic configuration goes here
@@ -68,12 +80,13 @@ if !options["database"]
     options["output"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
   end
 
-parser.parse!
 
 # Log process queries
-path = "#{File.dirname(__FILE__)}/watch.rb"
-watch_args = ARGV + [ "--file", options["file"] ]
-system(path, *watch_args)
+if !options.delete("test")
+  path = "#{File.dirname(__FILE__)}/watch.rb"
+  watch_args = ARGV + [ "--file", options["file"] ]
+  system(path, *watch_args)
+end
 
 # Explain
 $stderr.puts "Analyzing SQL to '#{options["output"]}'..."
