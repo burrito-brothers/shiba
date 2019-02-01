@@ -58,7 +58,7 @@ parser.parse!
   if !options[opt]
     $stderr.puts "Required: #{opt}"
     $stderr.puts parser.banner
-    exit
+    exit 1
   end
 end
 
