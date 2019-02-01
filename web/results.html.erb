@@ -61,7 +61,7 @@ bar.rb:1313</pre>
                 Cost: {{ query.cost }}<br>
               </div>
               <ul>
-                <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ titles[tag] }}</a></li>
+                <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ tags[tag].title }}</a></li>
               </ul>
             </div>
           </div>
@@ -78,14 +78,14 @@ bar.rb:1313</pre>
           <div class="col">Source</div>
           <div class="col-1">Severity</div>
         </div>
-        <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:titles="titles"></query>
+        <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
       </div>
     </div>
 
   <script>
     Vue.component('query', {
       template: '#query-template',
-      props: ['query', 'titles'],
+      props: ['query', 'tags'],
       data: function () {
         return {
           expanded: false
@@ -101,8 +101,8 @@ bar.rb:1313</pre>
         },
         expandInfo: function(tag, event) {
           this.$modal.show('dialog', {
-            title: data.titles[tag],
-            text: data.messages[tag],
+            title: this.tags[tag].title,
+            text: this.tags[tag].description,
             buttons: [
               {
                 title: 'Close'
@@ -139,9 +139,7 @@ bar.rb:1313</pre>
       el: '#app',
       data: {
         queries: queriesByTable,
-        messages: data.messages,
-        titles: data.titles,
-        tags: Object.keys(data.titles)
+        tags: data.tags
       },
       methods: {
       }

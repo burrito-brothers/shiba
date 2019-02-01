@@ -1,0 +1,38 @@
+---
+possible_key_check:
+  title: Oddly reported possible keys
+  description: |
+    MySQL reported that it had keys it could have used, but elected not to use them.
+    Shiba checked each of the possible keys and returned the results from the best
+    key possible.  Sometimes "possible_keys" will be inaccurate and no keys were possible.
+access_type_const:
+  title: Constant Lookup
+  description: |
+    This query selects at *most* one row, which is about as good as things get.
+access_type_ref:
+  title: Index Lookup (reference)
+  description: |
+    This query uses an index to find rows that match a single value.  Often this
+    has very good performance, but it depends on how many rows match that value.
+access_type_range:
+  title: Index Lookup (range)
+  description: |
+    This query uses an index to find rows that match a range of values, for instance
+    `WHERE indexed_value in (1,2,5,6)` or `WHERE indexed_value >= 5 AND indexed_value <= 15`.
+    It's very hard to estimate how many rows this query will consider in production, so we've
+    upped the cost of this query.
+access_type_tablescan:
+  title: Table Scan
+  description: |
+    This query doesn't use any indexes to find data, meaning this query will need to evaluate
+    every single row in the table.  This is about the worst of all possible worlds.
+
+    This *can* be fine if, say, you're querying a tiny table (less than ~500 rows),
+    but be aware that if this table is not effectively tiny or constant-sized you're entering
+    a world of pain.
+fuzzed_data:
+  title: Guessed Table Size
+  description: |
+    There wasn't enough data in your local environment to adequately measure this query, so we
+    pretended this table had a bunch of data in it. To improve results, please dump your
+    production index statistics into Shiba.

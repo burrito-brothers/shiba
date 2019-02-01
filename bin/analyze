@@ -5,6 +5,7 @@
 require 'bundler/setup'
 require 'optionparser'
 require 'shiba/configure'
+require 'shiba/output'
 
 options = {}
 parser = OptionParser.new do |opts|
@@ -63,7 +64,7 @@ end
 # Automagic configuration goes here
 if !options["database"]
     config = Shiba::Configure.activerecord_configuration
-  
+
     if tc = config && config['test']
       $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
       options['host']     ||= tc['hostname']
@@ -72,7 +73,7 @@ if !options["database"]
       options['password'] ||= tc['password']
     end
   end
-  
+
   if !options["file"]
     options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp
   end
@@ -109,5 +110,5 @@ path = "#{File.dirname(__FILE__)}/explain"
 args = options.select { |_,v| !v.nil? }.map { |k,v| [ "--#{k}", v ] }.flatten
 system(path, *args)
 
-# Decipher 
-system("#{File.dirname(__FILE__)}/decipher", :in => options["output"])
+
+Shiba::Output.from_file(options['output']).make_web!
