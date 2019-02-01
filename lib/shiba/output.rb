@@ -34,7 +34,7 @@ module Shiba
       return nil unless url
       return nil if url =~ %r{burrito-brothers/shiba}
       url.chomp!
-      url.gsub!('git@github.com', 'https://github.com')
+      url.gsub!('git@github.com:', 'https://github.com/')
       url.gsub!(/\.git$/, '')
       url + '/blob/master/'
     end
