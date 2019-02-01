@@ -166,8 +166,15 @@ module Shiba
 
       return 0 if ignore_explain?
 
+      messages << "fuzzed_data" if Shiba::Index.fuzzed?(first_table, @stats)
+
       if simple_table_scan?
-        messages << 'simple_table_scan'
+        if limit
+          messages << 'limited_tablescan'
+        else
+          messages << 'access_type_tablescan'
+        end
+
         return limit || table_size
       end
 
@@ -182,9 +189,6 @@ module Shiba
       # TODO: if possible_keys but mysql chooses NULL, this could be a test-data issue,
       # pick the best key from the list of possibilities.
       #
-
-      messages << "fuzzed_data" if Shiba::Index.fuzzed?(first_table, @stats)
-
       if first_key
         Shiba::Index.estimate_key(first_table, first_key, first['used_key_parts'], @stats)
       else

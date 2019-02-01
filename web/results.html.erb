@@ -60,7 +60,7 @@
                 Cost: {{ query.cost }}<br>
               </div>
               <ul>
-                <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ tags[tag].title }}</a></li>
+                <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ tagTitle(tag) }}</a></li>
               </ul>
             </div>
           </div>
@@ -141,6 +141,12 @@
           var line = matches[2];
 
           return `<a href='${data.url}/${file}#L${line}' target='_new'>${content}</a>`;
+        },
+        tagTitle: function(tag) {
+          if ( !this.tags[tag] )
+            return tag;
+          else
+            return this.tags[tag].title;
         }
       },
       computed: {

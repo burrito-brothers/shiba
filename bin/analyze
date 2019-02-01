@@ -109,6 +109,7 @@ $stderr.puts "Analyzing SQL to '#{options["output"]}'..."
 path = "#{File.dirname(__FILE__)}/explain"
 args = options.select { |_,v| !v.nil? }.map { |k,v| [ "--#{k}", v ] }.flatten
 
+$stderr.puts ([path] + args).join(" ")
 if !system(path, *args)
   exit 1
 end
