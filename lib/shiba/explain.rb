@@ -19,7 +19,7 @@ module Shiba
     end
 
     def as_json
-      sql, _, backtrace = @sql.partition("\*shiba")
+      sql, _, backtrace = @sql.partition(" /*shiba")
       backtrace.chomp!("*/")
 
       {
