@@ -31,12 +31,24 @@ parser = OptionParser.new do |opts|
     options["index"] = i.to_i
   end
 
+  opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
+    options["limit"] = l.to_i
+  end
+
   opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
     options["stats_file"] = f
   end
 
   opts.on("-f", "--file FILE", "location of file containing queries") do |f|
     options["file"] = f
+  end
+
+  opts.on("-o", "--output FILE", "write to file instead of stdout") do |f|
+    options["output"] = f
+  end
+
+  opts.on("--stdout", "--stdout", "always write to stdout") do |f|
+    options["stdout"] = true 
   end
 
   opts.on("--debug") do
@@ -46,9 +58,7 @@ end
 
 parser.parse!
 
-
 # Automagic configuration goes here
-
 if !options["database"]
   config = Shiba::Configure.activerecord_configuration
 
@@ -64,8 +74,14 @@ end
 
 if !options["file"]
   path = "#{Dir.pwd}/log/test.log"
-  $stderr.puts "Reading SQL queries from #{path}. To check other queries, use the -file option."
+  $stderr.puts "Sampling SQL queries from #{path}. To check other queries, use the -file option."
   options["file"] = path
+  # So we don't spin forever on massive logs
+  options["limit"] ||= 50_000
+end
+
+if !options["output"] && !options["stdout"]
+  options["output"] = `mktemp /tmp/shiba-analyze.log-#{Time.now.to_i}`.chomp
 end
 
 ["database", "username"].each do |opt|
@@ -79,6 +95,8 @@ end
 file = options.delete("file")
 file = File.open(file, "r") if file
 
+output = options.delete("output")
+output = File.open(output, 'w') if output
 
 Shiba.configure(options)
 
@@ -108,4 +126,7 @@ else
   end
 end
 
-Shiba::Analyzer.analyze(file, schema_stats, options)
+file = $stdin if file.nil?
+output = $stdout if output.nil?
+
+Shiba::Analyzer.analyze(file, output, schema_stats, options)

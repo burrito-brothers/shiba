@@ -4,26 +4,73 @@ require 'json'
 require 'logger'
 
 module Shiba
-  # TO use, put this line in config/initializers: Shiba::QueryWatcher.watch
-  module Analyzer
-    FINGERPRINTS = {}
+  class Analyzer
 
-    def self.make_logger(fname)
-      FileUtils.touch fname
-      Logger.new(fname).tap do |l|
-        l.formatter = proc do |severity, datetime, progname, msg|
-          "#{msg}\n"
+    def self.analyze(file, output, stats, options)
+      new(file, output, stats, options).analyze
+    end
+
+    def initialize(file, output, stats, options)
+      @file = file
+      @output = output
+      @stats = stats
+      @options = options
+      @fingerprints = {}
+    end
+
+    def analyze
+      idx = 0
+      while line = @file.gets
+        # strip out colors
+        begin
+          line.gsub!(/\e\[?.*?[\@-~]/, '')
+        rescue ArgumentError => e
+          next
         end
+        
+        if line =~ /(select.*from.*)/i
+          sql = $1
+        else
+          next
+        end
+
+        if @options['limit']
+          return if idx == @options['limit']
+        end
+
+        if @options['index']
+          next unless idx == @options['index']
+        end
+
+        sql.chomp!
+        query = Shiba::Query.new(sql, @stats)
+
+        if !@fingerprints[query.fingerprint]
+          if sql.downcase.start_with?("select")
+            if @options['debug']
+              require 'byebug'
+              debugger
+            end
+
+            if analyze_query(query)
+              idx += 1
+            end
+          end
+        end
+
+        @fingerprints[query.fingerprint] = true
       end
     end
 
-    def self.dump_error(e, query)
+    protected
+
+    def dump_error(e, query)
       $stderr.puts "got exception trying to explain: #{e.message}"
       $stderr.puts "query: #{query.sql} (index #{query.index})"
       $stderr.puts e.backtrace.join("\n")
     end
 
-    def self.analyze_query(query)
+    def analyze_query(query)
       explain = nil
       begin
         explain = query.explain
@@ -38,51 +85,13 @@ module Shiba
       return false unless explain
 
       json = JSON.dump(explain.as_json)
-      puts json
+      write(json) 
       true
     end
 
-    def self.analyze(file, stats, options = {})
-      file = $stdin if file.nil?
-      idx = 0
-      while line = file.gets
-        # strip out colors
-        begin
-          line.gsub!(/\e\[?.*?[\@-~]/, '')
-        rescue ArgumentError => e
-          next
-        end
-
-        if line =~ /(select.*from.*)/i
-          sql = $1
-        else
-          next
-        end
-
-        if options['index']
-          next unless idx == options['index']
-        end
-
-        sql.chomp!
-
-        query = Shiba::Query.new(sql, stats)
-
-        if !FINGERPRINTS[query.fingerprint]
-          if sql.downcase.start_with?("select")
-            if options['debug']
-              require 'byebug'
-              debugger
-            end
-
-            if analyze_query(query)
-              idx += 1
-            end
-          end
-        end
-
-        FINGERPRINTS[query.fingerprint] = true
-      end
+    def write(line)
+      @output.puts(line)
     end
+
   end
 end
-
