@@ -8,7 +8,6 @@ module Shiba
   module QueryWatcher
     FINGERPRINTS = {}
     IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
-    ROOT = Rails.root.to_s
 
     def self.make_logger(fname)
       FileUtils.touch fname
@@ -24,11 +23,7 @@ module Shiba
     end
 
     def self.logger
-      @logger ||= make_logger('shiba.log')
-    end
-
-    def self.json_logger
-      @json_logger ||= make_logger('shiba.log.json')
+      @logger ||= make_logger('shiba.log.json')
     end
 
     # Logs ActiveRecord SELECT queries that originate from application code.
@@ -37,20 +32,17 @@ module Shiba
 
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         sql = payload[:sql]
-        query = Shiba::Query.new(sql, self.table_sizes)
+        # fixme: add table stats
+        query = Shiba::Query.new(sql, {})
 
         if sql.start_with?("SELECT") && !FINGERPRINTS[query.fingerprint]
-          line = app_line
+          lines = app_backtrace
 
-          if !line.nil?
+          if lines
+            # fixme don't take down the app when explain goes bad.
             explain = query.explain
-            json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), line: app_line, cost: explain.cost)
-            json_logger.info(json)
-
-            logger.info(sql)
-            logger.info(explain.to_log)
-            logger.info(app_line)
-            logger.info("")
+            json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), backtrace: lines, cost: explain.cost)
+            logger.info(json)
           end
 
           FINGERPRINTS[query.fingerprint] = true
@@ -58,35 +50,47 @@ module Shiba
       end
     end
 
-    def self.app_line
-      last_line = caller.detect { |line| line !~ IGNORE }
-      if last_line && last_line.start_with?(ROOT)
-        last_line = last_line[ROOT.length..-1]
+    # 8 backtrace lines starting from the app caller, cleaned of app/project cruft.
+    def self.app_backtrace
+      app_line_idx = caller_locations.index { |line| line.to_s !~ IGNORE }
+      if app_line_idx == nil
+        return
       end
 
-      last_line
+      caller_locations(app_line_idx+1, 8).map do |loc|
+        line = loc.to_s
+        line.sub!(backtrace_ignore_pattern, '')
+        line
+      end
     end
 
-    class TableConfigurator
-      def initialize(hash)
-        @hash = hash
+    def self.backtrace_ignore_pattern
+      @roots ||= begin
+        paths = Gem.path
+        paths << Rails.root.to_s if Rails.root
+        paths << repo_root
+        paths << ENV['HOME']
+        paths.uniq!
+        paths.compact!
+        # match and replace longest path first
+        paths.sort_by!(&:size).reverse!
+        
+        Regexp.new(paths.map {|r| Regexp.escape(r) }.join("|"))
       end
+    end
 
-      [:small, :medium, :large].each do |size|
-        define_method(size) do |*tables|
-          tables.each do |t|
-            @hash[t.to_s] = size
-          end
+    # /user/git_repo => "/user/git_repo"
+    # /user/not_a_repo => nil
+    def self.repo_root
+      root = nil
+      Open3.popen3('git rev-parse --show-toplevel') {|_,o,_,_|
+        if root = o.gets
+          root = root.chomp
         end
-      end
+      }
+
+      root
     end
 
-    def self.table_sizes
-      @table_sizes ||= {}
-    end
-
-    def self.configure_tables(&block)
-      yield(TableConfigurator.new(table_sizes))
-    end
   end
 end
