@@ -5,7 +5,8 @@ require 'optionparser'
 APP = File.basename(__FILE__)
 
 commands = {
-    "analyze" => { :bin => "analyze.rb", :description => "Analyze logged SQL queries" }
+    "analyze" => { :bin => "analyze.rb", :description => "Analyze logged SQL queries" },
+    "watch"   => { :bin => "watch.rb", :description => "Log queries from Rails command" }
 }
 
 global = OptionParser.new do |opts|

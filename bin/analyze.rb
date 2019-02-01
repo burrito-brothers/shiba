@@ -47,42 +47,12 @@ parser = OptionParser.new do |opts|
     options["output"] = f
   end
 
-  opts.on("--stdout", "--stdout", "always write to stdout") do |f|
-    options["stdout"] = true 
-  end
-
   opts.on("--debug") do
     options["debug"] = true
   end
 end
 
 parser.parse!
-
-# Automagic configuration goes here
-if !options["database"]
-  config = Shiba::Configure.activerecord_configuration
-
-  if tc = config && config['test']
-    $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]"
-    $stderr.puts "See -help to manually configure the database connection."
-    options['database'] ||= tc['database']
-    options['username'] ||= tc['username']
-    options['password'] ||= tc['password']
-    options['host']     ||= tc['hostname']
-  end
-end
-
-if !options["file"]
-  path = "#{Dir.pwd}/log/test.log"
-  $stderr.puts "Sampling SQL queries from #{path}. To check other queries, use the -file option."
-  options["file"] = path
-  # So we don't spin forever on massive logs
-  options["limit"] ||= 50_000
-end
-
-if !options["output"] && !options["stdout"]
-  options["output"] = `mktemp /tmp/shiba-analyze.log-#{Time.now.to_i}`.chomp
-end
 
 ["database", "username"].each do |opt|
   if !options[opt]

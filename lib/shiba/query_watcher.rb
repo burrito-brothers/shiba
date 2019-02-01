@@ -1,25 +1,25 @@
 require 'shiba/query'
 require 'json'
-require 'logger'
 require 'rails'
 
 module Shiba
-  # TO use, put this line in config/initializers: Shiba::QueryWatcher.watch
-  module QueryWatcher
+  class QueryWatcher
     FINGERPRINTS = {}
     IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
 
-    def self.make_logger(fname)
-      FileUtils.touch fname
-      Logger.new(fname).tap do |l|
-        l.formatter = proc do |severity, datetime, progname, msg|
-          "#{msg}\n"
-        end
-      end
+    def self.watch(file)
+      new(file).watch
     end
 
-    def self.cleaned_explain(h)
-      h.except("id", "select_type", "partitions", "type")
+    def initialize(file)
+      @file = file
+      # fixme mem growth on this is kinda nasty
+      @queries = {}
+    end
+
+    def self.make_logger(fname)
+      FileUtils.touch fname
+      File.open(fname, 'a')
     end
 
     def self.logger
@@ -27,31 +27,47 @@ module Shiba
     end
 
     # Logs ActiveRecord SELECT queries that originate from application code.
-    def self.watch
-      Shiba.configure(ActiveRecord::Base.configurations["test"])
-
+    def watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
         sql = payload[:sql]
-        # fixme: add table stats
-        query = Shiba::Query.new(sql, {})
-
-        if sql.start_with?("SELECT") && !FINGERPRINTS[query.fingerprint]
+        
+        if sql.start_with?("SELECT") 
           lines = app_backtrace
-
-          if lines
-            # fixme don't take down the app when explain goes bad.
-            explain = query.explain
-            json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), backtrace: lines, cost: explain.cost)
-            logger.info(json)
+          if lines && !@queries[sql]
+            @file.puts("#{sql} /*shiba#{lines}*/" )
           end
-
-          FINGERPRINTS[query.fingerprint] = true
+          @queries[sql] = true
         end
       end
     end
 
+    def explain(sql)
+      Shiba.configure(ActiveRecord::Base.configurations["test"])
+
+      if sql.start_with?("SELECT") && !FINGERPRINTS[query.fingerprint]
+        # fixme: add table stats
+        query = Shiba::Query.new(sql, {})
+        lines = app_backtrace
+
+        if lines
+          # fixme don't take down the app when explain goes bad.
+          explain = query.explain
+          json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), backtrace: lines, cost: explain.cost)
+          logger.puts(json)
+        end
+
+        FINGERPRINTS[query.fingerprint] = true
+      end
+    end
+
+    protected
+
+    def cleaned_explain(h)
+      h.except("id", "select_type", "partitions", "type")
+    end
+
     # 8 backtrace lines starting from the app caller, cleaned of app/project cruft.
-    def self.app_backtrace
+    def app_backtrace
       app_line_idx = caller_locations.index { |line| line.to_s !~ IGNORE }
       if app_line_idx == nil
         return
@@ -64,7 +80,7 @@ module Shiba
       end
     end
 
-    def self.backtrace_ignore_pattern
+    def backtrace_ignore_pattern
       @roots ||= begin
         paths = Gem.path
         paths << Rails.root.to_s if Rails.root
@@ -81,7 +97,7 @@ module Shiba
 
     # /user/git_repo => "/user/git_repo"
     # /user/not_a_repo => nil
-    def self.repo_root
+    def repo_root
       root = nil
       Open3.popen3('git rev-parse --show-toplevel') {|_,o,_,_|
         if root = o.gets

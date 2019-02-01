@@ -19,14 +19,18 @@ module Shiba
     end
 
     def as_json
+      sql, _, backtrace = @sql.partition("\*shiba")
+      backtrace.chomp!("*/")
+
       {
-        sql: @sql,
+        sql: sql,
         table: get_table,
         key: first_key,
         tags: messages,
         cost: @cost,
         used_key_parts: first['used_key_parts'],
-        possible_keys: first['possible_keys']
+        possible_keys: first['possible_keys'],
+        backtrace: backtrace
       }
     end
 
