@@ -83,7 +83,7 @@ if !options["database"]
 
 # Log process queries
 if !options.delete("test")
-  if ARGV.empty?
+  if ARGV.empty? 
     $stderr.puts "The name of a command must be passed in to generate SQL logs."
     $stderr.puts "Example: shiba analyze rake spec"
     $stderr.puts ""
@@ -93,7 +93,14 @@ if !options.delete("test")
 
   path = "#{File.dirname(__FILE__)}/watch.rb"
   watch_args = ARGV + [ "--file", options["file"] ]
-  system(path, *watch_args)
+  pid = fork do
+    Signal.trap("INT") { exit 1 }
+    exec(path, *watch_args)
+  end
+
+  Signal.trap("INT", "IGNORE")
+  Process.wait(pid)
+  Signal.trap("INT", "DEFAULT")
 end
 
 # Explain
