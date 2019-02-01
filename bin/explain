@@ -9,7 +9,7 @@ require 'optionparser'
 
 options = {}
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: analyze.rb -h HOST -d DB -u USER -p PASS [-f QUERY_FILE] [-s STATS_FILE] "
+  opts.banner = "Usage: explain -h HOST -d DB -u USER -p PASS [-f QUERY_FILE] [-s STATS_FILE] "
 
   opts.on("-h","--host HOST", "sql host") do |h|
     options["host"] = h

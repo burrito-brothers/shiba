@@ -19,7 +19,9 @@ group :test do
 end
 
 bundle
-bundle exec shiba analyze 
+
+# Run some some code using shiba to generate a SQL report
+bundle exec shiba analyze rake test:functional
 ```
 
 ### Standalone:
