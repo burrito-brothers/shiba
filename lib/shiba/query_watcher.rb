@@ -17,15 +17,6 @@ module Shiba
       @queries = {}
     end
 
-    def self.make_logger(fname)
-      FileUtils.touch fname
-      File.open(fname, 'a')
-    end
-
-    def self.logger
-      @logger ||= make_logger('shiba.log.json')
-    end
-
     # Logs ActiveRecord SELECT queries that originate from application code.
     def watch
       ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
@@ -41,30 +32,7 @@ module Shiba
       end
     end
 
-    def explain(sql)
-      Shiba.configure(ActiveRecord::Base.configurations["test"])
-
-      if sql.start_with?("SELECT") && !FINGERPRINTS[query.fingerprint]
-        # fixme: add table stats
-        query = Shiba::Query.new(sql, {})
-        lines = app_backtrace
-
-        if lines
-          # fixme don't take down the app when explain goes bad.
-          explain = query.explain
-          json = JSON.dump(sql: sql, explain: cleaned_explain(explain.to_h), backtrace: lines, cost: explain.cost)
-          logger.puts(json)
-        end
-
-        FINGERPRINTS[query.fingerprint] = true
-      end
-    end
-
     protected
-
-    def cleaned_explain(h)
-      h.except("id", "select_type", "partitions", "type")
-    end
 
     # 8 backtrace lines starting from the app caller, cleaned of app/project cruft.
     def app_backtrace
