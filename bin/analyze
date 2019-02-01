@@ -81,9 +81,16 @@ if !options["database"]
     options["output"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
   end
 
-
 # Log process queries
 if !options.delete("test")
+  if ARGV.empty?
+    $stderr.puts "The name of a command must be passed in to generate SQL logs."
+    $stderr.puts "Example: shiba analyze rake spec"
+    $stderr.puts ""
+    $stderr.puts "For static analysis, try the --test option."
+    exit 1
+  end
+
   path = "#{File.dirname(__FILE__)}/watch.rb"
   watch_args = ARGV + [ "--file", options["file"] ]
   system(path, *watch_args)
