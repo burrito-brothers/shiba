@@ -25,7 +25,8 @@ module Shiba
         key: first_key,
         tags: messages,
         cost: @cost,
-        used_key_parts: first['used_key_parts']
+        used_key_parts: first['used_key_parts'],
+        possible_keys: first['possible_keys']
       }
     end
 

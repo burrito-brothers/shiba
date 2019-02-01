@@ -11,13 +11,23 @@
     <script language="javascript">
       var data = <%= data.to_json %>;
       var byTable = {};
+      var byTableLow = {};
       var queriesByTable = [];
       data.queries.forEach(function(query) {
         query.expanded = false;
         query.loc = "foo.rb:1231";
-        if ( !byTable[query.table] )
-          byTable[query.table] = [];
-        byTable[query.table].push(query);
+
+        var table = byTable;
+        if ( query.cost <= 1 )
+          table = byTableLow;
+
+        if ( !table[query.table] )
+          table[query.table] = [];
+
+        if ( !query.tags.includes("fuzzed_data") )
+          query.costAvailable = true;
+
+        table[query.table].push(query);
       });
 
       Object.keys(byTable).sort().forEach(function(table) {
@@ -41,7 +51,7 @@
             <div class="col">{{ query.loc }}</div>
             <div class="col-1">{{ severity(query) }}</div>
             <div class="col-1">
-              <a href="#" v-on:click="expandToggle(query)">
+              <a href="#" v-on:click="expandToggle(query, $event)">
                 <span v-if="query.expanded">-</span>
                 <span v-else>+</span>
               </a>
@@ -55,7 +65,12 @@
                 <pre>
 foo.rb:123
 bar.rb:1313</pre>
-                Query Attributes: {{ query.tags }}
+                Query Attributes: {{ query.tags }}<br>
+                Key chosen: {{ query.key }}<br>
+                Possible keys: {{ query.possible_keys }}<br>
+                <div v-if="query.costAvailable">
+                  Cost: {{ query.cost }}<br>
+                </div>
               </div>
             </div>
           </div>
@@ -77,11 +92,13 @@ bar.rb:1313</pre>
             return string;
           }
         },
-        expandToggle: function(query) {
+        expandToggle: function(query, event) {
+          if (event) event.preventDefault()
           query.expanded = !query.expanded;
+          return false;
         },
         severity: function(query) {
-          if ( query.cost > 100 )
+          if ( query.cost > 1 )
             return "high";
           else
             return "low";
