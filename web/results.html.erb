@@ -65,12 +65,14 @@
                 <pre>
 foo.rb:123
 bar.rb:1313</pre>
-                Query Attributes: {{ query.tags }}<br>
-                Key chosen: {{ query.key }}<br>
-                Possible keys: {{ query.possible_keys }}<br>
+                Key chosen: {{ castNull(query.key) }}<br>
+                Possible keys: {{ castNull(query.possible_keys) }}<br>
                 <div v-if="query.costAvailable">
                   Cost: {{ query.cost }}<br>
                 </div>
+                <ul>
+                  <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(query, tag, $event)">{{ titles[tag] }}</a></li>
+                </ul>
               </div>
             </div>
           </div>
@@ -82,9 +84,16 @@ bar.rb:1313</pre>
       el: '#app',
       data: {
         queries: queriesByTable,
-        messages: data.messages
+        messages: data.messages,
+        titles: data.titles
       },
       methods: {
+        castNull: function (string) {
+          if ( !string )
+            return "(none)";
+          else
+            return string;
+        },
         truncate: function (string, len) {
           if ( string.length > len ) {
             return string.substring(0, len - 3) + "...";
