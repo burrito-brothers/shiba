@@ -30,7 +30,7 @@ module Shiba
         cost: @cost,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
-        backtrace: backtrace
+        backtrace: JSON.parse(backtrace)
       }
     end
 
