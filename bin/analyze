@@ -67,7 +67,7 @@ if !options["database"]
 
     if tc = config && config['test']
       $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
-      options['host']     ||= tc['hostname']
+      options['host']     ||= tc['host']
       options['database'] ||= tc['database']
       options['user'] ||= tc['username']
       options['password'] ||= tc['password']
@@ -84,7 +84,7 @@ if !options["database"]
 
 # Log process queries
 if !options.delete("test")
-  if ARGV.empty? 
+  if ARGV.empty?
     $stderr.puts "The name of a command must be passed in to generate SQL logs."
     $stderr.puts "Example: shiba analyze rake spec"
     $stderr.puts ""
