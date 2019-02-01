@@ -68,4 +68,5 @@ File.open("/tmp/shiba_results/results.html", "w+") do |f|
   f.write(erb.result(binding))
 end
 
+puts "done, results are in " + "/tmp/shiba_results/results.html"
 
