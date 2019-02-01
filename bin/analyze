@@ -2,6 +2,7 @@
 
 #!/usr/bin/env ruby
 
+require 'bundler/setup'
 require 'optionparser'
 require 'shiba/configure'
 
@@ -34,7 +35,7 @@ parser = OptionParser.new do |opts|
   end
 
   opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
-    options["stats_file"] = f
+    options["stats"] = f
   end
 
   opts.on("-f", "--file FILE", "location of file containing queries") do |f|
