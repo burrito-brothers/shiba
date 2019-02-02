@@ -5,6 +5,8 @@ require 'shiba'
 require 'shiba/analyzer'
 require 'shiba/index'
 require 'shiba/configure'
+require 'shiba/output'
+
 require 'optionparser'
 
 options = {}
@@ -99,4 +101,5 @@ end
 file = $stdin if file.nil?
 output = $stdout if output.nil?
 
-Shiba::Analyzer.analyze(file, output, schema_stats, options)
+queries = Shiba::Analyzer.analyze(file, output, schema_stats, options)
+Shiba::Output.new(queries).make_web!

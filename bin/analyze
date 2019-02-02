@@ -114,5 +114,3 @@ if !system(path, *args)
   exit 1
 end
 
-
-Shiba::Output.from_file(options['output']).make_web!

@@ -20,6 +20,7 @@ module Shiba
 
     def analyze
       idx = 0
+      queries = []
       while line = @file.gets
         # strip out colors
         begin
@@ -27,7 +28,7 @@ module Shiba
         rescue ArgumentError => e
           next
         end
-        
+
         if line =~ /(select.*from.*)/i
           sql = $1
         else
@@ -52,14 +53,17 @@ module Shiba
               debugger
             end
 
-            if analyze_query(query)
+            explain = analyze_query(query)
+            if explain
               idx += 1
+              queries << explain
             end
           end
         end
 
         @fingerprints[query.fingerprint] = true
       end
+      queries
     end
 
     protected
@@ -82,16 +86,15 @@ module Shiba
       rescue StandardError => e
         dump_error(e, query)
       end
-      return false unless explain
+      return nil unless explain
 
       json = JSON.dump(explain.as_json)
-      write(json) 
-      true
+      write(json)
+      explain.as_json
     end
 
     def write(line)
       @output.puts(line)
     end
-
   end
 end
