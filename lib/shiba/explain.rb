@@ -6,6 +6,7 @@ module Shiba
     def initialize(sql, stats, options = {})
       @sql = sql
 
+      @sql, _, @backtrace = @sql.partition(" /*shiba")
       if options[:force_key]
          @sql = @sql.sub(/(FROM\s*\S+)/i, '\1' + " FORCE INDEX(`#{options[:force_key]}`)")
       end
@@ -19,18 +20,17 @@ module Shiba
     end
 
     def as_json
-      sql, _, backtrace = @sql.partition(" /*shiba")
-      backtrace.chomp!("*/")
+      @backtrace.chomp!("*/")
 
       {
-        sql: sql,
+        sql: @sql,
         table: get_table,
         key: first_key,
         tags: messages,
         cost: @cost,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
-        backtrace: JSON.parse(backtrace)
+        backtrace: JSON.parse(@backtrace)
       }
     end
 
@@ -169,8 +169,6 @@ module Shiba
       messages << "fuzzed_data" if Shiba::Index.fuzzed?(first_table, @stats)
 
       if simple_table_scan?
-        require 'byebug'
-        debugger
         if limit
           messages << 'limited_tablescan'
         else
