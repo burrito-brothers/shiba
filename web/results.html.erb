@@ -11,28 +11,32 @@
   <body>
     <script language="javascript">
       var data = <%= data.to_json %>;
-      var byTable = {};
-      var byTableLow = {};
       var queriesByTable = [];
+      var queriesByTableLow = [];
+
+
+      function sortByTable(a, b) {
+        if ( a.table < b.table )
+          return -1;
+        else if ( b.table > a.table )
+          return 1;
+        else {
+          return b.cost - a.cost;
+        }
+      }
+
       data.queries.forEach(function(query) {
-        query.expanded = false;
-
-        var table = byTable;
-        if ( query.cost <= 1 )
-          table = byTableLow;
-
-        if ( !table[query.table] )
-          table[query.table] = [];
+        if ( query.cost < 100 ) {
+          queriesByTableLow.push(query);
+        } else {
+          queriesByTable.push(query);
+        }
 
         if ( !query.tags.includes("fuzzed_data") )
           query.costAvailable = true;
-
-        table[query.table].push(query);
       });
 
-      Object.keys(byTable).sort().forEach(function(table) {
-        queriesByTable = queriesByTable.concat(byTable[table]);
-      });
+      queriesByTable = queriesByTable.sort(sortByTable);
     </script>
     <script type="text/x-template" id="query-template">
       <div class="query">

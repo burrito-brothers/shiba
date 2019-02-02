@@ -169,6 +169,8 @@ module Shiba
       messages << "fuzzed_data" if Shiba::Index.fuzzed?(first_table, @stats)
 
       if simple_table_scan?
+        require 'byebug'
+        debugger
         if limit
           messages << 'limited_tablescan'
         else
