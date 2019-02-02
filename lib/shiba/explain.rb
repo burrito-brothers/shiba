@@ -46,7 +46,7 @@ module Shiba
     end
 
     def self.transform_table(table)
-      t = table['table']
+      t = table
       res = {}
       res['table'] = t['table_name']
       res['access_type'] = t['access_type']
@@ -62,7 +62,7 @@ module Shiba
       res
     end
 
-    def self.transform_json(json)
+    def self.transform_json(json, res = [])
       rows = []
 
       if json['ordering_operation']
@@ -71,13 +71,14 @@ module Shiba
         return transform_json(json['duplicates_removal'])
       elsif !json['nested_loop'] && !json['table']
         return [{'Extra' => json['message']}]
-      elsif !json['nested_loop']
-        json['nested_loop'] = [{'table' => json['table']}]
+      elsif json['nested_loop']
+        json['nested_loop'].map do |nested|
+          transform_json(nested, res)
+        end
+      elsif json['table']
+        res << transform_table(json['table'])
       end
-
-      json['nested_loop'].map do |o|
-        transform_table(o)
-      end
+      res
     end
 
     # [{"id"=>1, "select_type"=>"SIMPLE", "table"=>"interwiki", "partitions"=>nil, "type"=>"const", "possible_keys"=>"PRIMARY", "key"=>"PRIMARY", "key_len"=>"34", "ref"=>"const", "rows"=>1, "filtered"=>100.0, "Extra"=>nil}]
