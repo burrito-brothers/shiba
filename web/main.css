@@ -1,0 +1,18 @@
+
+.query-info-box {
+  border: 1px solid black;
+  padding: 10px;
+  margin: 20px;
+}
+
+.backtrace {
+  font-family: monospace;
+  background-color: #EEEEEE;
+  padding: 5px;
+  margin: 10px
+}
+
+.badge  {
+  color: white;
+  margin-right: 10px;
+}

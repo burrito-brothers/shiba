@@ -5,6 +5,7 @@
       <script type="text/javascript" src="./js/<%= js %>"></script>
     <% end %>
     <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="main.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
   </head>
   <body>
@@ -36,32 +37,36 @@
     <script type="text/x-template" id="query-template">
       <div class="query">
         <div class="row">
-          <div class="col">
+          <div class="col-3">
             <a href="#" v-on:click="expandToggle">
               <span stlye="text-align: right">{{ expandText }}</span>
             </a>
             {{ query.table }}
           </div>
-          <div class="col-6">{{ truncate(query.sql, 60) }}</div>
-          <div class="col" v-html="makeURL(query.backtrace[0], shortLocation(query))"></div>
+          <div class="col-5">{{ truncate(query.sql, 50) }}</div>
+          <div class="col-3" v-html="makeURL(query.backtrace[0], shortLocation(query))"></div>
           <div class="col-1">{{ severity(query) }}</div>
         </div>
         <div class="row" v-if="expanded">
           <div class="col-12">
-            <div style="border: 1px solid black; padding: 10px; margin: 20px; ">
+            <div class="query-info-box">
               <pre style="white-space: pre-wrap;">{{ query.sql }}</pre>
               <div v-if="query.backtrace && query.backtrace.length > 0">
                 Stack Trace:<br>
-                <div v-for="backtrace in query.backtrace" v-html="makeURL(backtrace, backtrace)"></span>
+                <div class="backtrace">
+                  <div v-for="backtrace in query.backtrace" v-html="makeURL(backtrace, backtrace)"></div>
+                </div>
               </div>
               Key: {{ castNull(query.key) }}<br>
               Possible keys: {{ castNull(query.possible_keys) }}<br>
               <div v-if="query.costAvailable">
                 Cost: {{ query.cost }}<br>
               </div>
-              <ul>
-                <li v-for="tag in query.tags"><a href="#" v-on:click="expandInfo(tag, $event)">{{ tagTitle(tag) }}</a></li>
-              </ul>
+              <a class="badge"
+                v-for="tag in query.tags"
+                href="#"
+                v-bind:class="tagClass(tag)"
+                v-on:click="expandInfo(tag, $event)">{{ tagTitle(tag) }}</a>
             </div>
           </div>
         </div>
@@ -72,12 +77,14 @@
       <v-dialog :width="600"></v-dialog>
       <div class="container" style="">
         <div class="row">
-          <div class="col">Table</div>
-          <div class="col-6">Query</div>
-          <div class="col">Source</div>
+          <div class="col-3">Table</div>
+          <div class="col-5">Query</div>
+          <div class="col-3">Source</div>
           <div class="col-1">Severity</div>
         </div>
-        <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
+        <div class="queries">
+          <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
+        </div>
       </div>
     </div>
 
@@ -147,6 +154,12 @@
             return tag;
           else
             return this.tags[tag].title;
+        },
+        tagClass: function(tag) {
+          if ( !this.tags[tag] )
+            return '';
+          else
+            return "badge-" + this.tags[tag].level;
         }
       },
       computed: {
