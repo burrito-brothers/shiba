@@ -31,7 +31,7 @@ parser = OptionParser.new do |opts|
     options["config"] = f
   end
 
-  opts.on("-i","--index INDEX", "location of shiba_indices.yml") do |i|
+  opts.on("-i","--index INDEX", "location of shiba_index.yml") do |i|
     options["index"] = i.to_i
   end
 
@@ -77,6 +77,9 @@ if !options["database"]
     options['password'] ||= tc['password']
   end
 end
+
+
+Shiba::Configure.configure_main_yaml(options["config"])
 
 if !options["file"]
   options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp

@@ -1,5 +1,5 @@
 require 'pathname'
-
+require 'pp'
 module Shiba
   module Configure
 
@@ -27,5 +27,35 @@ module Shiba
       raise e, "Cannot load `#{path}`:\n#{e.message}", e.backtrace
     end
 
+    def self.read_config_file(option_file, default)
+      file_to_read = nil
+      if option_file
+        if !File.exist?(option_file)
+          $stderr.puts "no such file: #{option_file}"
+          exit 1
+        end
+        file_to_read = option_file
+      elsif File.exist?(default)
+        file_to_read = default
+      end
+
+      if file_to_read
+        YAML.load_file(file_to_read)
+      else
+        {}
+      end
+    end
+
+    def self.main_config
+      @config ||= {}
+    end
+
+    def self.configure_main_yaml(yaml)
+      @config = read_config_file(yaml, "config/shiba.yml")
+    end
+
+    def self.configure_index_yaml(yaml)
+      @indexes = read_config_file(yaml, "config/shiba_index.yml")
+    end
   end
 end
