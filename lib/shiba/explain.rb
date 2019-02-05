@@ -120,7 +120,7 @@ module Shiba
     ]
 
     def table_size
-      Shiba::Index.count(first["table"], @stats)
+      @stats.fetch_table(first['table']).count
     end
 
     def no_matching_row_in_const_table?

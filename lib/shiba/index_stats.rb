@@ -1,4 +1,5 @@
 require 'yaml'
+require 'shiba/dothash'
 
 module Shiba
   class IndexStats
@@ -12,7 +13,7 @@ module Shiba
     end
 
     def fetch_table(table)
-      @tables[table] ||= {}
+      @tables[table] ||= DotHash.new
     end
 
     def fetch_index(table, name)
