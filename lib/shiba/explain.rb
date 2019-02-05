@@ -123,6 +123,11 @@ module Shiba
       @stats.fetch_table(first['table']).count
     end
 
+    def fuzzed?(table)
+      true
+      #@statsShiba::Index.fuzzed?(first_table, @stats)
+    end
+
     def no_matching_row_in_const_table?
       first_extra && first_extra =~ /no matching row in const table/
     end
@@ -165,7 +170,7 @@ module Shiba
 
       return 0 if ignore_explain?
 
-      messages << "fuzzed_data" if Shiba::Index.fuzzed?(first_table, @stats)
+      messages << "fuzzed_data" if fuzzed?(first_table)
 
       if simple_table_scan?
         if limit
@@ -189,12 +194,12 @@ module Shiba
       # pick the best key from the list of possibilities.
       #
       if first_key
-        Shiba::Index.estimate_key(first_table, first_key, first['used_key_parts'], @stats)
+        @stats.estimate_key(first_table, first_key, first['used_key_parts'])
       else
         if first['possible_keys'].nil?
           # if no possibile we're table scanning, use PRIMARY to indicate that cost.
           # note that this can be wildly inaccurate bcs of WHERE + LIMIT stuff.
-          Shiba::Index.count(first_table, @stats)
+          table_size
         else
           if @options[:force_key]
             # we were asked to force a key, but mysql still told us to fuck ourselves.
@@ -202,10 +207,10 @@ module Shiba
             #
             # there seems to be cases where mysql lists `possible_key` values
             # that it then cannot use, seen this in OR queries.
-            return Shiba::Index.count(first_table, @stats)
+            return table_size
           end
 
-          possibilities = [Shiba::Index.count(first_table, @stats)]
+          possibilities = [table_size]
           possibilities += first['possible_keys'].map do |key|
             estimate_row_count_with_key(key)
           end

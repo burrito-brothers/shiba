@@ -3,9 +3,8 @@ require 'shiba/dothash'
 
 module Shiba
   class IndexStats
-    def self.from_yaml_file(fname)
-      yaml = YAML.load_file(fname)
-      IndexStats.new(yaml)
+    def self.from_hash(hash)
+      IndexStats.new(hash)
     end
 
     def initialize(tables = {})
@@ -23,10 +22,13 @@ module Shiba
     end
 
     def estimate_key(table_name, key, parts)
-      table = fetch_table(table)
+      require 'byebug'
+      debugger
+
+      table = fetch_table(table_name)
       return nil unless table
 
-      index_arr = tables['indexes'][key]
+      index_arr = table['indexes'][key]
       return nil unless index_arr
 
       index_part = index_arr.detect do |p|

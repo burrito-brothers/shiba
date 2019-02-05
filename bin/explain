@@ -60,7 +60,7 @@ end
 file = $stdin if file.nil?
 output = $stdout if output.nil?
 
-index_stats = Shiba::IndexStats.from_yaml(options['index'])
+index_stats = Shiba::IndexStats.from_hash(Shiba.index_config)
 queries = Shiba::Analyzer.analyze(file, output, index_stats, options)
 Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
 
