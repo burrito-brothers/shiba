@@ -17,11 +17,18 @@ Add this line to your application's Gemfile:
 group :test do
   gem 'shiba'
 end
+```
 
+Run shiba
+
+```ruby
 bundle
 
 # Run some some code using shiba to generate a SQL report
 bundle exec shiba analyze rake test:functional
+
+# Or run a single test
+bundle exec shiba analyze rails test test/controllers/users_controller_test.rb
 ```
 
 ### Standalone:
