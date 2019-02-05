@@ -46,6 +46,11 @@ module Shiba
         sql.chomp!
         query = Shiba::Query.new(sql, @stats)
 
+        if query.ignore?
+          puts "ignoring query: backtrace line '%s' matched ignore rule '%s'" % query.ignore_line_and_backtrace_line.reverse
+          next
+        end
+
         if !@fingerprints[query.fingerprint]
           if sql.downcase.start_with?("select")
             if @options['debug']

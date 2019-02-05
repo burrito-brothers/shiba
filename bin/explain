@@ -75,6 +75,7 @@ output = options.delete("output")
 output = File.open(output, 'w') if output
 
 Shiba.configure(options)
+Shiba::Configure.configure_main_yaml(options['config'])
 
 schema_stats_fname = options["stats_file"]
 

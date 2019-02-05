@@ -31,6 +31,25 @@ module Shiba
 
     attr_reader :sql, :index
 
+    def ignore?
+      !!ignore_line_and_backtrace_line
+    end
+
+    def ignore_line_and_backtrace_line
+      ignore_files = Shiba::Configure.main_config['ignore']
+      if ignore_files
+        ignore_files.each do |i|
+          file, method = i.split('#')
+          @backtrace.each do |b|
+            next unless b.include?(file)
+            next if method && !b.include?(method)
+            return [i, b]
+          end
+        end
+      end
+      nil
+    end
+
     def fingerprint
       @fingerprint ||= self.class.get_fingerprint(@sql)
     end
