@@ -1,11 +1,22 @@
 require "shiba/version"
+require "shiba/configure"
 require "mysql2"
 
 module Shiba
   class Error < StandardError; end
 
-  def self.configure(connection_hash)
-    @connection_hash = connection_hash
+  def self.configure(options)
+    @connection_hash = options.select { |k, v| ['username', 'database', 'host', 'password'].include?(k) }
+    @main_config = Configure.read_config_file(options['config'], "config/shiba.yml")
+    @index_config = Configure.read_config_file(options['index'], "config/shiba_index.yml")
+  end
+
+  def self.config
+    @main_config
+  end
+
+  def self.index_config
+    @index_config
   end
 
   def self.connection

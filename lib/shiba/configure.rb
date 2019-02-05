@@ -46,16 +46,52 @@ module Shiba
       end
     end
 
-    def self.main_config
-      @config ||= {}
-    end
+    def self.make_options_parser(options)
+      parser = OptionParser.new do |opts|
+        opts.on("-h","--host HOST", "sql host") do |h|
+          options["host"] = h
+        end
 
-    def self.configure_main_yaml(yaml)
-      @config = read_config_file(yaml, "config/shiba.yml")
-    end
+        opts.on("-d","--database DATABASE", "sql database") do |d|
+          options["database"] = d
+        end
 
-    def self.configure_index_yaml(yaml)
-      @indexes = read_config_file(yaml, "config/shiba_index.yml")
+        opts.on("-u","--username USER", "sql user") do |u|
+          options["username"] = u
+        end
+
+        opts.on("-p","--password PASSWORD", "sql password") do |p|
+          options["password"] = p
+        end
+
+        opts.on("-c","--config FILE", "location of shiba.yml") do |f|
+          options["config"] = f
+        end
+
+        opts.on("-i","--index INDEX", "location of shiba_index.yml") do |i|
+          options["index"] = i.to_i
+        end
+
+        opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
+          options["limit"] = l.to_i
+        end
+
+        opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
+          options["stats"] = f
+        end
+
+        opts.on("-f", "--file FILE", "location of file containing queries") do |f|
+          options["file"] = f
+        end
+
+        opts.on("-o", "--output FILE", "write to file instead of stdout") do |f|
+          options["output"] = f
+        end
+
+        opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
+          options["test"] = true
+        end
+      end
     end
   end
 end

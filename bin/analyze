@@ -4,59 +4,14 @@
 
 require 'bundler/setup'
 require 'optionparser'
+require 'shiba'
 require 'shiba/configure'
 require 'shiba/output'
 
 options = {}
-parser = OptionParser.new do |opts|
-  opts.banner = "analyze <command>. Creates report of SQL from the running process."
 
-  opts.on("-h","--host HOST", "sql host") do |h|
-    options["host"] = h
-  end
-
-  opts.on("-d","--database DATABASE", "sql database") do |d|
-    options["database"] = d
-  end
-
-  opts.on("-u","--user USER", "sql user") do |u|
-    options["user"] = u
-  end
-
-  opts.on("-p","--password PASSWORD", "sql password") do |p|
-    options["password"] = p
-  end
-
-  opts.on("-c","--config FILE", "location of shiba.yml") do |f|
-    options["config"] = f
-  end
-
-  opts.on("-i","--index INDEX", "location of shiba_index.yml") do |i|
-    options["index"] = i.to_i
-  end
-
-  opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
-    options["limit"] = l.to_i
-  end
-
-  opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
-    options["stats"] = f
-  end
-
-  opts.on("-f", "--file FILE", "location of file containing queries") do |f|
-    options["file"] = f
-  end
-
-  opts.on("-o", "--output FILE", "write to file instead of stdout") do |f|
-    options["output"] = f
-  end
-
-  opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
-    options["test"] = true
-  end
-
-end
-
+parser = Shiba::Configure.make_options_parser(options)
+parser.banner = "analyze <command>. Creates report of SQL from the running process."
 parser.parse!
 
 if options["test"] && !options["file"]
@@ -73,13 +28,12 @@ if !options["database"]
     $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
     options['host']     ||= tc['host']
     options['database'] ||= tc['database']
-    options['user'] ||= tc['username']
+    options['username'] ||= tc['username']
     options['password'] ||= tc['password']
   end
 end
 
-
-Shiba::Configure.configure_main_yaml(options["config"])
+Shiba.configure(options)
 
 if !options["file"]
   options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp

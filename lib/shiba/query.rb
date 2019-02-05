@@ -36,7 +36,7 @@ module Shiba
     end
 
     def ignore_line_and_backtrace_line
-      ignore_files = Shiba::Configure.main_config['ignore']
+      ignore_files = Shiba.config['ignore']
       if ignore_files
         ignore_files.each do |i|
           file, method = i.split('#')
