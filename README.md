@@ -11,19 +11,15 @@ You can run shiba either as a gem in your test suite, or as a standalone utility
 
 ### Gem
 
-Add this line to your application's Gemfile:
+Install
 
 ```ruby
-group :test do
-  gem 'shiba'
-end
+bundle add shiba --group "development, test"
 ```
 
 Run shiba
 
 ```ruby
-bundle
-
 # Run some some code using shiba to generate a SQL report
 bundle exec shiba analyze rake test:functional
 
