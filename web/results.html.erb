@@ -82,6 +82,9 @@
       <v-dialog :width="600"></v-dialog>
       <div class="container" style="">
         <div class="row">
+          <div class="col-12">We found {{ queries.length }} queries that deserve your attention: </div>
+        </div>
+        <div class="row">
           <div class="col-3">Table</div>
           <div class="col-5">Query</div>
           <div class="col-3">Source</div>
@@ -90,7 +93,9 @@
         <div class="queries">
           <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
         </div>
-        <div>Queries that aren't very serious:</div>
+        <div class="row">
+          <div class="col-12">We also found {{ queriesLow.length }} queries that look fine.</div>
+        </div>
         <div class="queries">
           <query v-for="query in queriesLow" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
         </div>
