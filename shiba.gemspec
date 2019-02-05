@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.name          = "shiba"
   spec.version       = Shiba::VERSION
   spec.authors       = ["Ben Osheroff", "Eric Chapweske"]
-  spec.email         = ["ben@gimbo.net", "ben.osheroff@gmail.com"]
+  spec.email         = ["ben@gimbo.net", "ben.osheroff@gmail.com", "ericis@gmail.com"]
 
   spec.summary       = %q{A gem that attempts to find bad queries before you shoot self in foot}
   spec.description   = %q{}
