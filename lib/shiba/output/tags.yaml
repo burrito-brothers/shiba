@@ -38,7 +38,12 @@ access_type_tablescan:
 fuzzed_data:
   title: Guessed Table Size
   description: |
-    There wasn't enough data in your local environment to adequately measure this query, so we
-    pretended this table had a bunch of data in it. To improve results, please dump your
-    production index statistics into Shiba.
+    We're not sure how much data this table will hold in the future, so we've pretended
+    there's 6000 rows in it.  This can lead to a lot of false positives. To
+    improve results, please give shiba your index statistics.
+  level: info
+ignored:
+  title: Ignored Query
+  description: |
+    This query matched an "ignore" rule in shiba.yml, so we skipped any further analysis on it.
   level: info

@@ -224,7 +224,32 @@ module Shiba
       raise e
     end
 
+    def ignore?
+      !!ignore_line_and_backtrace_line
+    end
+
+    def ignore_line_and_backtrace_line
+      ignore_files = Shiba.config['ignore']
+      if ignore_files
+        ignore_files.each do |i|
+          file, method = i.split('#')
+          @backtrace.each do |b|
+            next unless b.include?(file)
+            next if method && !b.include?(method)
+            return [i, b]
+          end
+        end
+      end
+      nil
+    end
+
     def run_checks!
+      if ignore?
+        @cost = 0
+        messages << "ignored"
+        return
+      end
+
       @cost = estimate_row_count
     end
   end
