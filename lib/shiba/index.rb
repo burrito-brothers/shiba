@@ -1,6 +1,8 @@
+require 'yaml'
+require 'pp'
+
 module Shiba
   module Index
-
     # Given the path to the information_schema.statistics output, returns index statistics keyed by table name.
     # Examples:
     # Exploring the schema:
@@ -22,6 +24,32 @@ module Shiba
         table.push(h)
       end
       tables
+    end
+
+    def self.tsv_to_yaml(path)
+      yaml = {}
+      stats = parse(path)
+
+      stats.keys.sort.each do |table_name|
+        h = yaml[table_name] = {}
+        h['indexes'] = {}
+
+        table_count = count(table_name, stats)
+
+        h['count'] = table_count
+        stats[table_name].each do |index_row|
+          name = index_row['index_name']
+          h['indexes'][name] ||= []
+
+          if table_count == 0
+            selectivity = 1
+          else
+            selectivity = (index_row['cardinality'].to_f / table_count.to_f).round(3)
+          end
+          h['indexes'][name] << { 'column' => index_row['column_name'], 'uniqueness' =>  selectivity}
+        end
+      end
+      puts yaml.to_yaml
     end
 
     # Getting a row count for a table:
