@@ -67,24 +67,24 @@ end
 
 # Automagic configuration goes here
 if !options["database"]
-    config = Shiba::Configure.activerecord_configuration
+  config = Shiba::Configure.activerecord_configuration
 
-    if tc = config && config['test']
-      $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
-      options['host']     ||= tc['host']
-      options['database'] ||= tc['database']
-      options['user'] ||= tc['username']
-      options['password'] ||= tc['password']
-    end
+  if tc = config && config['test']
+    $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
+    options['host']     ||= tc['host']
+    options['database'] ||= tc['database']
+    options['user'] ||= tc['username']
+    options['password'] ||= tc['password']
   end
+end
 
-  if !options["file"]
-    options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp
-  end
+if !options["file"]
+  options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp
+end
 
-  if !options["output"]
-    options["output"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
-  end
+if !options["output"]
+  options["output"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
+end
 
 # Log process queries
 if !options.delete("test")
