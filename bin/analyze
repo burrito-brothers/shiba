@@ -39,8 +39,8 @@ if !options["file"]
   options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp
 end
 
-if !options["output"]
-  options["output"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
+if !options["explain"]
+  options["explain"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
 end
 
 # Log process queries
@@ -66,7 +66,7 @@ if !options.delete("test")
 end
 
 # Explain
-$stderr.puts "Analyzing SQL to '#{options["output"]}'..."
+$stderr.puts "Analyzing SQL to '#{options["explain"]}'..."
 path = "#{File.dirname(__FILE__)}/explain"
 args = options.select { |_,v| !v.nil? }.map { |k,v| [ "--#{k}", v ] }.flatten
 

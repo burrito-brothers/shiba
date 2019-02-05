@@ -5,28 +5,26 @@ require 'erb'
 
 module Shiba
   class Output
-
     OUTPUT_PATH = "/tmp/shiba_results"
-    JS_PATH = OUTPUT_PATH + "/js"
 
     WEB_PATH = File.dirname(__FILE__) + "/../../web"
     def self.tags
       @tags ||= YAML.load_file(File.dirname(__FILE__) + "/output/tags.yaml")
     end
 
-    def self.from_file(fname)
-      queries = []
-      File.open(fname, "r") do |f|
-        while line = f.gets
-          queries << JSON.parse(line)
-        end
-      end
-      new(queries)
+    def initialize(queries, options = {})
+      @queries = queries
+      @options = options
     end
 
+    def output_path
+      path ||= File.join(@options['output'], "shiba_results") if @options['output']
+      path ||= Dir.pwd + "/log/shiba_results" if File.exist?(Dir.pwd + "/log")
+      path ||= OUTPUT_PATH
+    end
 
-    def initialize(queries)
-      @queries = queries
+    def js_path
+      File.join(output_path, "js")
     end
 
     def remote_url
@@ -40,11 +38,11 @@ module Shiba
     end
 
     def make_web!
-      FileUtils.mkdir_p(JS_PATH)
+      FileUtils.mkdir_p(js_path)
 
       js = Dir.glob(WEB_PATH + "/dist/*.js").map { |f| File.basename(f) }
       js.each do |f|
-        system("cp #{WEB_PATH}/dist/#{f} #{JS_PATH}")
+        system("cp #{WEB_PATH}/dist/#{f} #{js_path}")
       end
 
       data = {
@@ -54,14 +52,14 @@ module Shiba
         url: remote_url
       }
 
-      system("cp #{WEB_PATH}/*.css #{OUTPUT_PATH}")
+      system("cp #{WEB_PATH}/*.css #{output_path}")
 
       erb = ERB.new(File.read(WEB_PATH + "/../web/results.html.erb"))
-      File.open(OUTPUT_PATH + "/results.html", "w+") do |f|
+      File.open(output_path + "/results.html", "w+") do |f|
         f.write(erb.result(binding))
       end
 
-      puts "done, results are in " + "/tmp/shiba_results/results.html"
+      puts "done, results are in " + File.join(output_path, "results.html")
     end
   end
 end

@@ -48,6 +48,8 @@ module Shiba
 
     def self.make_options_parser(options)
       parser = OptionParser.new do |opts|
+        # note that the key to the hash needs to stay the same as the
+        # option name since we re-pass them
         opts.on("-h","--host HOST", "sql host") do |h|
           options["host"] = h
         end
@@ -84,8 +86,12 @@ module Shiba
           options["file"] = f
         end
 
-        opts.on("-o", "--output FILE", "write to file instead of stdout") do |f|
-          options["output"] = f
+        opts.on("-e", "--explain FILE", "write explain JSON to file. default: stdout") do |f|
+          options["explain"] = f
+        end
+
+        opts.on("-o", "--output PATH", "path to put generated report in.  default: /tmp") do |p|
+          options["output"] = p
         end
 
         opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|

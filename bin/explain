@@ -26,7 +26,7 @@ end
 file = options.delete("file")
 file = File.open(file, "r") if file
 
-output = options.delete("output")
+output = options.delete("explain")
 output = File.open(output, 'w') if output
 
 Shiba.configure(options)
@@ -61,4 +61,4 @@ file = $stdin if file.nil?
 output = $stdout if output.nil?
 
 queries = Shiba::Analyzer.analyze(file, output, schema_stats, options)
-Shiba::Output.new(queries).make_web!
+Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
