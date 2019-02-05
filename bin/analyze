@@ -36,11 +36,13 @@ end
 Shiba.configure(options)
 
 if !options["file"]
-  options["file"] = `mktemp /tmp/shiba-query.log-#{Time.now.to_i}`.chomp
+  options["file"] = "/tmp/shiba-query.log-#{Time.now.to_i}"
+  system("touch", options["file"])
 end
 
 if !options["explain"]
-  options["explain"] = `mktemp /tmp/shiba-explain.log-#{Time.now.to_i}`.chomp
+  options["explain"] = "/tmp/shiba-explain.log-#{Time.now.to_i}"
+  system("touch", options["explain"])
 end
 
 # Log process queries
