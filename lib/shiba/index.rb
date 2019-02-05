@@ -1,5 +1,6 @@
 require 'yaml'
 require 'pp'
+require 'shiba/index_stats'
 
 module Shiba
   module Index
@@ -14,42 +15,16 @@ module Shiba
     # => {:table_schema=>"blog_test", :table_name=>"users", :non_unique=>"0", :column_name=>"id", :cardinality=>"2", :is_visible=>"YES", :"expression\n"=>"NULL\n"}
     #
     def self.parse(path)
+      stats = IndexStats.new
       tables = {}
       records = read(path)
       headers = records.shift.map { |header| header.downcase }
       records.each do |r|
         h = Hash[headers.zip(r)]
         h["cardinality"] = h["cardinality"].to_i
-        table = tables[h['table_name']] ||= []
-        table.push(h)
+        stats.add_index_column(h['table_name'], h['index_name'], h['column_name'], h['cardinality'], h['non_unique'] != "0")
       end
-      tables
-    end
-
-    def self.tsv_to_yaml(path)
-      yaml = {}
-      stats = parse(path)
-
-      stats.keys.sort.each do |table_name|
-        h = yaml[table_name] = {}
-        h['indexes'] = {}
-
-        table_count = count(table_name, stats)
-
-        h['count'] = table_count
-        stats[table_name].each do |index_row|
-          name = index_row['index_name']
-          h['indexes'][name] ||= []
-
-          if table_count == 0
-            selectivity = 1
-          else
-            selectivity = (index_row['cardinality'].to_f / table_count.to_f).round(3)
-          end
-          h['indexes'][name] << { 'column' => index_row['column_name'], 'uniqueness' =>  selectivity}
-        end
-      end
-      puts yaml.to_yaml
+      stats
     end
 
     # Getting a row count for a table:
