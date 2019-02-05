@@ -94,11 +94,13 @@
           <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
         </div>
         <div class="row">
-          <div class="col-12">We also found {{ queriesLow.length }} queries that look fine.</div>
+          <div class="col-12">We also found <a href="#" v-on:click.prevent="lowExpanded = !lowExpanded">{{ queriesLow.length }} queries</a> that look fine.</div>
         </div>
-        <div class="queries">
+        <a name="lowExapnded"></a>
+        <div class="queries" v-if="lowExpanded">
           <query v-for="query in queriesLow" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
         </div>
+        <div style="height:50px"></div>
       </div>
     </div>
 
@@ -188,7 +190,8 @@
       data: {
         queries: queriesByTable,
         queriesLow: queriesByTableLow,
-        tags: data.tags
+        tags: data.tags,
+        lowExpanded: false
       },
       methods: { }
     });
