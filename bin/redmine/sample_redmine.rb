@@ -45,7 +45,15 @@ end
 
 class Watcher < Redmine; end
 class Relation < Redmine; end
-class User < Redmine; end
+class User < Redmine
+  def enhance(hash, owner)
+    if rand < 0.01
+      hash['type'] = 'admin'
+    else
+      hash['type'] = 'user'
+    end
+  end
+end
 
 class Sampler
   def initialize(interested_in)
@@ -105,9 +113,17 @@ class Sampler
   def sample_model(model, params = {})
     # go exponentially up from 1.
     last = find_max(model, 0, 1, params)
+
     # go up from the last hit value.
-    if last
-      find_max(model, last.id, 1, params)
+    last = find_max(model, last.id, 1, params)
+
+    max_id = last.id
+    num_to_sample = (max_id * 0.05).to_i
+
+    num_to_sample.times do
+      instance = get_instance(model, rand(max_id), params)
+      extract_hash(instance) if instance
+      sleep(1)
     end
   end
 
