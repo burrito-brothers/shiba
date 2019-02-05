@@ -3,10 +3,10 @@ require 'shiba/index'
 
 module Shiba
   class Explain
-    def initialize(sql, stats, options = {})
+    def initialize(sql, stats, backtrace, options = {})
       @sql = sql
+      @backtrace = backtrace
 
-      @sql, _, @backtrace = @sql.partition(" /*shiba")
       if options[:force_key]
          @sql = @sql.sub(/(FROM\s*\S+)/i, '\1' + " FORCE INDEX(`#{options[:force_key]}`)")
       end
@@ -20,8 +20,6 @@ module Shiba
     end
 
     def as_json
-      @backtrace.chomp!("*/")
-
       {
         sql: @sql,
         table: get_table,
@@ -30,7 +28,7 @@ module Shiba
         cost: @cost,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
-        backtrace: JSON.parse(@backtrace)
+        backtrace: @backtrace
       }
     end
 
@@ -217,7 +215,7 @@ module Shiba
     end
 
     def estimate_row_count_with_key(key)
-      Explain.new(@sql, @stats, force_key: key).estimate_row_count
+      Explain.new(@sql, @stats, @backtrace, force_key: key).estimate_row_count
     rescue Mysql2::Error => e
       if /Key .+? doesn't exist in table/ =~ e.message
         return nil

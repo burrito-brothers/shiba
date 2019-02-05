@@ -15,7 +15,15 @@ module Shiba
     end
 
     def initialize(sql, stats)
-      @sql = sql
+      @sql, _, @backtrace = sql.partition(" /*shiba")
+
+      if @backtrace.length > 0
+        @backtrace.chomp!("*/")
+        @backtrace = JSON.parse(@backtrace)
+      else
+        @backtrace = []
+      end
+
       @stats = stats
       @@index += 1
       @index = @@index
@@ -28,7 +36,11 @@ module Shiba
     end
 
     def explain
-      Explain.new(@sql, @stats)
+      Explain.new(@sql, @stats, @backtrace)
+    end
+
+    def backtrace
+      @backtrace
     end
   end
 end
