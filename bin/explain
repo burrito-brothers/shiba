@@ -31,7 +31,7 @@ output = File.open(output, 'w') if output
 
 Shiba.configure(options)
 
-schema_stats_fname = options["stats_file"]
+schema_stats_fname = options["stats"]
 
 if schema_stats_fname && !File.exist?(schema_stats_fname)
   $stderr.puts "No such file: #{schema_stats_fname}"
