@@ -1,6 +1,7 @@
 require "shiba/version"
 require "shiba/configure"
 require "mysql2"
+require "pp"
 
 module Shiba
   class Error < StandardError; end
