@@ -2,8 +2,13 @@ require 'yaml'
 
 module Shiba
   class IndexStats
-    def initialize
-      @tables = {}
+    def self.from_yaml_file(fname)
+      yaml = YAML.load_file(fname)
+      IndexStats.new(yaml)
+    end
+
+    def initialize(tables = {})
+      @tables = tables
     end
 
     def fetch_table(table)
@@ -14,6 +19,23 @@ module Shiba
       tbl = fetch_table(table)
       tbl['indexes'] ||= {}
       tbl['indexes'][name] ||= []
+    end
+
+    def estimate_key(table_name, key, parts)
+      table = fetch_table(table)
+      return nil unless table
+
+      index_arr = tables['indexes'][key]
+      return nil unless index_arr
+
+      index_part = index_arr.detect do |p|
+        p['column'] == parts.last
+      end
+
+      return nil unless index_part
+
+      return 1 if index_part['uniqueness'] == 0.0
+      (table['count'].to_f * index_part['uniqueness'].to_f).to_i
     end
 
     def add_index_column(table, index_name, column_name, cardinality, is_unique)
