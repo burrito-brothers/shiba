@@ -4,12 +4,13 @@ require 'rails'
 
 module Shiba
   class QueryWatcher
-    FINGERPRINTS = {}
     IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
 
     def self.watch(file)
       new(file).watch
     end
+
+    attr_reader :queries
 
     def initialize(file)
       @file = file
@@ -23,11 +24,13 @@ module Shiba
         sql = payload[:sql]
 
         if sql.start_with?("SELECT")
-          lines = app_backtrace
-          if lines && !@queries[sql]
-            @file.puts("#{sql} /*shiba#{lines}*/" )
+          fingerprint = Query.get_fingerprint(sql)
+          if !@queries[fingerprint]
+            if lines = app_backtrace
+              @file.puts("#{sql} /*shiba#{lines}*/")
+            end
           end
-          @queries[sql] = true
+          @queries[fingerprint] = true
         end
       end
     end
