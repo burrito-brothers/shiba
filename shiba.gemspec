@@ -6,10 +6,10 @@ require "shiba/version"
 Gem::Specification.new do |spec|
   spec.name          = "shiba"
   spec.version       = Shiba::VERSION
-  spec.authors       = ["Ben Osheroff"]
-  spec.email         = ["ben@gimbo.net"]
+  spec.authors       = ["Ben Osheroff", "Eric Chapweske"]
+  spec.email         = ["ben@gimbo.net", "ben.osheroff@gmail.com"]
 
-  spec.summary       = %q{}
+  spec.summary       = %q{A gem that attempts to find bad queries before you shoot self in foot}
   spec.description   = %q{}
   spec.homepage      = "https://github.com/burrito-brothers/shiba"
 
