@@ -1,0 +1,4 @@
+ignore:
+  - "acts_as_searchable.rb#fetch_ranks_and_ids"
+  - "issue_query.rb"
+
