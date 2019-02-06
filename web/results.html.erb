@@ -62,11 +62,11 @@
                   <div v-for="backtrace in query.backtrace" v-html="makeURL(backtrace, backtrace)"></div>
                 </div>
               </div>
-              Key: {{ castNull(query.key) }}<br>
+              Index used: {{ castNull(query.key) }}<br>
               <div v-if="query.possible_keys && query.possible_keys.length > 0 || !query.key">
-                Possible keys: {{ castNull(query.possible_keys) }}
+                Indexes considered: {{ castNull(query.possible_keys) }}
               </div>
-              Cost: {{ query.cost }}<br>
+              Rows checked: {{ query.cost }}<br>
               <a class="badge"
                 v-for="tag in query.tags"
                 href="#"

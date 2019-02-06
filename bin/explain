@@ -39,9 +39,24 @@ if schema_stats_fname && !File.exist?(schema_stats_fname)
 end
 
 file = $stdin if file.nil?
+if output && options["verbose"]
+  $stderr.puts "Analyzing SQL to '#{options["explain"]}'..."
+end
 output = $stdout if output.nil?
 
 table_stats = Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})
 queries = Shiba::Analyzer.analyze(file, output, table_stats, options)
-Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
 
+problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
+
+if problems.any?
+  puts "#{problems.size} problematic queries detected"
+  page = Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
+  if !File.exist?(page)
+    $stderr.puts("Failed to generate #{page}")
+    exit 1
+  end
+
+  puts "Report available at #{page}"
+  exit 3
+end

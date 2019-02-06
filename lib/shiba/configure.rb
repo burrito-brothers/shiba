@@ -97,6 +97,10 @@ module Shiba
         opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
           options["test"] = true
         end
+
+        opts.on("-v", "--verbose", "print internal runtime information") do
+           options["verbose"] = true
+        end
       end
     end
   end
