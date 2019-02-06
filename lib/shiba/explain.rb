@@ -174,11 +174,11 @@ module Shiba
       if simple_table_scan?
         if limit
           messages << 'limited_tablescan'
+          return limit
         else
-          messages << 'access_type_tablescan'
+          tag_query_type
+          return @stats.estimate_key(first_table, first_key, first['used_key_parts'])
         end
-
-        return limit || table_size
       end
 
       if derived?

@@ -38,3 +38,5 @@ production_host: cd shiba ; bundle
 production_host: bin/dump_stats DATABASE_NAME [MYSQLOPTS] > ~/shiba_index.yml
 local: scp production_host:~/shiba_index.yml MYPROJECT/config
 ```
+
+
