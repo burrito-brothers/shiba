@@ -142,7 +142,7 @@ module Shiba
 
     # TODO: need to parse SQL here I think
     def simple_table_scan?
-      @rows.size == 1 && (@sql !~ /where/i || @sql =~ /where\s*1=1/i) && (@sql !~ /order by/i)
+      @rows.size == 1 && first['using_index'] && (@sql !~ /order by/i)
     end
 
     def limit
