@@ -16,12 +16,41 @@ parser = OptionParser.new do |opts|
   opts.on("-f","--file FILE", "Explain output log to compare against") do |f|
     options["file"] = f
   end
+
+  opts.on("--staged", "Only check files that are staged for commit") do
+    options["staged"] = true
+  end
+
+  opts.on("--unstaged", "Only check files that are not staged for commit") do
+    options["unstaged"] = true
+  end
+
 end
 parser.parse!
 
-changes = `git diff --name-only`
+# This is a noop since it's the default behavior. Ignore.
+if options["staged"] && options["unstaged"]
+  options.delete("staged")
+  options.delete("unstaged")
+end
+
+cmd = case
+when options["staged"]
+  " --staged"
+when options["unstaged"]
+  ""
+else
+  " HEAD"
+end
+
+changes = `git diff#{cmd} --name-only`
 
 last_explain = options["file"] || Dir.glob("/tmp/shiba-explain*").sort.last
+
+if !File.exist?(last_explain)
+  $stderr.puts "Specify an explain log, or run shiba explain to generate one."
+  exit 1
+end
 
 patterns = changes.split("\n").map { |path| "-e #{path}" }.join(" ")
 json_lines = `grep #{last_explain} #{patterns}`
