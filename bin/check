@@ -68,7 +68,7 @@ if options['verbose']
   puts cmd
 end
 
-changes = `git diff#{cmd} --name-only`
+changes = `git diff#{cmd} --name-only --diff-filter=d`
 if $?.exitstatus != 0
   exit $?.exitstatus
 end
