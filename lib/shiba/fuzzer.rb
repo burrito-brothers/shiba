@@ -16,7 +16,7 @@ module Shiba
         table.count = table_sizes[name]
         table.indexes.each do |name, index|
           index.columns.each do |column|
-            column.uniqueness = index.unique ? 1.0 : 0.7
+            column.rows_per = index.unique ? 1 : "30%"
           end
         end
       end

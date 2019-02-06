@@ -20,7 +20,7 @@ module Shiba
 
     private
     def ask_each(method, *args)
-      [@manual_stats, @dump_stats, @db_stats].each do |stat|
+      [@dump_stats, @db_stats].each do |stat|
         result = stat.send(method, *args)
         return result unless result.nil?
       end
