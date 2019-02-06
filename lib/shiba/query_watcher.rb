@@ -7,7 +7,7 @@ module Shiba
     IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
 
     def self.watch(file)
-      new(file).watch
+      new(file).tap { |w| w.watch }
     end
 
     attr_reader :queries

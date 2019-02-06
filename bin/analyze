@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-#!/usr/bin/env ruby
-
 require 'bundler/setup'
 require 'optionparser'
 require 'shiba'
@@ -9,10 +7,60 @@ require 'shiba/configure'
 require 'shiba/output'
 
 options = {}
+parser = OptionParser.new do |opts|
+  opts.banner = "analyze <command>. Creates report of SQL from the running process."
+
+  opts.on("-h","--host HOST", "sql host") do |h|
+    options["host"] = h
+  end
+
+  opts.on("-d","--database DATABASE", "sql database") do |d|
+    options["database"] = d
+  end
+
+  opts.on("-u","--user USER", "sql user") do |u|
+    options["user"] = u
+  end
+
+  opts.on("-p","--password PASSWORD", "sql password") do |p|
+    options["password"] = p
+  end
+
+  opts.on("-i","--index INDEX", "index of query to inspect") do |i|
+    options["index"] = i.to_i
+  end
+
+  opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
+    options["limit"] = l.to_i
+  end
+
+  opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
+    options["stats"] = f
+  end
+
+  opts.on("-f", "--file FILE", "location of file containing queries") do |f|
+    options["file"] = f
+  end
+
+  opts.on("-o", "--output FILE", "write to file instead of stdout") do |f|
+    options["output"] = f
+  end
+
+  opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
+    options["test"] = true
+  end
+
+  opts.on("--verbose") do
+    options["verbose"] = true
+  end
+
+end
 
 parser = Shiba::Configure.make_options_parser(options)
 parser.banner = "analyze <command>. Creates report of SQL from the running process."
 parser.parse!
+
+verbose = options["verbose"]
 
 if options["test"] && !options["file"]
   $stderr.puts "--file <query log> is required for test mode"
@@ -25,10 +73,12 @@ if !options["database"]
   config = Shiba::Configure.activerecord_configuration
 
   if tc = config && config['test']
-    $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
+    if verbose
+      $stderr.puts "Reading configuration from '#{`pwd`.chomp}/config/database.yml'[:test]."
+    end
     options['host']     ||= tc['host']
     options['database'] ||= tc['database']
-    options['username'] ||= tc['username']
+    options['user']     ||= tc['username']
     options['password'] ||= tc['password']
   end
 end
@@ -68,12 +118,14 @@ if !options.delete("test")
 end
 
 # Explain
-$stderr.puts "Analyzing SQL to '#{options["explain"]}'..."
+if verbose
+  $stderr.puts "Analyzing SQL to '#{options["explain"]}'..."
+end
 path = "#{File.dirname(__FILE__)}/explain"
 args = options.select { |_,v| !v.nil? }.map { |k,v| [ "--#{k}", v ] }.flatten
 
-$stderr.puts ([path] + args).join(" ")
-if !system(path, *args)
-  exit 1
+if verbose
+  $stderr.puts ([path] + args).join(" ")
 end
 
+exec(path, *args)

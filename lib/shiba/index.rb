@@ -84,8 +84,6 @@ module Shiba
       db = stats.values.first.first['table_schema']
       table_sizes = self.guess_table_sizes(db)
 
-
-
       stats.each do |table,indexes|
         indexes.each do |idx|
           idx['cardinality'] = table_sizes[table]
