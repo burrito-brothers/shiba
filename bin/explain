@@ -3,7 +3,7 @@
 require 'bundler/setup'
 require 'shiba'
 require 'shiba/analyzer'
-require 'shiba/index'
+require 'shiba/table_stats'
 require 'shiba/configure'
 require 'shiba/output'
 
@@ -61,28 +61,6 @@ if schema_stats_fname && !File.exist?(schema_stats_fname)
   exit 1
 end
 
-if schema_stats_fname
-  schema_stats = Shiba::Index.parse(schema_stats_fname)
-
-  local_db_stats = Shiba::Index.query(Shiba.connection)
-  Shiba::Index.fuzz!(local_db_stats)
-  local_db_stats.each do |table, values|
-    schema_stats[table] = values unless schema_stats[table]
-  end
-else
-  schema_stats = Shiba::Index.query(Shiba.connection)
-
-  if Shiba::Index.insufficient_stats?(schema_stats)
-    $stderr.puts "WARN: insufficient stats available in the #{options["database"]} database, guessing at numbers."
-    $stderr.puts "To get better analysis please specify an index statistics file."
-    puts ""
-    sleep 0.5
-    Shiba::Index.fuzz!(schema_stats)
-  end
-end
-
-
-
 file = $stdin if file.nil?
 output = $stdout if output.nil?
 
@@ -91,7 +69,8 @@ if options["verbose"]
   $stderr.puts "Analyzing SQL to '#{output.inspect}'..."
 end
 
-queries = Shiba::Analyzer.analyze(file, output, schema_stats, options)
+table_stats = Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})
+queries = Shiba::Analyzer.analyze(file, output, table_stats, options)
 
 problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
 

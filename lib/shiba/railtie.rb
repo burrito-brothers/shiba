@@ -20,6 +20,10 @@ class Shiba::Railtie < Rails::Railtie
       puts ""
       explain_path = "/tmp/shiba-explain.log-#{Time.now.to_i}"
       cmd = "shiba explain #{database_args} --file #{path} --explain #{explain_path} --out /tmp/"
+      if ENV['SHIBA_DEBUG']
+        $stderr.puts("running:")
+        $stderr.puts(cmd)
+      end
       system(cmd)
     end
   end
