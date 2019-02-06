@@ -20,10 +20,10 @@ bundle add shiba --group "development, test"
 Run shiba
 
 ```ruby
-# Run some some code using shiba to generate a SQL report
-bundle exec shiba analyze rake test:functional
+# Run some tests using shiba to generate a SQL report
+rake test:functional
+rails test test/controllers/users_controller_test.rb
 
-# Or run a single test
-bundle exec shiba analyze rails test test/controllers/users_controller_test.rb
+# When not running tests, ENV['SHIBA_OUT'] is checked.
+SHIBA_OUT=query.log rails server
 ```
-
