@@ -30,9 +30,11 @@ SHIBA_OUT=query.log rails server
 
 Make it smarter!
 
+for best results, run this command from a staging or production server:
+
 ```
-# for best results, run this command from a staging or production server.
-# for OK results, run this from your development box and hand-edit shiba_index.yml
-# (i know, i know)
-bin/dump_stats DATABASE_NAME [MYSQLOPTS] > MYPROJECTDIR/config/shiba_index.yml
+production_host: git clone https://github.com/burrito-brothers/shiba.git
+production_host: cd shiba ; bundle
+production_host: bin/dump_stats DATABASE_NAME [MYSQLOPTS] > ~/shiba_index.yml
+local: scp production_host:~/shiba_index.yml MYPROJECT/config
 ```
