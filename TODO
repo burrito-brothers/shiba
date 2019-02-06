@@ -7,6 +7,14 @@ if it's a test-data issue.
 
 # SELECT  ipb_id,ipb_address,ipb_timestamp,ipb_auto,ipb_anon_only,ipb_create_account,ipb_enable_autoblock,ipb_expiry,ipb_deleted,ipb_block_email,ipb_allow_usertalk,ipb_parent_block_id,ipb_sitewide,comment_ipb_reason.comment_text AS `ipb_reason_text`,comment_ipb_reason.comment_data AS `ipb_reason_data`,comment_ipb_reason.comment_id AS `ipb_reason_cid`,ipb_by,ipb_by_text,NULL AS `ipb_by_actor`  FROM `ipblocks` FORCE KEY(`ipb_address`) JOIN `comment` `comment_ipb_reason` ON ((comment_ipb_reason.comment_id = ipb_reason_id))   WHERE ipb_address = '127.0.0.1' OR ((ipb_range_start  LIKE '7F00%' ESCAPE '`' ) AND (ipb_range_start <= '7F000001') AND (ipb_range_end >= '7F000001'));
 
-===
-need to use format=json and see how much of an index we're using.
+# UI
+
+Add "ignore me" button next to query to show how to block stuff.
+Add link to some documentation about how to get real stats.  Write said docs.
+high/medium/low/constant queries
+
+# example
+Add index-walk detection
+Add filesort badge
+
 
