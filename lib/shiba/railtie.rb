@@ -18,8 +18,22 @@ class Shiba::Railtie < Rails::Railtie
 
     at_exit do
       puts ""
-      system("shiba analyze --file #{path} --test")
+      explain_path = "/tmp/shiba-explain.log-#{Time.now.to_i}"
+      cmd = "shiba explain #{database_args} --file #{path} --explain #{explain_path} --out /tmp/"
+      system(cmd)
     end
+  end
+
+  def self.database_args
+    c = ActiveRecord::Base.configurations['test']
+    options = {
+      'host':     c['host'],
+      'database': c['database'],
+      'user':     c['username'],
+      'password': c['password']
+    }
+
+    options.reject { |k,v| v.nil? }.map { |k,v| "--#{k} #{v}" }.join(" ")
   end
 
   def self.test_runners_defined?

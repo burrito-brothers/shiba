@@ -10,53 +10,6 @@ require 'shiba/output'
 require 'optionparser'
 
 options = {}
-parser = OptionParser.new do |opts|
-  opts.banner = "Usage: explain -h HOST -d DB -u USER -p PASS [-f QUERY_FILE] [-s STATS_FILE] "
-
-  opts.on("-h","--host HOST", "sql host") do |h|
-    options["host"] = h
-  end
-
-  opts.on("-d","--database DATABASE", "sql database") do |d|
-    options["database"] = d
-  end
-
-  opts.on("-u","--user USER", "sql user") do |u|
-    options["username"] = u
-  end
-
-  opts.on("-p","--password PASSWORD", "sql password") do |p|
-    options["password"] = p
-  end
-
-  opts.on("-i","--index INDEX", "index of query to inspect") do |i|
-    options["index"] = i.to_i
-  end
-
-  opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
-    options["limit"] = l.to_i
-  end
-
-  opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
-    options["stats_file"] = f
-  end
-
-  opts.on("-f", "--file FILE", "location of file containing queries") do |f|
-    options["file"] = f
-  end
-
-  opts.on("-o", "--output FILE", "write to file instead of stdout") do |f|
-    options["output"] = f
-  end
-
-  opts.on("--debug") do
-    options["debug"] = true
-  end
-
-  opts.on("--verbose") do
-    options["verbose"] = true
-  end
-end
 
 parser = Shiba::Configure.make_options_parser(options)
 parser.banner = "Run a list of queries through shiba's analyzer."
@@ -106,6 +59,9 @@ else
 end
 
 file = $stdin if file.nil?
+if output && options["verbose"]
+  $stderr.puts "Analyzing SQL to '#{options["explain"]}'..."
+end
 output = $stdout if output.nil?
 
 queries = Shiba::Analyzer.analyze(file, output, schema_stats, options)
@@ -113,6 +69,12 @@ problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
 
 if problems.any?
   puts "#{problems.size} problematic queries detected"
-  Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
+  page = Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
+  if !File.exist?(page)
+    $stderr.puts("Failed to generate #{page}")
+    exit 1
+  end
+
+  puts "Report available at #{page}"
   exit 3
 end

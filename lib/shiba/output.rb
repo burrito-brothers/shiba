@@ -59,7 +59,8 @@ module Shiba
         f.write(erb.result(binding))
       end
 
-      puts "results are in " + "/tmp/shiba_results/results.html"
+
+      "#{output_path}/results.html"
     end
   end
 end
