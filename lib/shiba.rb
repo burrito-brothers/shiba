@@ -2,6 +2,7 @@ require "shiba/version"
 require "shiba/configure"
 require "mysql2"
 require "pp"
+require "byebug" if ENV['SHIBA_DEBUG']
 
 module Shiba
   class Error < StandardError; end
