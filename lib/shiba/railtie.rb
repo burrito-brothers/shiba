@@ -8,7 +8,7 @@ class Shiba::Railtie < Rails::Railtie
     watcher = log_queries(path)
     next if !watcher
 
-    if defined?(RSpec)
+    if defined?(RSpec.configure)
       hook_into_rspec(path)
     end
   end
