@@ -120,7 +120,7 @@ module Shiba
     ]
 
     def table_size
-      @stats.fetch_table(first['table']).count
+      @stats.table_count(first['table'])
     end
 
     def fuzzed?(table)
