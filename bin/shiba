@@ -5,7 +5,8 @@ require 'optionparser'
 APP = File.basename(__FILE__)
 
 commands = {
-    "explain" => { :bin => "explain", :description => "Generate a report from logged SQL queries" },
+    "explain" => "Generate a report from logged SQL queries",
+    "check"   => "Check staged files for query problems",
 }
 
 global = OptionParser.new do |opts|
@@ -13,7 +14,7 @@ global = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "These are the commands available:"
   commands.each do |name,info|
-    opts.separator "  #{name}     #{info[:description]}"
+    opts.separator "  #{name}     #{info}"
   end
   opts.separator ""
   opts.separator "See #{APP} --help <command> to read about a specific command."
@@ -34,6 +35,6 @@ if !commands.key?(command)
     exit 1
 end
 
-path = "#{File.dirname(__FILE__)}/#{commands[command][:bin]}"
+path = File.join(File.dirname(__FILE__), command)
 
 Kernel.exec(path, *ARGV)

@@ -69,7 +69,7 @@ module Shiba
     protected
 
     def dump_error(e, query)
-      $stderr.puts "got exception trying to explain: #{e.message}"
+      $stderr.puts "got #{e.class.name} exception trying to explain: #{e.message}"
       $stderr.puts "query: #{query.sql} (index #{query.index})"
       $stderr.puts e.backtrace.join("\n")
     end
@@ -79,10 +79,7 @@ module Shiba
       begin
         explain = query.explain
       rescue Mysql2::Error => e
-        # we're picking up crap on the command-line that's not good SQL.  ignore it.
-        if !(e.message =~ /You have an error in your SQL syntax/)
-          dump_error(e, query)
-        end
+        dump_error(e, query) if verbose?
       rescue StandardError => e
         dump_error(e, query)
       end
@@ -95,6 +92,10 @@ module Shiba
 
     def write(line)
       @output.puts(line)
+    end
+
+    def verbose?
+      @options['verbose'] == true
     end
   end
 end
