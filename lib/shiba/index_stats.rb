@@ -77,7 +77,7 @@ module Shiba
             @rows_per = (table_count / @cardinality).round
           end
         elsif @rows_per.is_a?(String)
-          @rows_per = ((@rows_per.to__f / 100.0) * table_count.to_f).round
+          @rows_per = ((@rows_per.to_f / 100.0) * table_count.to_f).round
         end
         @rows_per
       end
