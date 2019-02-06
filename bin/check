@@ -25,6 +25,13 @@ parser = OptionParser.new do |opts|
     options["unstaged"] = true
   end
 
+  opts.on("--last-explain", "Use the latest explain log in /tmp/") do
+    options["file"] = Dir.glob("/tmp/shiba-explain*").sort.last
+  end
+
+  opts.on("--verbose", "Verbose/debug mode") do
+    options["verbose"] = true
+  end
 end
 parser.parse!
 
@@ -45,15 +52,16 @@ end
 
 changes = `git diff#{cmd} --name-only`
 
-last_explain = options["file"] || Dir.glob("/tmp/shiba-explain*").sort.last
+explains = options["file"]
 
-if !File.exist?(last_explain)
+if explains.nil? || !File.exist?(explains)
   $stderr.puts "Specify an explain log, or run shiba explain to generate one."
+  puts parser.banner
   exit 1
 end
 
 patterns = changes.split("\n").map { |path| "-e #{path}" }.join(" ")
-json_lines = `grep #{last_explain} #{patterns}`
+json_lines = `grep #{explains} #{patterns}`
 explains = json_lines.each_line.map do |line|
   JSON.parse(line)
 end
