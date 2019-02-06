@@ -22,14 +22,19 @@ if option_path
   options['default_file'] ||= option_path
 end
 
-if options['default_file'] && ! options['default_group']
-  options['default_group'] = 'client'
-end
-
 option_file = if options['default_file'] && File.exist?(options['default_file'])
    File.read(options['default_file'])
 else
   ""
+end
+
+if option_file && !options['default_group']
+  if option_file.include?("[client]")
+    options['default_group'] = 'client'
+  end
+  if option_file.include?("[mysql]")
+    options['default_group'] = 'mysql'
+  end
 end
 
 def require_option(parser, name)
