@@ -25,6 +25,10 @@ parser = OptionParser.new do |opts|
     options["unstaged"] = true
   end
 
+  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and branch") do |b|
+    options["branch"] = b
+  end
+
   opts.on("--last-explain", "Use the latest explain log in /tmp/") do
     options["file"] = Dir.glob("/tmp/shiba-explain*").sort.last
   end
@@ -47,16 +51,32 @@ when options["staged"]
 when options["unstaged"]
   ""
 else
-  " HEAD"
+  commit = " HEAD"
+  commit << "...#{options["branch"]}" if options["branch"]
+  commit
 end
-
-changes = `git diff#{cmd} --name-only`
 
 explains = options["file"]
 
 if explains.nil? || !File.exist?(explains)
   $stderr.puts "Specify an explain log, or run shiba explain to generate one."
-  puts parser.banner
+  $stderr.puts parser.banner
+  exit 1
+end
+
+if options['verbose']
+  puts cmd
+end
+
+changes = `git diff#{cmd} --name-only`
+if $?.exitstatus != 0
+  exit $?.exitstatus
+end
+
+# Seems like it would only happen in error, maybe not.
+if changes.empty?
+  $stderr.puts("No file changes found.")
+
   exit 1
 end
 
