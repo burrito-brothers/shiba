@@ -124,8 +124,7 @@ module Shiba
     end
 
     def fuzzed?(table)
-      true
-      #@statsShiba::Index.fuzzed?(first_table, @stats)
+      @stats.fuzzed?(first['table'])
     end
 
     def no_matching_row_in_const_table?

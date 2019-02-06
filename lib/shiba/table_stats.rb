@@ -18,6 +18,10 @@ module Shiba
       ask_each(:table_count, table)
     end
 
+    def fuzzed?(table)
+      !@dump_stats.tables[table] && !@manual_stats.tables[table]
+    end
+
     private
     def ask_each(method, *args)
       [@dump_stats, @db_stats].each do |stat|
