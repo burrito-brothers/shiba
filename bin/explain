@@ -15,12 +15,35 @@ parser = Shiba::Configure.make_options_parser(options)
 parser.banner = "Run a list of queries through shiba's analyzer."
 parser.parse!
 
-["database", "username"].each do |opt|
-  if !options[opt]
-    $stderr.puts "Required: #{opt}"
-    $stderr.puts parser.banner
-    exit 1
-  end
+option_path = Shiba::Configure.mysql_config_path
+
+if option_path
+  puts "Found config at #{option_path}" if options["verbose"]
+  options['default_file'] ||= option_path
+end
+
+if options['default_file'] && ! options['default_group']
+  options['default_group'] = 'client'
+end
+
+option_file = if options['default_file'] && File.exist?(options['default_file'])
+   File.read(options['default_file'])
+else
+  ""
+end
+
+def require_option(parser, name)
+  $stderr.puts "Required: #{name}"
+  $stderr.puts parser.banner
+  exit 1
+end
+
+if !options["username"] && !option_file.include?('user')
+  require_option(parser, 'username')
+end
+
+if !options["database"] && !option_file.include?('database')
+  require_option(parser, 'database')
 end
 
 file = options.delete("file")
@@ -58,23 +81,35 @@ else
   end
 end
 
+
+
 file = $stdin if file.nil?
-if output && options["verbose"]
-  $stderr.puts "Analyzing SQL to '#{options["explain"]}'..."
-end
 output = $stdout if output.nil?
 
+if options["verbose"]
+  $stderr.puts "Reading queries from '#{file.inspect}'..."
+  $stderr.puts "Analyzing SQL to '#{output.inspect}'..."
+end
+
 queries = Shiba::Analyzer.analyze(file, output, schema_stats, options)
+
 problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
 
 if problems.any?
-  puts "#{problems.size} problematic queries detected"
+  $stderr.puts "#{problems.size} problematic queries detected"
+
+  # Only generate web page if we're writing to a file.
+  # Should probably stop generating page in this script.
+  if output == $stdout
+    exit 3
+  end
+
   page = Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
   if !File.exist?(page)
     $stderr.puts("Failed to generate #{page}")
     exit 1
   end
 
-  puts "Report available at #{page}"
+  $stderr.puts "Report available at #{page}"
   exit 3
 end

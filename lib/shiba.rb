@@ -6,7 +6,7 @@ module Shiba
   class Error < StandardError; end
 
   def self.configure(options)
-    @connection_hash = options.select { |k, v| ['username', 'database', 'host', 'password'].include?(k) }
+    @connection_hash = options.select { |k, v| [ 'default_file', 'default_group', 'username', 'database', 'host', 'password'].include?(k) }
     @main_config = Configure.read_config_file(options['config'], "config/shiba.yml")
     @index_config = Configure.read_config_file(options['index'], "config/shiba_index.yml")
   end

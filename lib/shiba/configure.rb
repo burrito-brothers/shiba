@@ -27,6 +27,13 @@ module Shiba
       raise e, "Cannot load `#{path}`:\n#{e.message}", e.backtrace
     end
 
+    # loosely based on https://dev.mysql.com/doc/refman/8.0/en/option-files.html
+    def self.mysql_config_path
+      paths = [ File.join(Dir.home, '.mylogin.cnf'), File.join(Dir.home, '.my.cnf')  ]
+
+      paths.detect { |p| File.exist?(p) }
+    end
+
     def self.read_config_file(option_file, default)
       file_to_read = nil
       if option_file
@@ -100,6 +107,15 @@ module Shiba
 
         opts.on("-v", "--verbose", "print internal runtime information") do
            options["verbose"] = true
+        end
+
+        # This naming seems to be mysql convention, maybe we should just do our own thing though.
+        opts.on("--login-path", "The option group from the mysql config file to read from") do |f|
+          options["default_group"] = f
+        end
+
+        opts.on("--default-extras-file", "The option file to read mysql configuration from") do |f|
+          options["default_file"] = f
         end
       end
     end
