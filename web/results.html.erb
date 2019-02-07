@@ -57,7 +57,7 @@
           </div>
           <div class="col-5">{{ truncate(query.sql, 50) }}</div>
           <div class="col-3" v-html="makeURL(query.backtrace[0], shortLocation(query))"></div>
-          <div class="col-1">{{ severity(query) }}</div>
+          <div class="col-1">{{ query.severity }}</div>
         </div>
         <div class="row" v-if="expanded">
           <div class="col-12">
@@ -143,12 +143,6 @@
         expandToggle: function(event) {
           if (event) event.preventDefault()
           this.expanded = !this.expanded;
-        },
-        severity: function(query) {
-          if ( query.cost > 1 )
-            return "high";
-          else
-            return "low";
         },
         castNull: function (string) {
           if ( !string )
