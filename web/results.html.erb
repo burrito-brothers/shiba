@@ -41,11 +41,14 @@
 
         if ( !query.tags.includes("fuzzed_data") )
           query.costAvailable = true;
+
+        query.expandSelect = false;
       });
 
       queriesByTable = queriesByTable.sort(sortByTable);
       queriesByTableLow = queriesByTableLow.sort(sortByTable);
     </script>
+
     <script type="text/x-template" id="query-template">
       <div class="query">
         <div class="row">
@@ -62,7 +65,7 @@
         <div class="row" v-if="expanded">
           <div class="col-12">
             <div class="query-info-box">
-              <pre style="white-space: pre-wrap;">{{ query.sql }}</pre>
+              <query-sql v-bind:sql="query.sql"></query-sql>
               <div v-if="query.backtrace && query.backtrace.length > 0">
                 Stack Trace:<br>
                 <div class="backtrace">
@@ -84,7 +87,40 @@
         </div>
       </div>
     </script>
-
+    <script type="text/x-template" id="sql-template">
+      <div class="sql">
+        <span>{{ select }}</span>
+        <span v-if="!expandFields && fields.length > 80">
+          <a href="#" v-on:click.prevent="expandFields = !expandFields">...</a>
+        </span>
+        <span v-else>{{ fields }}</span>
+        <span>{{ rest }}</span>
+      </div>
+    </script>
+    <script>
+      Vue.component('query-sql', {
+        template: '#sql-template',
+        props: ['sql'],
+        data: function () {
+          return { expandFields: false }
+        },
+        computed: {
+          sqlFragments: function() {
+            var result = this.sql.match(/(SELECT\s)(.*?)(\s+FROM .*)/i);
+            return [result[1], result[2], result[3]];
+          },
+          select: function () {
+            return this.sqlFragments[0];
+          },
+          fields: function () {
+            return this.sqlFragments[1];
+          },
+          rest: function() {
+            return this.sqlFragments[2];
+          }
+        }
+      });
+    </script>
     <div id="app">
       <v-dialog :width="600"></v-dialog>
       <div class="container" style="">

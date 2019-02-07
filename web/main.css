@@ -12,6 +12,10 @@
   margin: 10px
 }
 
+.sql {
+  font-family: monospace;
+}
+
 .badge  {
   color: white;
   margin-right: 10px;
