@@ -26,6 +26,7 @@ module Shiba
         key: first_key,
         tags: messages,
         cost: @cost,
+        severity: severity,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
         backtrace: @backtrace
@@ -112,13 +113,6 @@ module Shiba
       first.merge(cost: cost, messages: messages)
     end
 
-    IGNORE_PATTERNS = [
-      /No tables used/,
-      /Impossible WHERE/,
-      /Select tables optimized away/,
-      /No matching min\/max row/
-    ]
-
     def table_size
       @stats.table_count(first['table'])
     end
@@ -132,7 +126,6 @@ module Shiba
     end
 
     def ignore_explain?
-      first_extra && IGNORE_PATTERNS.any? { |p| first_extra =~ p }
     end
 
     def derived?
@@ -144,6 +137,17 @@ module Shiba
       @rows.size == 1 && first['using_index'] && (@sql !~ /order by/i)
     end
 
+    def severity
+      case @cost
+      when 0..100
+        "low"
+      when 100..1000
+        "medium"
+      when 1000..1_000_000_000
+        "high"
+      end
+    end
+
     def limit
       if @sql =~ /limit\s*(\d+)\s*(offset \d+)?$/i
         $1.to_i
@@ -152,53 +156,100 @@ module Shiba
       end
     end
 
+    def self.check(c)
+      @checks ||= []
+      @checks << c
+    end
+
+    def self.get_checks
+      @checks
+    end
+
+    check :check_query_is_ignored
+    def check_query_is_ignored
+      if ignore?
+        messages << "ignored"
+        @cost = 0
+      end
+    end
+
+    check :check_no_matching_row_in_const_table
+    def check_no_matching_row_in_const_table
+      if no_matching_row_in_const_table?
+        messages << "access_type_const"
+        first['key'] = 'PRIMARY'
+        @cost = 1
+      end
+    end
+
+    IGNORE_PATTERNS = [
+      /No tables used/,
+      /Impossible WHERE/,
+      /Select tables optimized away/,
+      /No matching min\/max row/
+    ]
+
+    check :check_query_shortcircuits
+    def check_query_shortcircuits
+      if first_extra && IGNORE_PATTERNS.any? { |p| first_extra =~ p }
+        @cost = 0
+      end
+    end
+
+    check :check_fuzzed
+    def check_fuzzed
+      messages << "fuzzed_data" if fuzzed?(first_table)
+    end
+
+    check :check_simple_table_scan
+    def check_simple_table_scan
+      if simple_table_scan?
+        if limit
+          messages << 'limited_tablescan'
+          @cost = limit
+        else
+          tag_query_type
+          @cost = @stats.estimate_key(first_table, first_key, first['used_key_parts'])
+        end
+      end
+    end
+
+    check :check_derived
+    def check_derived
+      if derived?
+        # select count(*) from ( select 1 from foo where blah )
+        @rows.shift
+        return run_checks!
+      end
+    end
+
+
+    check :tag_query_type
     def tag_query_type
       access_type = first['access_type']
 
-      return unless access_type
+      if access_type.nil?
+        @cost = 0
+        return
+      end
+
       access_type = 'tablescan' if access_type == 'ALL'
       messages << "access_type_" + access_type
     end
 
-    def estimate_row_count
-      if no_matching_row_in_const_table?
-        messages << "access_type_const"
-        first['key'] = 'PRIMARY'
-        return 0
-      end
 
-      return 0 if ignore_explain?
-
-      messages << "fuzzed_data" if fuzzed?(first_table)
-
-      if simple_table_scan?
-        if limit
-          messages << 'limited_tablescan'
-          return limit
-        else
-          tag_query_type
-          return @stats.estimate_key(first_table, first_key, first['used_key_parts'])
-        end
-      end
-
-      if derived?
-        # select count(*) from ( select 1 from foo where blah )
-        @rows.shift
-        return estimate_row_count
-      end
-
-      tag_query_type
-
+    check :check_key_size
+    def check_key_size
       # TODO: if possible_keys but mysql chooses NULL, this could be a test-data issue,
       # pick the best key from the list of possibilities.
       #
       if first_key
-        @stats.estimate_key(first_table, first_key, first['used_key_parts'])
+        @cost = @stats.estimate_key(first_table, first_key, first['used_key_parts'])
       else
         if first['possible_keys'].nil?
           # if no possibile we're table scanning, use PRIMARY to indicate that cost.
           # note that this can be wildly inaccurate bcs of WHERE + LIMIT stuff.
-          table_size
+          @cost = table_size
         else
           if @options[:force_key]
             # we were asked to force a key, but mysql still told us to fuck ourselves.
@@ -206,20 +257,21 @@ module Shiba
             #
             # there seems to be cases where mysql lists `possible_key` values
             # that it then cannot use, seen this in OR queries.
-            return table_size
+            @cost = table_size
+          else
+            possibilities = [table_size]
+            possibilities += first['possible_keys'].map do |key|
+              estimate_row_count_with_key(key)
+            end
+            @cost = possibilities.compact.min
           end
-
-          possibilities = [table_size]
-          possibilities += first['possible_keys'].map do |key|
-            estimate_row_count_with_key(key)
-          end
-          possibilities.compact.min
         end
       end
     end
 
     def estimate_row_count_with_key(key)
-      Explain.new(@sql, @stats, @backtrace, force_key: key).estimate_row_count
+      explain = Explain.new(@sql, @stats, @backtrace, force_key: key)
+      explain.run_checks!
     rescue Mysql2::Error => e
       if /Key .+? doesn't exist in table/ =~ e.message
         return nil
@@ -248,13 +300,11 @@ module Shiba
     end
 
     def run_checks!
-      if ignore?
-        @cost = 0
-        messages << "ignored"
-        return
+      self.class.get_checks.each do |check|
+        res = send(check)
+        break if @cost
       end
-
-      @cost = estimate_row_count
+      @cost
     end
   end
 end
