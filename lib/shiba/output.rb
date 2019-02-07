@@ -1,15 +1,14 @@
 require 'yaml'
 require 'json'
 require 'fileutils'
+require 'tmpdir'
 require 'erb'
 
 module Shiba
   class Output
-    OUTPUT_PATH = "/tmp/shiba_results"
-
-    WEB_PATH = File.dirname(__FILE__) + "/../../web"
+    WEB_PATH = File.join(File.dirname(__FILE__), "..", "..", "web")
     def self.tags
-      @tags ||= YAML.load_file(File.dirname(__FILE__) + "/output/tags.yaml")
+      @tags ||= YAML.load_file(File.join(File.dirname(__FILE__), "output", "tags.yaml"))
     end
 
     def initialize(queries, options = {})
@@ -17,10 +16,22 @@ module Shiba
       @options = options
     end
 
+    def default_filename
+      "shiba_results-#{Time.now.to_i}.html"
+    end
+
+    def logdir
+      File.join(Dir.pwd, "log")
+    end
+
     def output_path
-      path ||= File.join(@options['output'], "shiba_results") if @options['output']
-      path ||= Dir.pwd + "/log/shiba_results" if File.exist?(Dir.pwd + "/log")
-      path ||= OUTPUT_PATH
+      return @options['output'] if @options['output']
+      if File.exist?(logdir)
+        FileUtils.mkdir_p(File.join(logdir, "shiba_results"))
+        File.join(Dir.pwd, "log", "shiba_results", default_filename)
+      else
+        File.join(Dir.tmpdir, default_filename)
+      end
     end
 
     def js_path
@@ -38,8 +49,8 @@ module Shiba
     end
 
     def make_web!
-      js  = Dir.glob(WEB_PATH + "/dist/*.js")
-      css = Dir.glob(WEB_PATH + "/*.css")
+      js  = Dir.glob(File.join(WEB_PATH, "dist", "*.js"))
+      css = Dir.glob(File.join(WEB_PATH, "*.css"))
 
       data = {
         js: js,
@@ -49,15 +60,12 @@ module Shiba
         url: remote_url
       }
 
-      system("cp #{WEB_PATH}/*.css #{output_path}")
-
-      erb = ERB.new(File.read(WEB_PATH + "/../web/results.html.erb"))
-      File.open(output_path + "/results.html", "w+") do |f|
+      erb = ERB.new(File.read(File.join(WEB_PATH, "..", "web", "results.html.erb")))
+      File.open(output_path, "w+") do |f|
         f.write(erb.result(binding))
       end
 
-
-      "#{output_path}/results.html"
+      output_path
     end
   end
 end

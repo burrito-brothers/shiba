@@ -85,20 +85,16 @@ module Shiba
           options["limit"] = l.to_i
         end
 
-        opts.on("-s","--stats FILES", "location of index statistics tsv file") do |f|
-          options["stats"] = f
-        end
-
         opts.on("-f", "--file FILE", "location of file containing queries") do |f|
           options["file"] = f
         end
 
-        opts.on("-e", "--explain FILE", "write explain JSON to file. default: stdout") do |f|
-          options["explain"] = f
+        opts.on("-j", "--json_output FILE", "write JSON report here. default: stdout") do |f|
+          options["json_output"] = f
         end
 
-        opts.on("-o", "--output PATH", "path to put generated report in.  default: /tmp") do |p|
-          options["output"] = p
+        opts.on("-h", "--html_output FILE", "write html report here.") do |h|
+          options["html_output"] = h
         end
 
         opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|

@@ -54,7 +54,7 @@ end
 file = options.delete("file")
 file = File.open(file, "r") if file
 
-output = options.delete("explain")
+output = options.delete("json_output")
 output = File.open(output, 'w') if output
 
 Shiba.configure(options)
@@ -88,7 +88,8 @@ if problems.any?
     exit 3
   end
 
-  page = Shiba::Output.new(queries, { 'output' => options['output'] }).make_web!
+  page = Shiba::Output.new(queries, { 'output' => options['html_output'] }).make_web!
+
   if !File.exist?(page)
     $stderr.puts("Failed to generate #{page}")
     exit 1
