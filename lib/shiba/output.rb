@@ -38,15 +38,12 @@ module Shiba
     end
 
     def make_web!
-      FileUtils.mkdir_p(js_path)
-
-      js = Dir.glob(WEB_PATH + "/dist/*.js").map { |f| File.basename(f) }
-      js.each do |f|
-        system("cp #{WEB_PATH}/dist/#{f} #{js_path}")
-      end
+      js  = Dir.glob(WEB_PATH + "/dist/*.js")
+      css = Dir.glob(WEB_PATH + "/*.css")
 
       data = {
         js: js,
+        css: css,
         queries: @queries,
         tags: self.class.tags,
         url: remote_url

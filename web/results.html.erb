@@ -1,14 +1,21 @@
 <html>
   <head>
     <title>Shiba results for <%= Time.now %></title>
-    <% data[:js].each do |js| %>
-      <script type="text/javascript" src="./js/<%= js %>"></script>
-    <% end %>
-    <link rel="stylesheet" href="bootstrap.min.css">
-    <link rel="stylesheet" href="main.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
   </head>
   <body>
+    <% data[:js].each do |js| %>
+    <script type="text/javascript">
+      <%= File.read(js) %>
+    </script>
+    <% end %>
+
+    <% data[:css].each do |css| %>
+      <style type="text/css">
+        <%= File.read(css) %>
+      </style>
+    <% end %>
+
     <script language="javascript">
       var data = <%= data.to_json %>;
       var queriesByTable = [];
