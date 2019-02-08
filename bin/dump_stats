@@ -1,9 +1,16 @@
 #!/bin/bash
 
+case "$1" in
+  -t|--tables)
+    TABLES=$(echo "$2" | tr -d ' ' | tr ',' '\n')
+    shift 2
+    ;;
+esac
+
 DATABASE=$1
 if [ -z "$DATABASE" ]
 then
-  echo "usage: dump_stats DATABASE [ ...mysql_args]"
+  echo "usage: dump_stats -tables [table1,table2...] DATABASE [ ...mysql_args]"
   exit 1
 fi
 
@@ -16,5 +23,16 @@ shift
 MYSQL_STATS=`mktemp`
 mysql $* -ABe "select * from information_schema.statistics where table_schema = '$DATABASE'" > $MYSQL_STATS
 
-bundle exec ruby -e "require 'shiba/index'; puts Shiba::Index.parse('$MYSQL_STATS').to_yaml"
+if [ "$TABLES" ]
+then
+  filtered=`mktemp`
+  head -n 1 $MYSQL_STATS >> $filtered
+  for t in $TABLES
+  do
+    awk -v tbl=$t '{ if ($3 == tbl) print $0 }' $MYSQL_STATS >> $filtered
+  done
 
+  MYSQL_STATS=$filtered
+fi
+
+bundle exec ruby -e "require 'shiba/index'; puts Shiba::Index.parse('$MYSQL_STATS').to_yaml"
