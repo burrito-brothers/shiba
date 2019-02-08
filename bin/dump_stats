@@ -1,0 +1,20 @@
+#!/bin/bash
+
+DATABASE=$1
+if [ -z "$DATABASE" ]
+then
+  echo "usage: dump_stats DATABASE [ ...mysql_args]"
+  exit 1
+fi
+
+shift
+
+#for x in `mysql $* -NABe "show tables from $DATABASE"` ; do
+#  mysql $* -e "ANALYZE TABLE $DATABASE.$x" >/dev/null 2>&1
+#done
+
+MYSQL_STATS=`mktemp`
+mysql $* -ABe "select * from information_schema.statistics where table_schema = '$DATABASE'" > $MYSQL_STATS
+
+bundle exec ruby -e "require 'shiba/index'; puts Shiba::Index.parse('$MYSQL_STATS').to_yaml"
+
