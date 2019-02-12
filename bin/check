@@ -59,9 +59,7 @@ if result.problems
   $stderr.puts("")
 
   result.problems.each do |problem|
-    sql = problem["sql"]
-    sql.sub!(/select .*? where/i, '')
-    line =  "#{File.basename(problem["backtrace"].first)}\t#{sql}"
+    line =  "#{File.basename(problem["backtrace"].first)}\t#{problem["cost"]}"
     if line.length > 80
       line = line[0,80]
     end
