@@ -12,7 +12,7 @@ module Shiba
       end
 
       caller_locations(app_line_idx+1, 8).map do |loc|
-        clean(loc.to_s)
+        clean!(loc.to_s)
       end
     end
 
