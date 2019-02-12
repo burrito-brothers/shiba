@@ -50,7 +50,6 @@ module Shiba
 
     def backtrace_has_updated_line?(backtrace, updates)
       backtrace.any? do |bl|
-        bl.slice!(0) # remove leading /
         updates.any? do |path, lines|
           next if !bl.start_with?(path)
           bl =~ /:(\d+):/
