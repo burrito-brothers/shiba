@@ -17,7 +17,7 @@ module Shiba
     end
 
     def default_filename
-      "shiba_results-#{Time.now.to_i}.html"
+      @default_filename ||= "shiba_results-#{Time.now.to_i}.html"
     end
 
     def logdir
