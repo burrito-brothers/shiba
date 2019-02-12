@@ -1,19 +1,14 @@
 #!/usr/bin/env ruby
 
 require 'bundler/setup'
-require 'json'
-
 require 'optionparser'
-
-#git diff --name-only --cached
+require 'shiba/checker'
 
 MAGIC_COST = 100
 
 options = {}
 parser = OptionParser.new do |opts|
-  # note that the key to the hash needs to stay the same as the
-  # option name since we re-pass them
-  opts.on("-f","--file FILE", "Explain output log to compare against") do |f|
+  opts.on("-f","--file FILE", "The explain output log to compare with") do |f|
     options["file"] = f
   end
 
@@ -25,12 +20,8 @@ parser = OptionParser.new do |opts|
     options["unstaged"] = true
   end
 
-  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and branch") do |b|
+  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and BRANCH") do |b|
     options["branch"] = b
-  end
-
-  opts.on("--last-explain", "Use the latest explain log in /tmp/") do
-    options["file"] = Dir.glob("/tmp/shiba-explain*").sort.last
   end
 
   opts.on("--verbose", "Verbose/debug mode") do
@@ -45,68 +36,42 @@ if options["staged"] && options["unstaged"]
   options.delete("unstaged")
 end
 
-cmd = case
-when options["staged"]
-  " --staged"
-when options["unstaged"]
-  ""
-else
-  commit = " HEAD"
-  commit << "...#{options["branch"]}" if options["branch"]
-  commit
-end
-
 explains = options["file"]
 
-if explains.nil? || !File.exist?(explains)
-  $stderr.puts "Specify an explain log, or run shiba explain to generate one."
+if explains.nil?
+  $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
   $stderr.puts parser.banner
   exit 1
 end
 
-if options['verbose']
-  puts cmd
-end
-
-changes = `git diff#{cmd} --name-only --diff-filter=d`
-if $?.exitstatus != 0
-  exit $?.exitstatus
-end
-
-# Seems like it would only happen in error, maybe not.
-if changes.empty?
-  $stderr.puts("No file changes found.")
-
+if !File.exist?(explains)
+  $stderr.puts "File not found: '#{explains}'"
   exit 1
 end
 
-patterns = changes.split("\n").map { |path| "-e #{path}" }.join(" ")
-json_lines = `grep #{explains} #{patterns}`
-explains = json_lines.each_line.map do |line|
-  JSON.parse(line)
+result = Shiba::Checker.new(options).run(explains)
+
+if result.message
+  puts result.message
 end
 
-problems = explains.select { |explain| explain["cost"] && explain["cost"] > MAGIC_COST }
+if result.problems
+  $stderr.puts("")
 
-problem_lines = problems.map {|p| [ p["backtrace"].first, p["sql"] ] }
-
-# TODO:
-# 1. only fail when the line itself intersects with a diff
-# 2. print the first file:line that failed
-if problem_lines.empty?
-  exit
-end
-
-$stderr.puts("Potential problems:")
-$stderr.puts("")
-problem_lines.each do |problem|
-  sql = problem[1]
-  sql.sub!(/select .*? where/i, '')
-  line =  "#{File.basename(problem[0])}\t#{sql}"
-  if line.length > 80
-    line = line[0,80]
+  result.problems.each do |problem|
+    sql = problem["sql"]
+    sql.sub!(/select .*? where/i, '')
+    line =  "#{File.basename(problem["backtrace"].first)}\t#{sql}"
+    if line.length > 80
+      line = line[0,80]
+    end
+    puts line
   end
-  puts line
 end
 
-exit 3
+code = case result.status
+when :pass then 0
+when :fail then 3
+end
+
+exit code

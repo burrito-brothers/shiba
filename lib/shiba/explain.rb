@@ -308,4 +308,3 @@ module Shiba
     end
   end
 end
-
