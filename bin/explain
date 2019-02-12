@@ -28,6 +28,17 @@ else
   ""
 end
 
+if options['json'] && options['html']
+  $stderr.puts "Can only output to json or html, not both"
+  $stderr.puts parser.banner
+  exit 1
+end
+
+# Default to html
+if !options['json'] && !options['html']
+  options['html'] = '/tmp/explain.html'
+end
+
 if option_file && !options['default_group']
   if option_file.include?("[client]")
     options['default_group'] = 'client'
@@ -54,9 +65,6 @@ end
 file = options.delete("file")
 file = File.open(file, "r") if file
 
-output = options.delete("json_output")
-output = File.open(output, 'w') if output
-
 Shiba.configure(options)
 
 schema_stats_fname = options["stats"]
@@ -67,7 +75,8 @@ if schema_stats_fname && !File.exist?(schema_stats_fname)
 end
 
 file = $stdin if file.nil?
-output = $stdout if output.nil?
+json = options['json']
+json = File.open('/dev/null', 'w') if json.nil?
 
 if options["verbose"]
   $stderr.puts "Reading queries from '#{file.inspect}'..."
@@ -75,7 +84,7 @@ if options["verbose"]
 end
 
 table_stats = Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})
-queries = Shiba::Analyzer.analyze(file, output, table_stats, options)
+queries = Shiba::Analyzer.analyze(file, json, table_stats, options)
 
 problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
 
@@ -84,11 +93,11 @@ if problems.any?
 
   # Only generate web page if we're writing to a file.
   # Should probably stop generating page in this script.
-  if output == $stdout
+  if !options['html']
     exit 3
   end
 
-  page = Shiba::Output.new(queries, { 'output' => options['html_output'] }).make_web!
+  page = Shiba::Output.new(queries, { 'output' => options['html'] }).make_web!
 
   if !File.exist?(page)
     $stderr.puts("Failed to generate #{page}")

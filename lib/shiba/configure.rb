@@ -89,12 +89,16 @@ module Shiba
           options["file"] = f
         end
 
-        opts.on("-j", "--json_output FILE", "write JSON report here. default: stdout") do |f|
-          options["json_output"] = f
+        opts.on("-j", "--json [FILE]", "write JSON report here. default: to stdout") do |f|
+          if f
+            options["json"] = File.open(f, 'w')
+          else
+            options["json"] = $stdout
+          end
         end
 
-        opts.on("-h", "--html_output FILE", "write html report here.") do |h|
-          options["html_output"] = h
+        opts.on("-h", "--html FILE", "write html report here. Default to /tmp/explain.html") do |h|
+          options["html"] = h
         end
 
         opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
