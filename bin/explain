@@ -34,11 +34,6 @@ if options['json'] && options['html']
   exit 1
 end
 
-# Default to html
-if !options['json'] && !options['html']
-  options['html'] = '/tmp/explain.html'
-end
-
 if option_file && !options['default_group']
   if option_file.include?("[client]")
     options['default_group'] = 'client'
@@ -91,9 +86,7 @@ problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
 if problems.any?
   $stderr.puts "#{problems.size} problematic queries detected"
 
-  # Only generate web page if we're writing to a file.
-  # Should probably stop generating page in this script.
-  if !options['html']
+  if options['json']
     exit 3
   end
 
