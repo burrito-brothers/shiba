@@ -11,10 +11,12 @@ if it's a test-data issue.
 
 Add "ignore me" button next to query to show how to block stuff.
 Add link to some documentation about how to get real stats.  Write said docs.
-high/medium/low/constant queries
 
-# example
+# Explain Stuff
+
 Add index-walk detection
 Add filesort badge
+Postgres!
+
 
 

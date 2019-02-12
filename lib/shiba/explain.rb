@@ -13,8 +13,8 @@ module Shiba
 
       @options = options
       ex = Shiba.connection.query("EXPLAIN FORMAT=JSON #{@sql}").to_a
-      json = JSON.parse(ex.first['EXPLAIN'])
-      @rows = self.class.transform_json(json['query_block'])
+      @explain_json = JSON.parse(ex.first['EXPLAIN'])
+      @rows = self.class.transform_json(@explain_json['query_block'])
       @stats = stats
       run_checks!
     end
@@ -44,7 +44,7 @@ module Shiba
       table
     end
 
-    def self.transform_table(table)
+    def self.transform_table(table, extra = {})
       t = table
       res = {}
       res['table'] = t['table_name']
@@ -58,24 +58,28 @@ module Shiba
         res['possible_keys'] = t['possible_keys']
       end
       res['using_index'] = t['using_index'] if t['using_index']
+
+      res.merge!(extra)
+
       res
     end
 
-    def self.transform_json(json, res = [])
+    def self.transform_json(json, res = [], extra = {})
       rows = []
 
-      if json['ordering_operation']
-        return transform_json(json['ordering_operation'])
+      if (ordering = json['ordering_operation'])
+        index_walk = (ordering['using_filesort'] == false)
+        return transform_json(json['ordering_operation'], res, { "index_walk" => index_walk } )
       elsif json['duplicates_removal']
-        return transform_json(json['duplicates_removal'])
+        return transform_json(json['duplicates_removal'], res, extra)
       elsif !json['nested_loop'] && !json['table']
         return [{'Extra' => json['message']}]
       elsif json['nested_loop']
         json['nested_loop'].map do |nested|
-          transform_json(nested, res)
+          transform_json(nested, res, extra)
         end
       elsif json['table']
-        res << transform_table(json['table'])
+        res << transform_table(json['table'], extra)
       end
       res
     end
@@ -237,6 +241,15 @@ module Shiba
       messages << "access_type_" + access_type
     end
 
+    #check :check_index_walk
+    # disabling this one for now, it's not quite good enough and has a high
+    # false-negative rate.
+    def check_index_walk
+      if first['index_walk']
+        @cost = limit
+        messages << 'index_walk'
+      end
+    end
 
     check :check_key_size
     def check_key_size
@@ -298,6 +311,7 @@ module Shiba
       end
       nil
     end
+
 
     def run_checks!
       self.class.get_checks.each do |check|

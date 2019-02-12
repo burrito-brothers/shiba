@@ -47,3 +47,10 @@ ignored:
   description: |
     This query matched an "ignore" rule in shiba.yml, so we skipped any further analysis on it.
   level: info
+index_walk:
+  title: Index Walk
+  description: |
+    This query is sorted in the same order as the index used, which means that the server
+    can read the index and simply pluck {LIMIT} rows out of the index.  It's a very
+    fast way to look up stuff by index.
+  level: success
