@@ -13,8 +13,15 @@ Full explain, JSON.
 Move Tags inline with relevant info
 Fuzzed Data call to action
 
+SQL Query -> where clause
+throw tags in
+
 Add "ignore me" button next to query to show how to block stuff.
 Add link to some documentation about how to get real stats.  Write said docs.
+
+# Fuzzer
+
+see how feasible a basic-ass cardinality estimator would be
 
 # Docs
 
