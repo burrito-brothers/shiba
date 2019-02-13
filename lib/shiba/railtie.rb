@@ -5,20 +5,26 @@ class Shiba::Railtie < Rails::Railtie
   #  1. SHIBA_OUT environment variable is set to an existing file path.
   #  2. RSpec/MiniTest exists, in which case a fallback query log is generated at /tmp
   config.after_initialize do
-    path = ENV['SHIBA_OUT'] || "/tmp/shiba-query.log-#{Time.now.to_i}"
+    begin
+      path = ENV['SHIBA_OUT'] || "/tmp/shiba-query.log-#{Time.now.to_i}"
+      f = File.open(path, 'a')
+      watcher = Shiba::QueryWatcher.watch(f)
+      next if watcher.nil?
 
-    watcher = watch(path)
-    next if watcher.nil?
-
-    at_exit do
-      puts ""
-      explain_path = "/tmp/shiba-explain.log-#{Time.now.to_i}"
-      cmd = "shiba explain #{database_args} --file #{path} --json_output #{explain_path}"
-      if ENV['SHIBA_DEBUG']
-        $stderr.puts("running:")
-        $stderr.puts(cmd)
+      at_exit do
+        f.close
+        puts ""
+        cmd = "shiba explain #{database_args} --file #{path}"
+        if ENV['SHIBA_DEBUG']
+          $stderr.puts("running:")
+          $stderr.puts(cmd)
+        end
+        system(cmd)
       end
-      system(cmd)
+
+    rescue => e
+      $stderr.puts("Shiba failed to load")
+      $stderr.puts(e.message, e.backtrace.join("\n"))
     end
   end
 
@@ -32,14 +38,6 @@ class Shiba::Railtie < Rails::Railtie
     }
 
     options.reject { |k,v| v.nil? }.map { |k,v| "--#{k} #{v}" }.join(" ")
-  end
-
-  def self.watch(path)
-    f = File.open(path, 'a')
-    Shiba::QueryWatcher.watch(f)
-  rescue => e
-    $stderr.puts("Shiba failed to load")
-    $stderr.puts(e.message, e.backtrace.join("\n"))
   end
 
 end
