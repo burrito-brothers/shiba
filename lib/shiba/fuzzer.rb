@@ -2,6 +2,7 @@ require 'shiba/index_stats'
 
 module Shiba
   class Fuzzer
+
     def initialize(connection)
       @connection = connection
       @index_stats = IndexStats.new
@@ -24,7 +25,9 @@ module Shiba
     end
 
     private
-    STANDARD_FUZZ_SIZE = 5_000
+
+    BIG_FUZZ_SIZE   = 5_000
+    SMALL_FUZZ_SIZE = 100
 
     def fetch_index!
       records = connection.query("select * from information_schema.statistics where table_schema = DATABASE()")
@@ -36,7 +39,6 @@ module Shiba
       end
     end
 
-
     # Create fake table sizes based on the table's index count.
     # The more indexes, the bigger the table. Seems to rank tables fairly well.
     def guess_table_sizes
@@ -47,9 +49,9 @@ module Shiba
 
       index_counts = connection.query(index_count_query).to_a
 
-      # 80th table percentile based on number of indexes
-      large_table_idx = (index_counts.size * 0.8).round
-      large_table = index_counts[large_table_idx]
+      # 90th table percentile based on number of indexes
+      large_table_idx = (index_counts.size * 0.9).round
+      large_table_index_count = index_counts[large_table_idx]["index_count"].to_f
 
       sizes = Hash[index_counts.map(&:values)]
 
@@ -58,7 +60,14 @@ module Shiba
           index_count = 1
         end
 
-        sizes[table_name] = STANDARD_FUZZ_SIZE * (index_count / large_table['index_count'].to_f)
+        size = sizes[table_name]
+        # Big
+        if size >= large_table_index_count
+          sizes[table_name] = BIG_FUZZ_SIZE
+        else
+        #small
+          sizes[table_name] = SMALL_FUZZ_SIZE
+        end
       end
 
       sizes
