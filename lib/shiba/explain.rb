@@ -29,6 +29,7 @@ module Shiba
         severity: severity,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
+        raw_explain: @explain_json,
         backtrace: @backtrace
       }
     end

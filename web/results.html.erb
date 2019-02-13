@@ -88,11 +88,19 @@
                 href="#"
                 v-bind:class="tagClass(tag)"
                 v-on:click="expandInfo(tag, $event)">{{ tagTitle(tag) }}</a>
+              <div v-if="!rawExpanded">
+                <a href="#" v-on:click.prevent="rawExpanded = !rawExpanded">See full EXPLAIN</a>
+              </div>
+              <div v-else>
+                <a href="#" v-on:click.prevent="rawExpanded = !rawExpanded">hide EXPLAIN</a>
+                <pre class="backtrace">{{  JSON.stringify(query.raw_explain, null, 2) }}</pre>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </script>
+
     <script type="text/x-template" id="sql-template">
       <div class="sql">
         <span>{{ select }}</span>
@@ -103,6 +111,7 @@
         <span>{{ rest }}</span>
       </div>
     </script>
+
     <script>
       Vue.component('query-sql', {
         template: '#sql-template',
@@ -159,7 +168,8 @@
       props: ['query', 'tags', 'github'],
       data: function () {
         return {
-          expanded: false
+          expanded: false,
+          rawExpanded: false
         };
       },
       methods: {
