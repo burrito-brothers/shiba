@@ -9,8 +9,17 @@ if it's a test-data issue.
 
 # UI
 
+Full explain, JSON.
+Move Tags inline with relevant info
+Fuzzed Data call to action
+
 Add "ignore me" button next to query to show how to block stuff.
 Add link to some documentation about how to get real stats.  Write said docs.
+
+# Docs
+
+- main docs (readme.md)
+- link from call to acion about fuzzed data
 
 # Explain Stuff
 
