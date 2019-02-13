@@ -20,6 +20,7 @@
       var data = <%= data.to_json %>;
       var queriesByTable = [];
       var queriesByTableLow = [];
+      var queriesHaveFuzzed = false;
       var severityIndexes = { high: 1, medium: 2, low: 3 };
 
 
@@ -46,6 +47,8 @@
 
         if ( !query.tags.includes("fuzzed_data") )
           query.costAvailable = true;
+        else
+          queriesHaveFuzzed = true;
 
         query.expandSelect = false;
       });
@@ -140,6 +143,11 @@
       <v-dialog :width="600"></v-dialog>
       <div class="container" style="">
         <div class="row">
+          <div v-if="hasFuzzed" class="alert alert-warning" role="alert">
+            This query analysis was generated using estimated table sizes.
+            <a href="https://github.com/burito-brothers/shiba">Find out how to get a more accurate analysis by feeding Shiba index stats</a>
+          </div>
+
           <div class="col-12">We found {{ queries.length }} queries that deserve your attention: </div>
         </div>
         <div class="row">
@@ -244,7 +252,8 @@
         queries: queriesByTable,
         queriesLow: queriesByTableLow,
         tags: data.tags,
-        lowExpanded: false
+        lowExpanded: false,
+        hasFuzzed: queriesHaveFuzzed
       },
       methods: { }
     });

@@ -29,7 +29,7 @@ module Shiba
         severity: severity,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
-        raw_explain: @explain_json,
+        raw_explain: humanized_explain,
         backtrace: @backtrace
       }
     end
@@ -73,6 +73,8 @@ module Shiba
         return transform_json(json['ordering_operation'], res, { "index_walk" => index_walk } )
       elsif json['duplicates_removal']
         return transform_json(json['duplicates_removal'], res, extra)
+      elsif json['grouping_operation']
+        return transform_json(json['grouping_operation'], res, extra)
       elsif !json['nested_loop'] && !json['table']
         return [{'Extra' => json['message']}]
       elsif json['nested_loop']
@@ -320,6 +322,12 @@ module Shiba
         break if @cost
       end
       @cost
+    end
+
+    def humanized_explain
+      h = @explain_json['query_block'].dup
+      %w(select_id cost_info).each { |i| h.delete(i) }
+      h
     end
   end
 end

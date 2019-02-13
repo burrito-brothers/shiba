@@ -19,7 +19,7 @@ module Shiba
     end
 
     def fuzzed?(table)
-      !@dump_stats.tables[table] && !@manual_stats.tables[table]
+      !@dump_stats.tables[table] && !@manual_stats.tables[table] && @db_stats.tables[table]
     end
 
     private
