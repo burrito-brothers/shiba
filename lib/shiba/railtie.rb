@@ -5,13 +5,7 @@ class Shiba::Railtie < Rails::Railtie
   #  1. SHIBA_OUT environment variable is set to an existing file path.
   #  2. RSpec/MiniTest exists, in which case a fallback query log is generated at /tmp
   config.after_initialize do
-    path = ENV['SHIBA_OUT']
-
-    if test_runners_defined?
-      path ||= "/tmp/shiba-query.log-#{Time.now.to_i}"
-    end
-
-    next if path.nil?
+    path = ENV['SHIBA_OUT'] || "/tmp/shiba-query.log-#{Time.now.to_i}"
 
     watcher = watch(path)
     next if watcher.nil?
@@ -38,10 +32,6 @@ class Shiba::Railtie < Rails::Railtie
     }
 
     options.reject { |k,v| v.nil? }.map { |k,v| "--#{k} #{v}" }.join(" ")
-  end
-
-  def self.test_runners_defined?
-    defined?(RSpec.configure) || defined?(MiniTest) || defined?(Test::Unit)
   end
 
   def self.watch(path)
