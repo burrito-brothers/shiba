@@ -84,7 +84,8 @@ queries = Shiba::Analyzer.analyze(file, json, table_stats, options)
 problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
 
 if problems.any?
-  $stderr.puts "#{problems.size} problematic queries detected"
+  query_word = problems.size == 1 ? 'query' : 'queries'
+  $stderr.puts "#{problems.size} problematic #{query_word} detected"
 
   if options['json']
     exit 3
