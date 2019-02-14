@@ -26,6 +26,54 @@ rails test test/controllers/users_controller_test.rb
 # Report available at /tmp/shiba-explain.log-1550099512
 ```
 
+## Typical query problems
+
+Here are some typical query problems Shiba can detect. We'll assume the following schema:
+
+```
+create_table :users do |t|
+  t.string :name
+  t.string :email
+  # add an organization_id column with an index
+  t.references :organization, index: true
+
+  t.timestamps
+end
+```
+
+### Full table scans
+
+The most simple case to detect are queries that don't utilize indexes. While it isn't a problem to scan small tables, often tables will grow large enough where this can become a serious issue.
+
+```
+user = User.where(email: 'squirrel@example.com').limit(1)
+```
+
+Becomes
+```
+select * from users where email = 'squirrel@example.com' limit 1
+```
+
+Without an index, the database will read every row in the table until it finds one with an email address that matches. By adding an index, the database can perform a quick lookup for the record.
+
+### Non selective indexes
+
+Another common case is queries that use an index, and work fine in the average case, but the distribution is non normal. These issues can be hard to track down and often impact large customers.
+
+```
+users = User.where(organization_id: 1)
+users.size
+# => 75
+
+users = User.where(organization_id: 42)
+users.size
+# => 52,000
+```
+
+Normally a query like this would only become a problem as the app grows in popularity. Fixes include adding `limit` or `find_each`.
+
+With more data, Shiba can help detect this issue when it appears in a pull request.
+
 ## Going beyond table scans
 
 For smarter analysis, Shiba requires general statistics about production data, such as the number of rows in a table and how unique columns are.
