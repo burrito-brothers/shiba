@@ -8,7 +8,7 @@ To help find such queries, Shiba monitors test runs for ActiveRecord queries. A 
 
 Install using bundler. Note: this gem is not designed to be run on production.
 
-```
+```ruby
 gem 'shiba', :group => :test, :require => true
 ```
 
@@ -30,7 +30,7 @@ rails test test/controllers/users_controller_test.rb
 
 Here are some typical query problems Shiba can detect. We'll assume the following schema:
 
-```
+```ruby
 create_table :users do |t|
   t.string :name
   t.string :email
@@ -41,26 +41,26 @@ create_table :users do |t|
 end
 ```
 
-### Full table scans
+#### Full table scans
 
 The most simple case to detect are queries that don't utilize indexes. While it isn't a problem to scan small tables, often tables will grow large enough where this can become a serious issue.
 
-```
+```ruby
 user = User.where(email: 'squirrel@example.com').limit(1)
 ```
 
 Becomes
-```
+```sql
 select * from users where email = 'squirrel@example.com' limit 1
 ```
 
 Without an index, the database will read every row in the table until it finds one with an email address that matches. By adding an index, the database can perform a quick lookup for the record.
 
-### Non selective indexes
+#### Non selective indexes
 
 Another common case is queries that use an index, and work fine in the average case, but the distribution is non normal. These issues can be hard to track down and often impact large customers.
 
-```
+```ruby
 users = User.where(organization_id: 1)
 users.size
 # => 75
@@ -80,16 +80,19 @@ For smarter analysis, Shiba requires general statistics about production data, s
 
 This information can be obtained by running the bin/dump_stats command in production.
 
-```
-production_host: git clone https://github.com/burrito-brothers/shiba.git
-production_host: cd shiba ; bundle
-production_host: bin/dump_stats DATABASE_NAME [MYSQLOPTS] > ~/shiba_index.yml
-local: scp production_host:~/shiba_index.yml MYPROJECT/config
+```console
+production$ 
+git clone https://github.com/burrito-brothers/shiba.git
+cd shiba ; bundle
+bin/dump_stats DATABASE_NAME [MYSQLOPTS] > ~/shiba_index.yml
+
+local$
+scp production:~/shiba_index.yml RAILS_PROJECT/config
 ```
 
 The stats file will look similar to the following:
 
-```
+```yaml
 users:
   count: 10000
   indexes:
