@@ -6,7 +6,6 @@ SELECT COUNT(*) AS count_all, group_id AS group_id FROM `users` INNER JOIN `grou
 
 # UI
 
-Move Tags inline with relevant info
 SQL Query -> where clause
 throw tags in
 

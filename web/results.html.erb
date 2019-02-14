@@ -23,7 +23,6 @@
       var queriesHaveFuzzed = false;
       var severityIndexes = { high: 1, medium: 2, low: 3 };
 
-
       function sortByFunc(fields) {
         return function(a, b) {
           for ( var i = 0 ; i < fields.length; i++ ) {
@@ -36,21 +35,43 @@
         }
       }
 
-      data.queries.forEach(function(query) {
-        query.severityIndex = severityIndexes[query.severity];
+      function Query(obj) {
+        Object.assign(this, obj);
+        this.severityIndex = severityIndexes[this.severity];
+        this.splitSQL();
+      };
 
-        if ( query.cost < 100 ) {
-          queriesByTableLow.push(query);
+      Query.prototype = {
+        hasTag: function(tag) {
+          this.tags.includes(tag);
+        },
+        splitSQL: function() {
+          this.sqlFragments = this.sql.match(/(SELECT\s)(.*?)(\s+FROM .*)/i);
+        },
+        select: function () {
+          return this.sqlFragments[1];
+        },
+        fields: function () {
+          return this.sqlFragments[2];
+        },
+        rest: function(index) {
+          return this.sqlFragments.slice(index).join();
+        }
+      };
+
+      data.queries.forEach(function(query) {
+        var q = new Query(query);
+
+        if ( q.cost < 100 ) {
+          queriesByTableLow.push(q);
         } else {
-          queriesByTable.push(query);
+          queriesByTable.push(q);
         }
 
-        if ( !query.tags.includes("fuzzed_data") )
-          query.costAvailable = true;
-        else
+        if ( q.hasTag("fuzzed_data" ) )
           queriesHaveFuzzed = true;
 
-        query.expandSelect = false;
+        q.expandSelect = false;
       });
 
       var f = sortByFunc(['severityIndex', 'table']);
@@ -74,7 +95,7 @@
         <div class="row" v-if="expanded">
           <div class="col-12">
             <div class="query-info-box">
-              <query-sql v-bind:sql="query.sql"></query-sql>
+              <query-sql v-bind:query="query"></query-sql>
               <div v-if="query.backtrace && query.backtrace.length > 0">
                 Stack Trace:<br>
                 <div class="backtrace">
@@ -129,36 +150,21 @@
 
     <script type="text/x-template" id="sql-template">
       <div class="sql">
-        <span>{{ select }}</span>
-        <span v-if="!expandFields && fields.length > 80">
+        <span>{{ query.select() }}</span>
+        <span v-if="!expandFields && query.fields().length > 80">
           <a href="#" v-on:click.prevent="expandFields = !expandFields">...</a>
         </span>
-        <span v-else>{{ fields }}</span>
-        <span>{{ rest }}</span>
+        <span v-else>{{ query.fields() }}</span>
+        <span>{{ query.rest(3) }}</span>
       </div>
     </script>
 
     <script>
       Vue.component('query-sql', {
         template: '#sql-template',
-        props: ['sql'],
+        props: ['query'],
         data: function () {
           return { expandFields: false }
-        },
-        computed: {
-          sqlFragments: function() {
-            var result = this.sql.match(/(SELECT\s)(.*?)(\s+FROM .*)/i);
-            return [result[1], result[2], result[3]];
-          },
-          select: function () {
-            return this.sqlFragments[0];
-          },
-          fields: function () {
-            return this.sqlFragments[1];
-          },
-          rest: function() {
-            return this.sqlFragments[2];
-          }
         }
       });
     </script>

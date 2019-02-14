@@ -61,10 +61,10 @@ index_walk:
   level: success
 retsize_bad:
   title: Big Results
-  summary: The database returns {{ query.return_size }} rows to the client.
+  summary: The database returns {{ query.return_size.toLocaleString() }} rows to the client.
   level: danger
 retsize_good:
   title: Small Results
-  summary: The database returns {{ query.return_size }} row(s) to the client.
+  summary: The database returns {{ query.return_size.toLocaleString() }} row(s) to the client.
   level: success
 
