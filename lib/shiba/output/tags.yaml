@@ -59,3 +59,12 @@ index_walk:
     can read the index and simply pluck {LIMIT} rows out of the index.  It's a very
     fast way to look up stuff by index.
   level: success
+retsize_bad:
+  title: Big Results
+  summary: The database returns {{ query.return_size }} rows to the client.
+  level: danger
+retsize_good:
+  title: Small Results
+  summary: The database returns {{ query.return_size }} row(s) to the client.
+  level: success
+

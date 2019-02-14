@@ -27,6 +27,7 @@ module Shiba
         key: first_key,
         tags: messages,
         cost: @cost,
+        return_size: @return_size,
         severity: severity,
         used_key_parts: first['used_key_parts'],
         possible_keys: first['possible_keys'],
@@ -164,6 +165,12 @@ module Shiba
       end
     end
 
+    def aggregation?
+      @sql =~ /select\s*(.*?)from/i
+      select_fields = $1
+      select_fields =~ /min|max|avg|count|sum|group_concat\s*\(.*?\)/i
+    end
+
     def self.check(c)
       @checks ||= []
       @checks << c
@@ -286,6 +293,22 @@ module Shiba
       end
     end
 
+    def check_return_size
+      if limit
+        @return_size = limit
+      elsif aggregation?
+        @return_size = 1
+      else
+        @return_size = @cost
+      end
+
+      if @return_size && @return_size > 100
+        messages << "retsize_bad"
+      else
+        messages << "retsize_good"
+      end
+    end
+
     def estimate_row_count_with_key(key)
       explain = Explain.new(@sql, @stats, @backtrace, force_key: key)
       explain.run_checks!
@@ -316,12 +339,12 @@ module Shiba
       nil
     end
 
-
     def run_checks!
       self.class.get_checks.each do |check|
         res = send(check)
         break if @cost
       end
+      check_return_size
       @cost
     end
 
