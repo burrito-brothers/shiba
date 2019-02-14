@@ -17,6 +17,32 @@
 }
 
 .badge  {
-  color: white;
-  margin-right: 10px;
+  color: black;
+  background-color: white;
+  border-style: solid;
+  border-width: 2px;
+  margin-right: 5px;
+  width: 90px;
+}
+
+.shiba-badge-info {
+  border-color: #78b0ec;
+}
+
+.shiba-badge-danger {
+  border-color: #ff655d;
+}
+
+.shiba-badge-success {
+  border-color: green;
+}
+
+.shiba-badge-warning {
+  border-color: #ffb100;
+}
+
+.shiba-info-list {
+  list-style-type:none;
+  margin: 5px;
+  padding: 0;
 }

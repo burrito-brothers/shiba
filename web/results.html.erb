@@ -81,16 +81,11 @@
                   <div v-for="backtrace in query.backtrace" v-html="makeURL(backtrace, backtrace)"></div>
                 </div>
               </div>
-              Index used: {{ castNull(query.key) }}<br>
-              <div v-if="query.possible_keys && query.possible_keys.length > 0 || !query.key">
-                Indexes considered: {{ castNull(query.possible_keys) }}
-              </div>
-              Rows checked: {{ query.cost }}<br>
-              <a class="badge"
-                v-for="tag in query.tags"
-                href="#"
-                v-bind:class="tagClass(tag)"
-                v-on:click="expandInfo(tag, $event)">{{ tagTitle(tag) }}</a>
+              <ul class="shiba-info-list">
+              <li v-for="tag in query.tags">
+                <component v-bind:is="'tag-' + tag" v-bind:query="query"></component>
+              </li>
+              </ul>
               <div v-if="!rawExpanded">
                 <a href="#" v-on:click.prevent="rawExpanded = !rawExpanded">See full EXPLAIN</a>
               </div>
@@ -103,6 +98,34 @@
         </div>
       </div>
     </script>
+
+    <% data[:tags].each do |tag, h| %>
+    <script type="text/x-template" id="tag-<%= tag %>-template">
+      <span><a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a><%= h['summary'] %></span>
+    </script>
+    <script>
+      Vue.component('tag-<%= tag %>', {
+        template: '#tag-<%= tag %>-template',
+        props: ['query'],
+        computed: {
+          key_parts: function() {
+            if ( this.query.used_key_parts && this.query.used_key_parts.length > 0 )
+              return this.query.used_key_parts.join(',');
+            else
+              return "";
+          },
+          formattedCost: function() {
+            var costPercentage = (this.query.cost / this.query.table_size) * 100.0;
+            if ( this.query.cost > 100 && costPercentage > 1 ) // todo: make better
+              return `${costPercentage.toFixed()}% (${this.query.cost.toLocaleString()}) of the`;
+            else
+              return this.query.cost.toLocaleString();
+          }
+        }
+      });
+    </script>
+    <% end %>
+
 
     <script type="text/x-template" id="sql-template">
       <div class="sql">
@@ -139,6 +162,7 @@
         }
       });
     </script>
+
     <div id="app">
       <v-dialog :width="600"></v-dialog>
       <div class="container" style="">
@@ -204,12 +228,6 @@
           if (event) event.preventDefault()
           this.expanded = !this.expanded;
         },
-        castNull: function (string) {
-          if ( !string )
-            return "(none)";
-          else
-            return string;
-        },
         shortLocation: function(query) {
           if ( !query.backtrace )
             return null;
@@ -225,24 +243,12 @@
           var line = matches[2];
 
           return `<a href='${data.url}/${file}#L${line}' target='_new'>${content}</a>`;
-        },
-        tagTitle: function(tag) {
-          if ( !this.tags[tag] )
-            return tag;
-          else
-            return this.tags[tag].title;
-        },
-        tagClass: function(tag) {
-          if ( !this.tags[tag] )
-            return '';
-          else
-            return "badge-" + this.tags[tag].level;
         }
       },
       computed: {
         expandText: function() {
           return this.expanded ? "-" : "+";
-        },
+        }
       }
     });
 

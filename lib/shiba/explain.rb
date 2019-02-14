@@ -23,6 +23,7 @@ module Shiba
       {
         sql: @sql,
         table: get_table,
+        table_size: table_size,
         key: first_key,
         tags: messages,
         cost: @cost,
