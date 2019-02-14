@@ -49,11 +49,6 @@ The most simple case to detect are queries that don't utilize indexes. While it 
 user = User.where(email: 'squirrel@example.com').limit(1)
 ```
 
-Becomes
-```sql
-select * from users where email = 'squirrel@example.com' limit 1
-```
-
 Without an index, the database will read every row in the table until it finds one with an email address that matches. By adding an index, the database can perform a quick lookup for the record.
 
 #### Non selective indexes
