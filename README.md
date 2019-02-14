@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/burrito-brothers/shiba.svg?branch=master)](https://travis-ci.com/burrito-brothers/shiba)
+
 # Shiba
 
 Shiba is a tool that helps catch poorly performing queries before they cause problems in production, including:
