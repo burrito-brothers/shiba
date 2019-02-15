@@ -3,9 +3,14 @@ require 'active_support/core_ext/hash/keys'
 
 module Shiba
   class IndexStats
+
     def initialize(tables = {})
       @tables = tables
       build_from_hash!
+    end
+
+    def any?
+      @tables.any?
     end
 
     Table = Struct.new(:name, :count, :indexes) do
@@ -203,4 +208,3 @@ module Shiba
     end
   end
 end
-
