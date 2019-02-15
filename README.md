@@ -18,13 +18,11 @@ Install using bundler. Note: this gem is not designed to be run on production.
 gem 'shiba', :group => :test
 ```
 
-If your application lazy loads gems, you may need to manually configure it.
+If your application lazy loads gems, you will to manually require it.
 
 ```ruby
-# config/environments/test.rb
-  require 'shiba'
-  require 'shiba/activerecord_integration'
-  Shiba::ActiveRecordIntegration.install!
+# config/environments/test.rb or test/test_helper.rb
+require 'shiba/setup'
 ```
 
 ## Usage
