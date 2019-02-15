@@ -15,7 +15,7 @@ Install using bundler. Note: this gem is not designed to be run on production.
 
 ```ruby
 # Gemfile
-gem 'shiba', :group => :test, :require => true
+gem 'shiba', :group => :test
 ```
 
 If your application lazy loads gems, you may need to manually configure it.
