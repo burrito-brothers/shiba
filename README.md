@@ -14,12 +14,15 @@ By default, it will pretty much only detect queries that miss indexes. As it's f
 Install using bundler. Note: this gem is not designed to be run on production.
 
 ```ruby
+# Gemfile
 gem 'shiba', :group => :test, :require => true
 ```
 
-If this doesn't magically work, you can manually configure it using an initializer:
+If your application lazy loads gems, you may need to manually configure it.
 
 ```ruby
+# config/environments/test.rb
+  require 'shiba'
   require 'shiba/activerecord_integration'
   Shiba::ActiveRecordIntegration.install!
 ```
@@ -27,6 +30,7 @@ If this doesn't magically work, you can manually configure it using an initializ
 ## Usage
 
 A report will only be generated when problem queries are detected.
+To verify shiba is actually running, you can run your tests with SHIBA_DEBUG=true.
 
 ```ruby
 # Install
@@ -35,6 +39,7 @@ bundle
 # Run some tests using to generate a SQL report
 rake test:functional
 rails test test/controllers/users_controller_test.rb
+SHIBA_DEBUG=true ruby test/controllers/users_controller_test.rb
 
 # 1 problematic query detected
 # Report available at /tmp/shiba-explain.log-1550099512
