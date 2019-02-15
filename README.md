@@ -26,6 +26,8 @@ If this doesn't magically work, you can manually configure it using an initializ
 
 ## Usage
 
+A report will only be generated when problem queries are detected.
+
 ```ruby
 # Install
 bundle
