@@ -49,6 +49,8 @@ module Shiba
       def encode_with(coder)
         coder.map = self.to_h.stringify_keys
         coder.map.delete('table')
+        coder.map.delete('unique') unless unique
+
         coder.tag = nil
       end
     end
