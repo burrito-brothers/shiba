@@ -83,7 +83,7 @@ For smarter analysis, Shiba requires general statistics about production data, s
 This information can be obtained by running the bin/dump_stats command in production.
 
 ```console
-production$ 
+production$
 git clone https://github.com/burrito-brothers/shiba.git
 cd shiba ; bundle
 bin/dump_stats DATABASE_NAME [MYSQLOPTS] > ~/shiba_index.yml
@@ -102,18 +102,18 @@ users:
       name: PRIMARY
       columns:
       - column: id
-        rows_per: 1
+        rows_per: 1 # one row per unique `id`
       unique: true
-    index_users_on_login:
-      name: index_users_on_login
+    index_users_on_email:
+      name: index_users_on_email
       columns:
-      - column: login
-        rows_per: 1
+      - column: email
+        rows_per: 1 # one row per email address (also unique)
       unique: true
-    index_users_on_created_by_id:
-      name: index_users_on_created_by_id
+    index_users_on_organization_id:
+      name: index_users_on_organization_id
       columns:
-      - column: created_by_id
-        rows_per: 3
+      - column: organization_id
+        rows_per: 20% # each organization has, on average, 20% or 2000 users.
       unique: false
 ```
