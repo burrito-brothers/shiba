@@ -10,7 +10,7 @@ esac
 DATABASE=$1
 if [ -z "$DATABASE" ]
 then
-  echo "usage: dump_stats -tables [table1,table2...] DATABASE [ ...mysql_args]"
+  echo "usage: dump_stats [-tables table1,table2...] DATABASE [ ...mysql_args]" >&2
   exit 1
 fi
 
@@ -22,6 +22,12 @@ shift
 
 MYSQL_STATS=`mktemp`
 mysql $* -ABe "select * from information_schema.statistics where table_schema = '$DATABASE'" > $MYSQL_STATS
+
+if ! [ -s $MYSQL_STATS ]
+then
+  echo "no such database: $DATABASE" >&2
+  exit 1
+fi
 
 if [ "$TABLES" ]
 then
