@@ -90,7 +90,7 @@ With more data, Shiba can help detect this issue when it appears in a pull reque
 
 ## Going beyond table scans
 
-For smarter analysis, Shiba requires general statistics about production data, such as the number of rows in a table and how unique columns are.
+Without more information, Shiba acts as a simple missed index detector. To catch other problems that can bring down production (or at least cause some performance issues), Shiba requires general statistics about production data, such as the number of rows in a table and how unique columns are.
 
 This information can be obtained by running the bin/dump_stats command in production.
 
@@ -105,7 +105,9 @@ scp production:~/shiba_index.yml RAILS_PROJECT/config
 ```
 
 The stats file will look similar to the following:
-
+```console
+local$ head <rails_project>/config/shiba_index.yml
+```
 ```yaml
 users:
   count: 10000
