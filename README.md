@@ -5,7 +5,7 @@
 Shiba is a tool that helps catch poorly performing queries before they cause problems in production, including:
 
 * Full table scans
-* Non selective indexes
+* Poorly performing indexes
 
 By default, it will pretty much only detect queries that miss indexes. As it's fed more information, it warns about advanced problems, such as queries that use indexes but are still very expensive.
 
@@ -17,6 +17,13 @@ Install using bundler. Note: this gem is not designed to be run on production.
 
 ```ruby
 gem 'shiba', :group => :test, :require => true
+```
+
+If this doesn't magically work, you can manually configure it using an initializer:
+
+```ruby
+  require 'shiba/activerecord_integration'
+  Shiba::ActiveRecordIntegration.install!
 ```
 
 ## Usage
