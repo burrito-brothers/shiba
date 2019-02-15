@@ -50,7 +50,8 @@ module Shiba
       index_counts = connection.query(index_count_query).to_a
 
       # 90th table percentile based on number of indexes
-      large_table_idx = (index_counts.size * 0.9).round
+      # round down so we don't blow up on small tables
+      large_table_idx = (index_counts.size * 0.9).floor
       large_table_index_count = index_counts[large_table_idx]["index_count"].to_f
 
       sizes = Hash[index_counts.map(&:values)]
