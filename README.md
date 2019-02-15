@@ -43,6 +43,11 @@ SHIBA_DEBUG=true ruby test/controllers/users_controller_test.rb
 # Report available at /tmp/shiba-explain.log-1550099512
 ```
 
+### Screenshot
+`open /tmp/shiba-explain.log-1550099512`
+![screenshot](/data/screenshot.png?raw=true)
+
+
 ## Typical query problems
 
 Here are some typical query problems Shiba can detect. We'll assume the following schema:
