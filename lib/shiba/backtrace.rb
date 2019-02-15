@@ -2,11 +2,15 @@ require 'open3'
 
 module Shiba
   module Backtrace
-    IGNORE = /\.rvm|gem|vendor\/|rbenv|seed|db|shiba|test|spec/
+
+    def self.ignore
+      @ignore ||= [ '.rvm', 'gem', 'vendor', 'rbenv', 'seed',
+        'db', 'test', 'spec', 'lib/shiba' ]
+    end
 
     # 8 backtrace lines starting from the app caller, cleaned of app/project cruft.
     def self.from_app
-      app_line_idx = caller_locations.index { |line| line.to_s !~ IGNORE }
+      app_line_idx = caller_locations.index { |line| line.to_s !~ ignore_pattern }
       if app_line_idx == nil
         return
       end
@@ -17,14 +21,18 @@ module Shiba
     end
 
     def self.clean!(line)
-      line.sub!(backtrace_ignore_pattern, '')
+      line.sub!(backtrace_clean_pattern, '')
       line
     end
 
     protected
 
-    def self.backtrace_ignore_pattern
-      @roots ||= begin
+    def self.ignore_pattern
+      @pattern ||= Regexp.new(ignore.map { |word| Regexp.escape(word) }.join("|"))
+    end
+
+    def self.backtrace_clean_pattern
+      @backtrace_clean_pattern ||= begin
         paths = Gem.path
         paths << Rails.root.to_s if defined?(Rails.root)
         paths << repo_root

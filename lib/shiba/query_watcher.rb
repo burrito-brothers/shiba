@@ -1,14 +1,9 @@
 require 'shiba/query'
 require 'shiba/backtrace'
-require 'json'
-require 'rails'
 
 module Shiba
+  # Logs ActiveRecord SELECT queries that originate from application code.
   class QueryWatcher
-
-    def self.watch(file)
-      new(file).tap { |w| w.watch }
-    end
 
     attr_reader :queries
 
@@ -18,21 +13,18 @@ module Shiba
       @queries = {}
     end
 
-    # Logs ActiveRecord SELECT queries that originate from application code.
-    def watch
-      ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, finish, id, payload|
-        sql = payload[:sql]
+    def call(name, start, finish, id, payload)
+      sql = payload[:sql]
+      return if !sql.start_with?("SELECT")
 
-        if sql.start_with?("SELECT")
-          fingerprint = Query.get_fingerprint(sql)
-          if !@queries[fingerprint]
-            if lines = Backtrace.from_app
-              @file.puts("#{sql} /*shiba#{lines}*/")
-            end
-          end
-          @queries[fingerprint] = true
-        end
-      end
+      fingerprint = Query.get_fingerprint(sql)
+      return if @queries[fingerprint]
+
+      lines = Backtrace.from_app
+      return if !lines
+
+      @file.puts("#{sql} /*shiba#{lines}*/")
+      @queries[fingerprint] = true
     end
 
   end

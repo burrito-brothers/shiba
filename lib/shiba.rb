@@ -31,4 +31,7 @@ module Shiba
 end
 
 # This goes at the end so that Shiba.root is defined.
-require "shiba/railtie" if defined?(Rails)
+if defined?(ActiveSupport.on_load)
+  require 'shiba/activerecord_integration'
+  Shiba::ActiveRecordIntegration.install!
+end
