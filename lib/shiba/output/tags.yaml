@@ -47,6 +47,13 @@ access_type_tablescan:
     but be aware that if this table is not effectively tiny or constant-sized you're entering
     a world of pain.
   level: danger
+limited_scan:
+  title: Limited Scan
+  summary: The database reads {{ query.cost }} rows from {{ query.table }}.
+  description: |
+    This query doesn't use any indexes to find data, but since it doesn't care about
+    ordering and it doesn't have any conditions, it only ever reads {{ query.cost }} rows.
+  level: info
 ignored:
   title: Ignored
   summary: This query matched an "ignore" rule in shiba.yml.  Any further analysis was skipped.

@@ -143,7 +143,8 @@ module Shiba
 
     # TODO: need to parse SQL here I think
     def simple_table_scan?
-      @rows.size == 1 && first['using_index'] && (@sql !~ /order by/i)
+      @rows.size == 1 &&  (@sql !~ /order by/i) &&
+        (first['using_index'] || !(@sql =~ /\s+WHERE\s+/i))
     end
 
     def severity
@@ -216,15 +217,14 @@ module Shiba
       messages << "fuzzed_data" if fuzzed?(first_table)
     end
 
+    # TODO: we don't catch some cases like SELECT * from foo where index_col = 1 limit 1
+    # bcs we really just need to parse the SQL.
     check :check_simple_table_scan
     def check_simple_table_scan
       if simple_table_scan?
         if limit
-          messages << 'limited_tablescan'
+          messages << 'limited_scan'
           @cost = limit
-        else
-          tag_query_type
-          @cost = @stats.estimate_key(first_table, first_key, first['used_key_parts'])
         end
       end
     end
