@@ -176,14 +176,22 @@
     <div id="app" v-cloak>
       <v-dialog :width="600"></v-dialog>
       <div class="container" style="">
-        <div class="row">
-          <div v-if="hasFuzzed" class="alert alert-warning" role="alert">
+        <div class="row" v-if="hasFuzzed">
+          <div class="alert alert-warning" role="alert">
             This query analysis was generated using estimated table sizes.
             To improve these results and find other problem queries beyond missing indexes, we'll need more stats.<br/>
             <a target="_blank" href="https://github.com/burrito-brothers/shiba/blob/master/README.md#going-beyond-table-scans">Find out how to get a more accurate analysis by feeding Shiba index stats</a>
           </div>
-
-          <div class="col-12">We found {{ queries.length }} queries that deserve your attention: </div>
+        </div>
+        <div class="row">
+          <div class="col-10"></div>
+          <div class="col-2"><input :value="search" @input="updateSearch" placeholder="search..."></div>
+        </div>
+        <div class="row">
+          <div class="col-12">We found {{ queries.length }} queries that
+            <span v-if="search == ''">deserve your attention:</span>
+            <span v-else=>match your search term</span>
+          </div>
         </div>
         <div class="row">
           <div class="col-3">Table</div>
@@ -194,12 +202,15 @@
         <div class="queries">
           <query v-for="query in queries" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
         </div>
-        <div class="row">
-          <div class="col-12">We also found <a href="#" v-on:click.prevent="lowExpanded = !lowExpanded">{{ queriesLow.length }} queries</a> that look fine.</div>
-        </div>
-        <a name="lowExapnded"></a>
-        <div class="queries" v-if="lowExpanded">
-          <query v-for="query in queriesLow" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
+
+        <div v-if="search == ''">
+          <div class="row">
+            <div class="col-12">We also found <a href="#" v-on:click.prevent="lowExpanded = !lowExpanded">{{ queriesLow.length }} queries</a> that look fine.</div>
+          </div>
+          <a name="lowExapnded"></a>
+          <div class="queries" v-if="lowExpanded">
+            <query v-for="query in queriesLow" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags"></query>
+          </div>
         </div>
         <div style="height:50px"></div>
       </div>
@@ -266,13 +277,37 @@
     var app = new Vue({
       el: '#app',
       data: {
-        queries: queriesByTable,
-        queriesLow: queriesByTableLow,
+        highQ: queriesByTable,
+        lowQ: queriesByTableLow,
         tags: data.tags,
         lowExpanded: false,
-        hasFuzzed: queriesHaveFuzzed
+        hasFuzzed: queriesHaveFuzzed,
+        search: ''
       },
-      methods: { }
+      methods: {
+        updateSearch: _.debounce(function (e) {
+          console.log("ok, updating...");
+          this.search = e.target.value;
+        }, 500)
+      },
+      computed: {
+        queries: function() {
+          if ( this.search != '' ) {
+            var filtered = [];
+            var lcSearch = this.search.toLowerCase();
+            this.highQ.concat(this.lowQ).forEach(function(q) {
+              var searchString = q.sql + ":" + q.tags.join(":") + q.backtrace.join(":");
+              if ( searchString.toLowerCase().includes(lcSearch) )
+                filtered.push(q);
+            });
+            return filtered;
+          } else
+            return this.highQ;
+        },
+        queriesLow: function() {
+          return this.lowQ;
+        }
+      }
     });
 
 
