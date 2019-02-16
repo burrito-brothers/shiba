@@ -36,7 +36,7 @@ describe "Explain" do
   end
 
   describe "a select that stays entirely in an index with a limit" do
-    let(:sql) { "select * from users where organization_id = 1 limit 1" }
+    let(:sql) { "select 1 from users where organization_id = 1 limit 1" }
     it "tags as limited_scan" do
       assert_includes(explain.messages, "limited_scan")
     end
