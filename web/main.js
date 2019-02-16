@@ -3,3 +3,4 @@ import VModal from 'vue-js-modal';
 
 Vue.use(VModal, { dialog: true });
 window.Vue = Vue;
+window._ = require('lodash');
