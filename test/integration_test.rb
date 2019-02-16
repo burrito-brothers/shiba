@@ -1,4 +1,4 @@
-require 'helper'
+require_relative 'helper'
 require 'shiba'
 require 'shiba/fuzzer'
 require 'open3'
@@ -32,5 +32,4 @@ describe "Connection" do
     # Should be 1, but there's schema loading garbage that's hard to remove
     assert_equal 9, queries.lines.size, "No queries logged"
   end
-
 end
