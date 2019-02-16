@@ -5,9 +5,13 @@
   </head>
   <body>
     <% data[:js].each do |js| %>
-    <script type="text/javascript">
-      <%= File.read(js) %>
-    </script>
+      <% if ENV['SHIBA_DEBUG'] %>
+        <script type="text/javascript" src="file://<%= js %>"></script>
+      <% else %>
+        <script type="text/javascript">
+          <%= File.read(js) %>
+        </script>
+      <% end %>
     <% end %>
 
     <% data[:css].each do |css| %>
