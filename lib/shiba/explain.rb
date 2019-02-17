@@ -1,5 +1,6 @@
 require 'json'
 require 'shiba/index'
+require 'shiba/explain/mysql_explain'
 
 module Shiba
   class Explain
@@ -14,7 +15,7 @@ module Shiba
       @options = options
       ex = Shiba.connection.query("EXPLAIN FORMAT=JSON #{@sql}").to_a
       @explain_json = JSON.parse(ex.first['EXPLAIN'])
-      @rows = self.class.transform_json(@explain_json['query_block'])
+      @rows = Shiba::Explain::MysqlExplain.new.transform_json(@explain_json['query_block'])
       @stats = stats
       run_checks!
     end
@@ -45,48 +46,6 @@ module Shiba
       table.gsub!('`', '')
       table.gsub!(/.*\.(.*)/, '\1')
       table
-    end
-
-    def self.transform_table(table, extra = {})
-      t = table
-      res = {}
-      res['table'] = t['table_name']
-      res['access_type'] = t['access_type']
-      res['key'] = t['key']
-      res['used_key_parts'] = t['used_key_parts'] if t['used_key_parts']
-      res['rows'] = t['rows_examined_per_scan']
-      res['filtered'] = t['filtered']
-
-      if t['possible_keys'] && t['possible_keys'] != [res['key']]
-        res['possible_keys'] = t['possible_keys']
-      end
-      res['using_index'] = t['using_index'] if t['using_index']
-
-      res.merge!(extra)
-
-      res
-    end
-
-    def self.transform_json(json, res = [], extra = {})
-      rows = []
-
-      if (ordering = json['ordering_operation'])
-        index_walk = (ordering['using_filesort'] == false)
-        return transform_json(json['ordering_operation'], res, { "index_walk" => index_walk } )
-      elsif json['duplicates_removal']
-        return transform_json(json['duplicates_removal'], res, extra)
-      elsif json['grouping_operation']
-        return transform_json(json['grouping_operation'], res, extra)
-      elsif !json['nested_loop'] && !json['table']
-        return [{'Extra' => json['message']}]
-      elsif json['nested_loop']
-        json['nested_loop'].map do |nested|
-          transform_json(nested, res, extra)
-        end
-      elsif json['table']
-        res << transform_table(json['table'], extra)
-      end
-      res
     end
 
     # [{"id"=>1, "select_type"=>"SIMPLE", "table"=>"interwiki", "partitions"=>nil, "type"=>"const", "possible_keys"=>"PRIMARY", "key"=>"PRIMARY", "key_len"=>"34", "ref"=>"const", "rows"=>1, "filtered"=>100.0, "Extra"=>nil}]
