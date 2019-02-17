@@ -6,7 +6,7 @@ require 'shiba/table_stats'
 
 describe "Explain" do
   before do
-    Shiba.configure('database' => 'shiba_test', 'default_file' => '~/.my.cnf', 'default_group' => 'client')
+    Shiba.configure('database' => 'shiba_test', 'default_file' => '~/.my.cnf', 'default_group' => 'client', 'server' => 'mysql')
   end
 
   let(:index_stats) do

@@ -1,5 +1,6 @@
 require "shiba/version"
 require "shiba/configure"
+require "shiba/connection"
 require "mysql2"
 require "pp"
 require "byebug" if ENV['SHIBA_DEBUG']
@@ -8,7 +9,7 @@ module Shiba
   class Error < StandardError; end
 
   def self.configure(options)
-    @connection_hash = options.select { |k, v| [ 'default_file', 'default_group', 'username', 'database', 'host', 'password'].include?(k) }
+    @connection_hash = options.select { |k, v| [ 'default_file', 'default_group', 'server', 'username', 'database', 'host', 'password', 'port'].include?(k) }
     @main_config = Configure.read_config_file(options['config'], "config/shiba.yml")
     @index_config = Configure.read_config_file(options['index'], "config/shiba_index.yml")
   end
@@ -22,7 +23,8 @@ module Shiba
   end
 
   def self.connection
-    @connection ||= Mysql2::Client.new(@connection_hash)
+    return @connection if @connection
+    @connection = Shiba::Connection.build(@connection_hash)
   end
 
   def self.root

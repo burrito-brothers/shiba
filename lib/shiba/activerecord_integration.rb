@@ -56,12 +56,22 @@ module Shiba
     end
 
     def self.database_args
-      c = ActiveRecord::Base.connection.raw_connection.query_options
+      cx = ActiveRecord::Base.connection.raw_connection
+      if cx.respond_to?(:query_options)
+        # mysql
+        c = cx.query_options.merge(server: 'mysql')
+      else
+        # postgres
+        c = { host: cx.host, database: cx.db, user: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
+      end
+
       options = {
-      'host':     c[:host],
-      'database': c[:database],
-      'user':     c[:username],
-      'password': c[:password]
+        'host':     c[:host],
+        'database': c[:database],
+        'user':     c[:username],
+        'password': c[:password],
+        'port':     c[:port],
+        'server':   c[:server]
       }
 
       options.reject { |k,v| v.nil? }.map { |k,v| "--#{k} #{v}" }.join(" ")

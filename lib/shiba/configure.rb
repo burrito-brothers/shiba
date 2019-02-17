@@ -57,6 +57,10 @@ module Shiba
       parser = OptionParser.new do |opts|
         # note that the key to the hash needs to stay the same as the
         # option name since we re-pass them
+        opts.on("-s","--server SERVER_TYPE", "mysql|postgres") do |s|
+          options["server"] = s
+        end
+
         opts.on("-h","--host HOST", "sql host") do |h|
           options["host"] = h
         end
@@ -71,6 +75,10 @@ module Shiba
 
         opts.on("-p","--password PASSWORD", "sql password") do |p|
           options["password"] = p
+        end
+
+        opts.on("-P","--port PORT", "server port") do |p|
+          options["port"] = p
         end
 
         opts.on("-c","--config FILE", "location of shiba.yml") do |f|
