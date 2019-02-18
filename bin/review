@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'optionparser'
+require 'shiba/reviewer'
+
+# Comment on Github Pull requests using the output of bin/check.
+options = {}
+parser = OptionParser.new do |opts|
+  # -f and -b options pass through to bin/check
+  opts.on("-f","--file FILE", "The explain output log to compare with") do |f|
+    options["file"] = f
+  end
+
+  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and BRANCH") do |b|
+    options["branch"] = b
+  end
+
+  opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on") do |p|
+    options["pull_request"] = p
+  end
+
+  opts.on("-t", "--token TOKEN", "The Github API token to use for commenting") do |t|
+    options["token"] = t
+  end
+
+  opts.on("--verbose", "Verbose/debug mode") do
+    options["verbose"] = true
+  end
+end
+parser.parse!
+
+if options["branch"] == nil
+  options["branch"] == ENV['TRAVIS_PULL_REQUEST_SHA']
+end
+
+if options["token"] == nil
+  options["token"] = ENV['GITHUB_TOKEN']
+end
+
+if options["pull_request"] == nil
+  options["pull_request"] = ENV['TRAVIS_PULL_REQUEST']
+end
+
+repo_cmd = "git config --get remote.origin.url"
+repo_url = `#{repo_cmd}`.chomp
+
+if options["verbose"]
+  $stderr.puts "#{repo_cmd}\t#{repo_url}"
+end
+
+def require_option(value, message)
+  if value.nil? || value.empty?
+    $stderr.puts message
+    exit 1
+  end
+end
+
+require_option(options["file"], "No explain log file provided (-f)")
+#require_option(options["branch"], "No branch sha provided")
+require_option(options["token"], "No Github API token provided (-t)")
+require_option(options["pull_request"], "No pull request id provided (-p)")
+require_option(repo_url, "'#{Dir.pwd}' does not appear to be a git repo")
+
+reviewer = Shiba::Reviewer.new(repo_url, options)
+
+if reviewer.repo_host.empty? || reviewer.repo_path.empty?
+  $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
+  exit 1
+end
+
+if reviewer.comments.empty?
+  $stderr.puts "No problems found" if options["verbose"]
+  exit
+end
+
+reviewer.post_comments

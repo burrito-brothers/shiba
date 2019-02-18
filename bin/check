@@ -3,8 +3,7 @@
 require 'bundler/setup'
 require 'optionparser'
 require 'shiba/checker'
-
-MAGIC_COST = 100
+require 'json'
 
 options = {}
 parser = OptionParser.new do |opts|
@@ -52,17 +51,16 @@ end
 result = Shiba::Checker.new(options).run(explains)
 
 if result.message
-  puts result.message
+  $stderr.puts result.message
 end
 
 if result.problems
   $stderr.puts("")
 
   result.problems.each do |problem|
-    line =  "#{File.basename(problem["backtrace"].first)}\t#{problem["cost"]}"
-    if line.length > 80
-      line = line[0,80]
-    end
+    path = problem.first
+    explain = problem.last
+    line = "#{path}\t#{JSON.dump(explain)}"
     puts line
   end
 end

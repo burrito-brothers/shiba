@@ -12,23 +12,28 @@ module Shiba
     # The position value equals the number of lines down from the first "@@" hunk header
     # in the file you want to add a comment.
 
-    # diff = `git diff --unified=0`
-    # parse_diff(StringIO.new(diff))
-    # => "hello.rb:1"
-    # => "hello.rb:2"
-    # => "test.rb:5"
-
-  # For simplicity, the default output of git diff is not supported.
-  # The expected format is from 'git diff unified=0'
-
   attr_reader :status
 
   def initialize(file)
+    # Fixme. seems like enumerables should work in general.
+    if !file.respond_to?(:pos)
+      raise StandardError.new("Diff file does not appear to be a seekable IO object.")
+    end
     @diff = file
     @status = :new
   end
 
   # Returns the file and line numbers that contain inserts. Deletions are ignored.
+  # For simplicity, the default output of git diff is not supported.
+  # The expected format is from 'git diff unified=0'
+  #
+  # Example:
+  # diff = `git diff --unified=0`
+  # Diff.new(StringIO.new(diff))
+  # => [ [ "hello.rb", 1..3 ]
+  # =>   [ "hello.rb", 7..7 ]
+  # =>   [ "test.rb", 23..23 ]
+  # => ]
   def updated_lines
     io = @diff.each_line
     path = nil
@@ -53,6 +58,11 @@ module Shiba
   # Returns the position in the diff, after the relevant file header,
   # that contains the specified file/lineno modification.
   # Only supports finding the position in the destination / newest version of the file.
+  #
+  # Example:
+  # diff = Diff.new(`git diff`)
+  # diff.find_position("test.rb", 3)
+  # => 5
   def find_position(path, line_number)
     io = @diff.each_line # maybe redundant?
 

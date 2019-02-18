@@ -6,6 +6,8 @@ require 'shiba/backtrace'
 
 module Shiba
   class Checker
+    MAGIC_COST = 100
+
     Result = Struct.new(:status, :message, :problems)
 
     attr_reader :options
@@ -14,6 +16,8 @@ module Shiba
       @options = options
     end
 
+    # Returns a Result object with a status, message, and any problem queries detected.
+    # Query problem format is [ [ "path:lineno", explain ]... ]
     def run(log)
       msg = nil
 
@@ -23,7 +27,7 @@ module Shiba
 
       if changes.empty?
         if options['verbose']
-          msg = "No changes found in git"
+          msg = "No changes found in git. Are you sure you specified the correct branch?"
         end
         return Result.new(:pass, msg)
       end
@@ -31,9 +35,21 @@ module Shiba
       explains = select_lines_with_changed_files(log)
       problems = explains.select { |explain| explain["cost"] && explain["cost"] > MAGIC_COST }
 
-      problems.select! do |problem|
-        backtrace_has_updated_line?(problem["backtrace"], updated_lines)
+      if options["verbose"]
+        puts problems
       end
+
+      if options["verbose"]
+        puts updated_lines
+      end
+
+      problems.map! do |problem|
+        line = updated_line_from_backtrace(problem["backtrace"], updated_lines)
+        next if line.nil?
+
+        [ line, problem ]
+      end
+      problems.compact!
 
       if problems.empty?
         if options['verbose']
@@ -48,19 +64,26 @@ module Shiba
 
     protected
 
-    def backtrace_has_updated_line?(backtrace, updates)
-      backtrace.any? do |bl|
-        updates.any? do |path, lines|
+    def updated_line_from_backtrace(backtrace, updates)
+      backtrace.each do |bl|
+        updates.each do |path, lines|
           next if !bl.start_with?(path)
           bl =~ /:(\d+):/
-          lines.include?($1.to_i)
+          next if !lines.include?($1.to_i)
+
+          return "#{path}:#{$1}"
         end
       end
+
+      return nil
     end
 
     def select_lines_with_changed_files(log)
       patterns = changes.split("\n").map { |path| "-e #{path}" }.join(" ")
-      json_lines = `grep #{log} #{patterns}`
+      cmd = "grep #{log} #{patterns}"
+      $stderr.puts cmd if options["verbose"]
+
+      json_lines = `#{cmd}`
       json_lines.each_line.map { |line| JSON.parse(line) }
     end
 

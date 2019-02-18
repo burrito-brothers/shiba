@@ -131,15 +131,33 @@
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: ['query'],
+        props: [ 'query' ],
         computed: {
+
+          table: function() {
+            return this.query.table;
+          },
+
+          table_size: function() {
+            return this.query.table_size;
+          },
+
+          key: function() {
+            return this.query.key;
+          },
+
+          return_size: function() {
+            return this.query.return_size.toLocaleString();
+          },
+
           key_parts: function() {
             if ( this.query.used_key_parts && this.query.used_key_parts.length > 0 )
               return this.query.used_key_parts.join(',');
             else
               return "";
           },
-          formattedCost: function() {
+
+          cost: function() {
             var costPercentage = (this.query.cost / this.query.table_size) * 100.0;
             if ( this.query.cost > 100 && costPercentage > 1 ) // todo: make better
               return `${costPercentage.toFixed()}% (${this.query.cost.toLocaleString()}) of the`;
