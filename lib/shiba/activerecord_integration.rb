@@ -62,7 +62,7 @@ module Shiba
         c = cx.query_options.merge(server: 'mysql')
       else
         # postgres
-        c = { host: cx.host, database: cx.db, user: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
+        c = { host: cx.host, database: cx.db, username: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
       end
 
       options = {

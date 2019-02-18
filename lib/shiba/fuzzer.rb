@@ -5,14 +5,14 @@ module Shiba
 
     def initialize(connection)
       @connection = connection
-      @index_stats = IndexStats.new
     end
 
     attr_reader :connection
 
     def fuzz!
-      fetch_index!
+      @index_stats = fetch_index
       table_sizes = guess_table_sizes
+
       @index_stats.tables.each do |name, table|
         table.count = table_sizes[name]
         table.indexes.each do |name, index|
@@ -21,7 +21,21 @@ module Shiba
           end
         end
       end
+
       @index_stats
+    end
+
+    def fetch_index
+      stats = Shiba::IndexStats.new
+      records = connection.fetch_indexes
+      tables = {}
+      records.each do |h|
+        h.keys.each { |k| h[k.downcase] = h.delete(k) }
+        h["cardinality"] = h["cardinality"].to_i
+
+        stats.add_index_column(h['table_name'], h['index_name'], h['column_name'], h['cardinality'], h['non_unique'] == 0)
+      end
+      stats
     end
 
     private
@@ -29,25 +43,11 @@ module Shiba
     BIG_FUZZ_SIZE   = 5_000
     SMALL_FUZZ_SIZE = 100
 
-    def fetch_index!
-      records = connection.query("select * from information_schema.statistics where table_schema = DATABASE()")
-      tables = {}
-      records.each do |h|
-        h.keys.each { |k| h[k.downcase] = h.delete(k) }
-        h["cardinality"] = h["cardinality"].to_i
-        @index_stats.add_index_column(h['table_name'], h['index_name'], h['column_name'], h['cardinality'], h['non_unique'] == "0")
-      end
-    end
 
     # Create fake table sizes based on the table's index count.
     # The more indexes, the bigger the table. Seems to rank tables fairly well.
     def guess_table_sizes
-      index_count_query = "select TABLE_NAME as table_name, count(*) as index_count
-        from information_schema.statistics where table_schema = DATABASE()
-        and seq_in_index = 1 and index_name not like 'fk_rails%'
-        group by table_name order by index_count"
-
-      index_counts = connection.query(index_count_query).to_a
+      index_counts = connection.count_indexes_by_table
 
       # 90th table percentile based on number of indexes
       # round down so we don't blow up on small tables
