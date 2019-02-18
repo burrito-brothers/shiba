@@ -30,7 +30,7 @@ module Shiba
     SMALL_FUZZ_SIZE = 100
 
     def fetch_index!
-      records = connection.query("select * from information_schema.statistics where table_schema = DATABASE()")
+      records = connection.fetch_indexes
       tables = {}
       records.each do |h|
         h.keys.each { |k| h[k.downcase] = h.delete(k) }
@@ -42,12 +42,7 @@ module Shiba
     # Create fake table sizes based on the table's index count.
     # The more indexes, the bigger the table. Seems to rank tables fairly well.
     def guess_table_sizes
-      index_count_query = "select TABLE_NAME as table_name, count(*) as index_count
-        from information_schema.statistics where table_schema = DATABASE()
-        and seq_in_index = 1 and index_name not like 'fk_rails%'
-        group by table_name order by index_count"
-
-      index_counts = connection.query(index_count_query).to_a
+      index_counts = connection.count_indexes_by_table
 
       # 90th table percentile based on number of indexes
       # round down so we don't blow up on small tables

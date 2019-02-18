@@ -3,6 +3,8 @@ PATH
   specs:
     shiba (0.2.3)
       activesupport
+      mysql2
+      pg
 
 GEM
   remote: https://rubygems.org/
@@ -25,6 +27,7 @@ GEM
       concurrent-ruby (~> 1.0)
     minitest (5.11.3)
     mysql2 (0.5.2)
+    pg (1.1.4)
     rake (10.5.0)
     thread_safe (0.3.6)
     tzinfo (1.2.5)
@@ -37,7 +40,6 @@ DEPENDENCIES
   activerecord
   bundler (~> 2.0)
   byebug
-  mysql2
   rake (~> 10.0)
   shiba!
 
