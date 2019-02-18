@@ -97,8 +97,7 @@ module Shiba
 
         count = table_count
         count = 1 if count == 0
-        ratio_per_item = self.rows_per / count.to_f rescue debugger
-
+        ratio_per_item = self.rows_per / count.to_f
 
         if count <= 10
           ratio_threshold = 1_000_0000 # always show a number

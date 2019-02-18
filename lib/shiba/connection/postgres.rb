@@ -34,26 +34,30 @@ module Shiba
               and t.relkind = 'r'
           order by
               t.relname,
-              i.relname
+              ix.indisprimary desc,
+              i.relname,
+              array_position(ix.indkey, a.attnum)
           EOL
         )
         rows = result.to_a.map do |row|
           # TBD: do better than this, have them return something objecty
           if row['is_primary'] == "t"
             row['index_name'] = "PRIMARY"
-            row['non_unique'] = "0"
+            row['non_unique'] = 0
           elsif row['is_unique']
-            row['non_unique'] = "0"
+            row['non_unique'] = 0
           end
 
-          row['numrows'] = row['numrows'].to_i
-          row['numdistinct'] = row['numdistinct'].to_f
-
-          if row['numrows'] == 0
+          if row['numdistinct'].nil?
+            # meaning the table's empty.
             row['cardinality'] = 0
+          elsif row['numdistinct'] == 0
+            # numdistinct is 0 if there's rows in the table but all values are null
+            row['cardinality'] = 1
           elsif row['numdistinct'] < 0
             # postgres talks about either cardinality or selectivity (depending.  what's their heuristic?)
             # in the same way we do in the yaml file!
+            # if less than zero, it's negative selectivity.
             row['cardinality'] = -(row['numrows'] * row['numdistinct'])
           else
             row['cardinality'] = row['numdistinct']
