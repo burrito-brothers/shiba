@@ -7,7 +7,7 @@ module Shiba
         if port == 3306
           server_type = 'mysql'
         elsif port == 5432
-          server_type 'postgres'
+          server_type = 'postgres'
         else
           raise "couldn't determine server type!  please pass --server"
         end

@@ -1,5 +1,7 @@
 require 'pathname'
 require 'pp'
+require 'optionparser'
+
 module Shiba
   module Configure
 
@@ -53,8 +55,8 @@ module Shiba
       end
     end
 
-    def self.make_options_parser(options)
-      parser = OptionParser.new do |opts|
+    def self.make_options_parser(options, only_basics = false)
+      OptionParser.new do |opts|
         # note that the key to the hash needs to stay the same as the
         # option name since we re-pass them
         opts.on("-s","--server SERVER_TYPE", "mysql|postgres") do |s|
@@ -89,6 +91,12 @@ module Shiba
           options["index"] = i.to_i
         end
 
+        opts.on("--default-extras-file", "The option file to read mysql configuration from") do |f|
+          options["default_file"] = f
+        end
+
+        next if only_basics
+
         opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
           options["limit"] = l.to_i
         end
@@ -122,9 +130,6 @@ module Shiba
           options["default_group"] = f
         end
 
-        opts.on("--default-extras-file", "The option file to read mysql configuration from") do |f|
-          options["default_file"] = f
-        end
       end
     end
   end
