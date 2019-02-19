@@ -8,3 +8,4 @@
 /tmp/
 .*.sw*
 node_modules
+test/database.yml
