@@ -6,7 +6,7 @@ APP = File.basename(__FILE__)
 
 commands = {
     "explain" => "Generate a report from logged SQL queries",
-    "check"   => "Check staged files for query problems",
+    "review"   => "Review staged files for query problems",
 }
 
 global = OptionParser.new do |opts|
