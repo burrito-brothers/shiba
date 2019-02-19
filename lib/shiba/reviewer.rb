@@ -55,13 +55,6 @@ module Shiba
     #    url
     def post_comments
       puts "Posting to #{api_url}"
-
-      puts "--------"
-      comments.each do |c|
-        puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
-        puts c[:body]
-        puts ""
-      end
     end
 
     def repo_host

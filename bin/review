@@ -5,13 +5,18 @@ require 'optionparser'
 require 'shiba/reviewer'
 require 'shiba/checker'
 
-# Comment on Github Pull requests using the output of bin/check.
 options = {}
 parser = OptionParser.new do |opts|
-  # -f and -b options pass through to bin/check
+  opts.banner = "Review changes for query problems. Optionally submit the comments to a Github pull request."
+
+  opts.separator "Required:"
+
   opts.on("-f","--file FILE", "The explain output log to compare with") do |f|
     options["file"] = f
   end
+
+  opts.separator ""
+  opts.separator "Git diff options:"
 
   opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and BRANCH") do |b|
     options["branch"] = b
@@ -25,6 +30,13 @@ parser = OptionParser.new do |opts|
     options["unstaged"] = true
   end
 
+  opts.separator ""
+  opts.separator "Github options:"
+
+  opts.on("--submit", "Submit comments to Github") do
+    options["submit"] = true
+  end
+
   opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on") do |p|
     options["pull_request"] = p
   end
@@ -33,8 +45,22 @@ parser = OptionParser.new do |opts|
     options["token"] = t
   end
 
+  opts.separator ""
+  opts.separator "Common options:"
+
   opts.on("--verbose", "Verbose/debug mode") do
     options["verbose"] = true
+  end
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+  opts.on_tail("--version", "Show version") do
+    require 'shiba/version'
+    puts Shiba::VERSION
+    exit
   end
 end
 parser.parse!
@@ -49,7 +75,8 @@ log = options["file"]
 
 if log.nil?
   $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
-  $stderr.puts parser.banner
+  $stderr.puts ""
+  $stderr.puts parser
   exit 1
 end
 
@@ -59,7 +86,7 @@ if !File.exist?(log)
 end
 
 if options["branch"] == nil
-  options["branch"] == ENV['TRAVIS_PULL_REQUEST_SHA']
+  options["branch"] = ENV['TRAVIS_PULL_REQUEST_SHA']
 end
 
 if options["token"] == nil
@@ -77,18 +104,28 @@ if options["verbose"]
   $stderr.puts "#{repo_cmd}\t#{repo_url}"
 end
 
-def require_option(value, message)
-  if value.nil? || value.empty?
-    $stderr.puts message
-    exit 1
-  end
+
+def require_option(parser, name)
+  $stderr.puts "Required: #{name}"
+  $stderr.puts ""
+  $stderr.puts parser
+  exit 1
 end
 
-require_option(options["file"], "No explain log file provided (-f)")
-#require_option(options["branch"], "No branch sha provided")
-require_option(options["token"], "No Github API token provided (-t)")
-require_option(options["pull_request"], "No pull request id provided (-p)")
-require_option(repo_url, "'#{Dir.pwd}' does not appear to be a git repo")
+if options["file"].nil?
+  require_option(parser, "file", "No explain log file provided")
+end
+
+if repo_url.empty?
+  $stderr.puts "'#{Dir.pwd}' does not appear to be a git repo"
+  exit 1
+end
+
+if options["submit"]
+  #require_option(options["branch"], "No branch sha provided")
+  require_option(parser, "token") if options["token"].nil?
+  require_option(parser, "pull_request") if options["pull_request"].nil?
+end
 
 # Check to see if the log overlaps with the git diff
 result = Shiba::Checker.new(options).run(log)
@@ -105,11 +142,19 @@ end
 # Generate comments for the problem queries
 reviewer = Shiba::Reviewer.new(repo_url, result.problems, options)
 
-if reviewer.repo_host.empty? || reviewer.repo_path.empty?
-  $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
-  exit 1
+if options["submit"]
+  if reviewer.repo_host.empty? || reviewer.repo_path.empty?
+    $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
+    exit 1
+  end
+
+  reviewer.post_comments
 end
 
-reviewer.post_comments
+reviewer.comments.each do |c|
+  puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
+  puts c[:body]
+  puts ""
+end
 
 exit 2
