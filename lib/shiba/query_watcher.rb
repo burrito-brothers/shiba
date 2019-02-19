@@ -21,6 +21,8 @@ module Shiba
         sql = interpolate(sql, payload[:type_casted_binds])
       end
 
+      sql = sql.gsub(/\n/, ' ')
+
       fingerprint = Query.get_fingerprint(sql)
       return if @queries[fingerprint]
 

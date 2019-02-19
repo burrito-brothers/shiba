@@ -28,6 +28,6 @@ describe "Connection" do
 
     queries = File.read(file.path)
     # Should be 1, but there's schema loading garbage that's hard to remove
-    assert_equal 9, queries.lines.size, "No queries logged"
+    assert_equal 3, queries.lines.size, "No queries logged"
   end
 end
