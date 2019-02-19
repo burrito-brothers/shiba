@@ -12,7 +12,14 @@ require_relative './models/user'
 if ENV['SHIBA_DEBUG']
   ActiveRecord::Base.logger = Logger.new('/dev/stdout')
 end
-ActiveRecord::Base.establish_connection('adapter' => 'mysql2', 'database' => 'shiba_test', 'username' => 'root')
+
+
+database_yml = File.join(File.dirname(__FILE__), "..", "database.yml")
+database_yml = database_yml + ".example" unless File.exist?(database_yml)
+
+connection = YAML.load_file(database_yml)
+
+ActiveRecord::Base.establish_connection(connection['mysql'])
 
 org = Organization.create!(name: 'test')
 org.users.create!(email: 'squirrel@example.com')

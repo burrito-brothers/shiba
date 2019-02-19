@@ -27,6 +27,10 @@ module Shiba
     @connection = Shiba::Connection.build(@connection_hash)
   end
 
+  def self.database
+    @connection_hash['database']
+  end
+
   def self.root
     File.dirname(__dir__)
   end
