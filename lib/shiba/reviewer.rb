@@ -9,26 +9,26 @@ module Shiba
   class Reviewer
     TEMPLATE_FILE = File.join(Shiba.root, 'lib/shiba/output/tags.yaml')
 
-    attr_reader :repo_url, :options
+    attr_reader :repo_url, :problems, :options
 
-    def initialize(repo_url, options)
+    def initialize(repo_url, problems, options)
       @repo_url = repo_url
+      @problems = problems
       @options = options
     end
 
     def comments
+      return @comments if @comments
       # FIXME: diff output needs to be branch flag aware
       diff = Shiba::Diff.new(StringIO.new(`git diff`))
 
-      problems.map do |line|
-        path, json = line.split("\t")
+      @comments = problems.map do |path, explain|
         file, line_number = path.split(":")
         if path.empty? || line_number.nil?
           raise StandardError.new("Bad path received: ", line_number)
         end
 
         position = diff.find_position(file, line_number.to_i)
-        explain = JSON.parse(json)
 
         { body: renderer.render(explain),
           commit_id: options["branch"],
@@ -89,22 +89,6 @@ module Shiba
       @url << "/repos/#{repo_path}/pulls/#{options["pull_request"]}/comments"
 
       @url
-    end
-
-    def problems
-      return @problems if @problems
-
-      cmd = "#{File.join(Shiba.root, 'bin/check')} -f #{options["file"]}"
-      cmd << " --branch #{options["branch"]}" if options["branch"]
-
-      if options["verbose"]
-        $stderr.puts cmd
-      end
-
-      Open3.popen3(cmd) {|_,o,e,_|
-        $stderr.puts e.readlines if options["verbose"]
-        @problems = o.readlines
-      }
     end
 
     def host_and_path

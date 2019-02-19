@@ -3,6 +3,7 @@
 require 'bundler/setup'
 require 'optionparser'
 require 'shiba/reviewer'
+require 'shiba/checker'
 
 # Comment on Github Pull requests using the output of bin/check.
 options = {}
@@ -14,6 +15,14 @@ parser = OptionParser.new do |opts|
 
   opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and BRANCH") do |b|
     options["branch"] = b
+  end
+
+  opts.on("--staged", "Only check files that are staged for commit") do
+    options["staged"] = true
+  end
+
+  opts.on("--unstaged", "Only check files that are not staged for commit") do
+    options["unstaged"] = true
   end
 
   opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on") do |p|
@@ -29,6 +38,25 @@ parser = OptionParser.new do |opts|
   end
 end
 parser.parse!
+
+# This is a noop since it's the default behavior. Ignore.
+if options["staged"] && options["unstaged"]
+  options.delete("staged")
+  options.delete("unstaged")
+end
+
+log = options["file"]
+
+if log.nil?
+  $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
+  $stderr.puts parser.banner
+  exit 1
+end
+
+if !File.exist?(log)
+  $stderr.puts "File not found: '#{log}'"
+  exit 1
+end
 
 if options["branch"] == nil
   options["branch"] == ENV['TRAVIS_PULL_REQUEST_SHA']
@@ -62,16 +90,26 @@ require_option(options["token"], "No Github API token provided (-t)")
 require_option(options["pull_request"], "No pull request id provided (-p)")
 require_option(repo_url, "'#{Dir.pwd}' does not appear to be a git repo")
 
-reviewer = Shiba::Reviewer.new(repo_url, options)
+# Check to see if the log overlaps with the git diff
+result = Shiba::Checker.new(options).run(log)
+
+if result.message
+  $stderr.puts result.message
+end
+
+if result.status == :pass
+  $stderr.puts "No problems found" if options["verbose"]
+  exit
+end
+
+# Generate comments for the problem queries
+reviewer = Shiba::Reviewer.new(repo_url, result.problems, options)
 
 if reviewer.repo_host.empty? || reviewer.repo_path.empty?
   $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
   exit 1
 end
 
-if reviewer.comments.empty?
-  $stderr.puts "No problems found" if options["verbose"]
-  exit
-end
-
 reviewer.post_comments
+
+exit 2
