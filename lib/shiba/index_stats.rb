@@ -157,11 +157,16 @@ module Shiba
 
       return nil unless index
 
-      index_part = index.columns.detect do |p|
-        p.column == parts.last
+      index_part = nil
+      index.columns.each do |c|
+        break unless parts.include?(c.column)
+        index_part = c
       end
 
-      return nil unless index_part
+      # postgres can claim to use the right hand side of an index
+      # in a bitmap scan, which seems to be a side-effect of forcing
+      # seq-scan off.  In these cases we'll say it's a full scan.
+      return table_count(table_name) unless index_part
 
       index_part.rows_per
     end

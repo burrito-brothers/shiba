@@ -1,4 +1,5 @@
 require 'mysql2'
+require 'json'
 
 module Shiba
   class Connection
@@ -29,6 +30,15 @@ module Shiba
         EOL
 
         @connection.query(sql).to_a
+      end
+
+      def explain(sql)
+        rows = query("EXPLAIN FORMAT=JSON #{sql}").to_a
+        JSON.parse(rows.first['EXPLAIN'])
+      end
+
+      def mysql?
+        true
       end
     end
   end

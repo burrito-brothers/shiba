@@ -2,6 +2,7 @@ require_relative 'helper'
 
 require 'shiba'
 require 'shiba/explain'
+require 'shiba/explain/postgres_explain_index_conditions'
 require 'shiba/table_stats'
 
 describe "Explain" do
@@ -41,4 +42,20 @@ describe "Explain" do
       assert_includes(explain.messages, "limited_scan")
     end
   end
+
+  describe "postgres index conditions" do
+    def parse_conditions(conds)
+      Shiba::Explain::PostgresExplainIndexConditions.new(conds).fields
+    end
+
+    it "parses some index conditions" do
+      assert_equal(%w(rgt), parse_conditions("(rgt > 7)"))
+      assert_equal(%w(type), parse_conditions("((type)::text = 'TimeEntryActivity'::text)"))
+      assert_equal(%w(type), parse_conditions("(((type)::text = ANY ('{Group,GroupBuiltin,GroupAnonymous,GroupNonMember}'::text[])) AND ((type)::text = 'Group'::text))"))
+      assert_equal(%w(type), parse_conditions("((type)::text = 'TimeEntryActivity '' '::text)"))
+      assert_equal(%w(type), parse_conditions("((type)::text = 'TimeEntryActivity '' '::text)"))
+      assert_equal(%w(role_id tracker_id old_status_id), parse_conditions("((role_id = 1) AND (tracker_id = 2) AND (old_status_id = 1))"))
+    end
+  end
 end
+
