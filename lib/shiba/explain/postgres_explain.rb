@@ -21,13 +21,19 @@ module Shiba
             "key" => nil,
             "filter" => node["Filter"]
           }
-        when "Index Scan", "Bitmap Index Scan"
-          array << {
+        when "Index Scan", "Bitmap Index Scan", "Index Only Scan"
+          h = {
             "table" => node["Relation Name"] || current_table,
             "access_type" => "ref",
             "key" => node["Index Name"],
             "used_key_parts" => extract_used_key_parts(node)
           }
+
+          if node['Node Type'] == "Index Only Scan"
+            h['using_index'] = true
+          end
+
+          array << h
         else
           raise "unhandled node: #{node}"
         end
@@ -35,7 +41,7 @@ module Shiba
       end
 
       def extract_used_key_parts(node)
-        conds = PostgresExplainIndexConditions.new(node['Index cond'])
+        conds = PostgresExplainIndexConditions.new(node['Index Cond'])
         conds.fields
       end
 
