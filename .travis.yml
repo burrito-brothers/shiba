@@ -16,4 +16,4 @@ before_script:
  - cp .travis/my.cnf ~/.my.cnf
 
 addons:
-  postgresql: "11.2"
+  postgresql: "9.5"
