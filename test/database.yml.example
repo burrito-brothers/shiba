@@ -1,7 +1,20 @@
-mysql:
-  adapter: mysql2
+
+test_postgres: &test_postgres
+  server: postgres
+  database: shiba_test_postgres
+  host: localhost
+  username: root
+  password: ""
+  encoding: utf8
+
+test_mysql: &test_mysql
+  server: mysql
   database: shiba_test_mysql
   host: localhost
   username: root
   password: ""
   encoding: utf8
+
+test:
+  <<: *test_mysql
+

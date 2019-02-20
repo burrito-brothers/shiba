@@ -17,5 +17,5 @@ database_yml = database_yml + ".example" unless File.exist?(database_yml)
 
 connection = YAML.load_file(database_yml)
 
-Shiba.configure(connection['mysql'].merge('server' => 'mysql'))
-create_test_database(connection['mysql']['database'])
+Shiba.configure(connection['test'])
+create_test_database(connection['test']['database'])
