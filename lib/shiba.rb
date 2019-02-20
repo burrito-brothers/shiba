@@ -34,6 +34,27 @@ module Shiba
   def self.root
     File.dirname(__dir__)
   end
+
+  def self.path
+    @log_path ||= ENV['SHIBA_PATH'] || try_tmp || use_tmpdir
+  end
+
+  private
+
+  def self.try_tmp
+    return if !Dir.exist?('/tmp')
+    return if !File.writable?('/tmp')
+
+    path = File.join('/tmp', 'shiba')
+    Dir.mkdir(path) if !Dir.exist?(path)
+    path
+  end
+
+  def self.use_tmpdir
+    path = File.join(Dir.tmpdir, 'shiba')
+    Dir.mkdir(path) if !Dir.exist?(path)
+    path
+  end
 end
 
 # This goes at the end so that Shiba.root is defined.

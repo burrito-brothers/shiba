@@ -17,7 +17,7 @@ describe "Connection" do
     test_app_path = File.join(File.dirname(__FILE__), 'app', 'app.rb')
 
     # This is auto-removed, so uncomment / use debugger to debug output issues.
-    env = {'SHIBA_OUT' => file.path}
+    env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
     Open3.popen2e(env, "ruby", test_app_path) {|_,eo,thread|
       out = eo.readlines
       if ENV['SHIBA_DEBUG']
