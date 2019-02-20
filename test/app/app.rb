@@ -19,7 +19,8 @@ database_yml = database_yml + ".example" unless File.exist?(database_yml)
 
 connection = YAML.load_file(database_yml)
 
-ActiveRecord::Base.establish_connection(connection['test'])
+TEST_ENV = ENV['SHIBA_TEST_ENV'] || 'test'
+ActiveRecord::Base.establish_connection(connection[TEST_ENV])
 
 org = Organization.create!(name: 'test')
 org.users.create!(email: 'squirrel@example.com')

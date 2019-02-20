@@ -6,7 +6,8 @@ require 'tempfile'
 
 describe "Connection" do
   it "doesn't blow up" do
-    assert_equal Shiba.database, Shiba.connection.query("select database() as db").first["db"]
+    function = Shiba.connection.mysql? ? "database" : "current_database"
+    assert_equal Shiba.database, Shiba.connection.query("select #{function}() as db").first["db"]
 
     stats = Shiba::Fuzzer.new(Shiba.connection).fuzz!
     assert stats.any?, stats.inspect
