@@ -6,8 +6,11 @@ rvm:
 
 services:
  - mysql
+ - postgresql
+
+env:
+  - SHIBA_TEST_ENV=test_postgres
+  - SHIBA_TEST_ENV=test_mysql
 
 before_script:
  - cp .travis/my.cnf ~/.my.cnf
- - mysql -e 'create database shiba_test;'
- - mysql shiba_test -e 'source test/structure.sql'
