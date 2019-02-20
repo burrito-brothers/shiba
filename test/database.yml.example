@@ -1,7 +1,7 @@
 
 test_postgres: &test_postgres
   server: postgres
-  adapter: postgres
+  adapter: postgresql
   database: shiba_test_postgres
   host: localhost
   username: postgres
