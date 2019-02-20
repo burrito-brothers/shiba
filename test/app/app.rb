@@ -19,7 +19,7 @@ database_yml = database_yml + ".example" unless File.exist?(database_yml)
 
 connection = YAML.load_file(database_yml)
 
-ActiveRecord::Base.establish_connection(connection['mysql'])
+ActiveRecord::Base.establish_connection(connection['test'])
 
 org = Organization.create!(name: 'test')
 org.users.create!(email: 'squirrel@example.com')
