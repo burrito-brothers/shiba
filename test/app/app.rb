@@ -25,4 +25,7 @@ ActiveRecord::Base.establish_connection(connection[TEST_ENV])
 org = Organization.create!(name: 'test')
 org.users.create!(email: 'squirrel@example.com')
 
-User.find_by(email: 'squirrel@example.com')
+user = User.find_by(email: 'squirrel@example.com')
+10.times do |i|
+  user.comments.create!(body: "text #{i}")
+end

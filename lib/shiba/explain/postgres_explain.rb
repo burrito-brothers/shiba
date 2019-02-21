@@ -8,12 +8,14 @@ module Shiba
       end
 
 
-      def transform_node(node, array, current_table=nil)
+      def transform_node(node, array, current_table=nil, join_fields = {})
         case node['Node Type']
         when "Limit", "LockRows", "Aggregate", "Unique", "Sort"
-          recurse_plans(node, array, current_table)
+          recurse_plans(node, array, current_table, join_fields)
+        when "Hash Join"
+          join_fields = extract_join_key_parts(node['Hash Cond'])
         when "Bitmap Heap Scan"
-          recurse_plans(node, array, node['Relation Name'])
+          recurse_plans(node, array, node['Relation Name'], join_fields)
         when "Seq Scan"
           array << {
             "table" => node["Relation Name"],
@@ -45,9 +47,14 @@ module Shiba
         conds.fields
       end
 
-      def recurse_plans(node, array, current_table)
+      def extract_join_key_parts(cond)
+        conds = PostgresExplainIndexConditions.new(cond)
+        conds.join_fields
+      end
+
+      def recurse_plans(node, array, current_table, join_fields)
         node['Plans'].each do |n|
-          transform_node(n, array, current_table)
+          transform_node(n, array, current_table, join_fields)
         end
       end
 

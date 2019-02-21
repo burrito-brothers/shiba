@@ -6,44 +6,63 @@ module Shiba
       def initialize(string)
         @string = string
         @sc = StringScanner.new(string)
+        @fields = nil
       end
 
       attr_reader :sc
-      def fields
-        fields = []
+      def parse!
+        return if @fields
+        @fields = {}
         sc.scan(LPAREN)
         if sc.peek(1) == "("
           while sc.peek(1) == "("
             sc.getch
-            fields << extract_field(sc)
+            extract_field(sc)
             sc.scan(/\s+AND\s+/)
           end
         else
-          fields << extract_field(sc)
+          extract_field(sc)
         end
-        fields.uniq
+      end
+
+      def fields
+        parse!
+        @fields[nil]
+      end
+
+      def join_fields
+        parse!
+        @fields
       end
 
       private
       LPAREN = /\(/
       RPAREN = /\)/
 
-      def parse_value(sc)
-        if sc.peek(1) == "'"
-          v = ""
-          sc.getch
-          while true
-            if sc.peek(1) == "'"
-              if sc.peek(2) == "''"
-                sc.scan(/''/)
-              else
-                sc.getch
-                sc.scan(/::\w+(\[\])?/)
-                return v
-              end
+      def parse_string(sc)
+        v = ""
+        qchar = sc.getch
+        double_quote = qchar * 2
+        while true
+          if sc.peek(1) == qchar
+            if sc.peek(2) == double_quote
+              sc.scan(/#{double_quote}/)
+            else
+              # end of string
+              sc.getch
+              # optional type hint
+              sc.scan(/::\w+(\[\])?/)
+              return v
             end
-            v += sc.getch
           end
+          v += sc.getch
+        end
+      end
+
+      def parse_value(sc)
+        peek = sc.peek(1)
+        if peek == '"' || peek == "'"
+          parse_string(sc)
         elsif (v = sc.scan(/\d+\.?\d*/))
           if v.include?('.')
             v.to_f
@@ -62,14 +81,18 @@ module Shiba
         # (type = 1)
         # ((type)::text = 1)
         # (((type)::text = ANY ('{User,AnonymousUser}'::text[])) AND ((type)::text = 'User'::text))
+        table = nil
         if sc.peek(1) == "("
           # multiple conditions with typed column
           sc.scan(LPAREN)
         end
 
         if sc.match?(/\S+::/)
+          # typed column like (name)::text = 'ben'
           field = sc.scan(/[^\)]+/)
           sc.scan(/\)::\S+/)
+        elsif sc.peek(1) == '"'
+          field = parse_value(sc)
         else
           field = sc.scan(/\S+/)
         end
@@ -80,7 +103,8 @@ module Shiba
         if sc.scan(RPAREN).nil?
           raise "bad scan; #{sc.inspect}"
         end
-        field
+        @fields[table] ||= []
+        @fields[table] << field unless @fields[table].include?(field)
       end
     end
   end
