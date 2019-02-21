@@ -6,7 +6,8 @@ require 'tempfile'
 
 describe "Connection" do
   it "doesn't blow up" do
-    assert_equal Shiba.database, Shiba.connection.query("select database() as db").first["db"]
+    function = Shiba.connection.mysql? ? "database" : "current_database"
+    assert_equal Shiba.database, Shiba.connection.query("select #{function}() as db").first["db"]
 
     stats = Shiba::Fuzzer.new(Shiba.connection).fuzz!
     assert stats.any?, stats.inspect
@@ -28,6 +29,6 @@ describe "Connection" do
 
     queries = File.read(file.path)
     # Should be 1, but there's schema loading garbage that's hard to remove
-    assert_equal 9, queries.lines.size, "No queries logged"
+    assert_equal 3, queries.lines.size, "No queries logged"
   end
 end

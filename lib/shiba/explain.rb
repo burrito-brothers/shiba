@@ -1,6 +1,7 @@
 require 'json'
 require 'shiba/index'
 require 'shiba/explain/mysql_explain'
+require 'shiba/explain/postgres_explain'
 
 module Shiba
   class Explain
@@ -13,9 +14,13 @@ module Shiba
       end
 
       @options = options
-      ex = Shiba.connection.query("EXPLAIN FORMAT=JSON #{@sql}").to_a
-      @explain_json = JSON.parse(ex.first['EXPLAIN'])
-      @rows = Shiba::Explain::MysqlExplain.new.transform_json(@explain_json['query_block'])
+      @explain_json = Shiba.connection.explain(@sql)
+
+      if Shiba.connection.mysql?
+        @rows = Shiba::Explain::MysqlExplain.new.transform_json(@explain_json['query_block'])
+      else
+        @rows = Shiba::Explain::PostgresExplain.new(@explain_json).transform
+      end
       @stats = stats
       run_checks!
     end
@@ -308,9 +313,10 @@ module Shiba
     end
 
     def humanized_explain
-      h = @explain_json['query_block'].dup
-      %w(select_id cost_info).each { |i| h.delete(i) }
-      h
+      #h = @explain_json['query_block'].dup
+      #%w(select_id cost_info).each { |i| h.delete(i) }
+      #h
+      @explain_json
     end
   end
 end
