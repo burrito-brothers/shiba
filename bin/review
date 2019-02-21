@@ -132,7 +132,7 @@ if repo_url.empty?
 end
 
 if options["submit"]
-  require_option(options["branch"], "No branch provided")
+  require_option(parser, "branch") if options["branch"].nil?
   require_option(parser, "token") if options["token"].nil?
   require_option(parser, "pull_request") if options["pull_request"].nil?
 end
