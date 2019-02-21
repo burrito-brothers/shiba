@@ -52,7 +52,7 @@ module Shiba
 
       cmd = "shiba explain #{database_args} --file #{path}"
       if Shiba::Configure.ci?
-        cmd << "--json #{File.join(Shiba.path, 'ci.json')}"
+        cmd << " --json #{File.join(Shiba.path, 'ci.json')}"
       end
 
       if ENV['SHIBA_DEBUG']
@@ -81,7 +81,7 @@ module Shiba
         'server':   c[:server]
       }
 
-      options.reject { |k,v| v.nil? }.map { |k,v| "--#{k} #{v}" }.join(" ")
+      options.reject { |k,v| v.nil? || v.empty? }.map { |k,v| "--#{k} #{v}" }.join(" ")
     end
 
   end
