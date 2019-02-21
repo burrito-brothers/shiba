@@ -92,7 +92,9 @@ module Shiba
         elsif peek == '"'
           ident = parse_string(sc)
         else
-          ident = sc.scan(/[^ \.\)]+/)
+          ident = sc.scan(/[^ \.\)\[]+/)
+          # field[1] for array fields, not bothering to do brace matching here yet, oy vey
+          sc.scan(/\[.*?\]/)
         end
         ident
       end

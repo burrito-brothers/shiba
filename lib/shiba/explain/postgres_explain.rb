@@ -5,18 +5,33 @@ module Shiba
     class PostgresExplain
       def initialize(json)
         @json = json
+        @state = {}
       end
 
+      def with_state(hash)
+        old_state = @state
+        @state = @state.merge(hash)
+        yield
+        @state = old_state
+      end
 
-      def transform_node(node, array, current_table=nil)
+      def transform_node(node, array)
         case node['Node Type']
-        when "Limit", "LockRows", "Aggregate", "Unique", "Sort", "Hash"
-          recurse_plans(node, array, current_table)
+        when "Limit", "LockRows", "Aggregate", "Unique", "Sort", "Hash", "ProjectSet"
+          recurse_plans(node, array)
+        when "Nested Loop"
+          with_state(join_type: node["Join Type"]) do
+            recurse_plans(node, array)
+          end
         when "Hash Join"
           join_fields = extract_join_key_parts(node['Hash Cond'])
-          recurse_plans(node, array, current_table)
+          with_state(join_fields: join_fields, join_type: "Hash") do
+            recurse_plans(node, array)
+          end
         when "Bitmap Heap Scan"
-          recurse_plans(node, array, node['Relation Name'])
+          with_state(table: node['Relation Name']) do
+            recurse_plans(node, array)
+          end
         when "Seq Scan"
           array << {
             "table" => node["Relation Name"],
@@ -25,7 +40,7 @@ module Shiba
             "filter" => node["Filter"]
           }
         when "Index Scan", "Bitmap Index Scan", "Index Only Scan"
-          table = node["Relation Name"] || current_table
+          table = node["Relation Name"] || @state[:table]
 
           if node['Index Cond']
             used_key_parts = extract_used_key_parts(node['Index Cond'])
@@ -34,7 +49,7 @@ module Shiba
           end
 
           h = {
-            "table" => node["Relation Name"] || current_table,
+            "table" => node["Relation Name"] || @state[:table],
             "access_type" => "ref",
             "key" => node["Index Name"],
             "used_key_parts" => used_key_parts
@@ -61,9 +76,9 @@ module Shiba
         conds.join_fields
       end
 
-      def recurse_plans(node, array, current_table)
+      def recurse_plans(node, array)
         node['Plans'].each do |n|
-          transform_node(n, array, current_table)
+          transform_node(n, array)
         end
       end
 
