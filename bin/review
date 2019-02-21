@@ -75,8 +75,8 @@ end
 log = options["file"]
 
 if log.nil? && Shiba::Configure.ci?
-  $stderr.puts "CI detected, setting file to ci.json"
-  options["file"] = File.join(Shiba.path, 'ci.json')
+  log = options["file"] = File.join(Shiba.path, 'ci.json')
+  $stderr.puts "CI detected, setting file to #{log}" if options["verbose"]
 end
 
 if log.nil?
