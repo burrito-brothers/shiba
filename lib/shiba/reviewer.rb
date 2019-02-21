@@ -62,7 +62,7 @@ module Shiba
     #    url
     def submit
       res = Net::HTTP.start(api_uri.hostname, api_uri.port, :use_ssl => true) do |http|
-        http.request(req)
+        http.request(pr_comment_request)
       end
 
       case res
