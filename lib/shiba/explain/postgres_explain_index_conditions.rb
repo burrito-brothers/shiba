@@ -14,7 +14,8 @@ module Shiba
         return if @fields
         @fields = {}
         sc.scan(LPAREN)
-        if sc.peek(1) == "("
+        if sc.peek(1) == "(" && !sc.match?(/\(\w+\)::/)
+
           while sc.peek(1) == "("
             sc.getch
             extract_field(sc)
@@ -61,8 +62,10 @@ module Shiba
 
       def parse_value(sc)
         peek = sc.peek(1)
-        if peek == '"' || peek == "'"
+        if peek == "'"
           parse_string(sc)
+        elsif peek == '"'
+          parse_field(sc)
         elsif (v = sc.scan(/\d+\.?\d*/))
           if v.include?('.')
             v.to_f
@@ -74,37 +77,58 @@ module Shiba
           v = parse_value(sc)
           sc.scan(/\)/)
           v
+        else
+          parse_field(sc)
         end
       end
+
+      def parse_ident(sc)
+        peek = sc.peek(1)
+        if peek == "("
+          sc.getch
+          # typed column like (name)::text = 'ben'
+          ident = sc.scan(/[^\)]+/)
+          sc.scan(/\)::\S+/)
+        elsif peek == '"'
+          ident = parse_string(sc)
+        else
+          ident = sc.scan(/[^ \.\)]+/)
+        end
+        ident
+      end
+
+      def parse_field(sc)
+        first = nil
+        second = nil
+
+        first = parse_ident(sc)
+        if sc.scan(/\./)
+          second = parse_ident(sc)
+          table = first
+          field = second
+        else
+          table = nil
+          field = first
+        end
+
+        @fields[table] ||= []
+        @fields[table] << field unless @fields[table].include?(field)
+      end
+
 
       def extract_field(sc)
         # (type = 1)
         # ((type)::text = 1)
         # (((type)::text = ANY ('{User,AnonymousUser}'::text[])) AND ((type)::text = 'User'::text))
         table = nil
-        if sc.peek(1) == "("
-          # multiple conditions with typed column
-          sc.scan(LPAREN)
-        end
 
-        if sc.match?(/\S+::/)
-          # typed column like (name)::text = 'ben'
-          field = sc.scan(/[^\)]+/)
-          sc.scan(/\)::\S+/)
-        elsif sc.peek(1) == '"'
-          field = parse_value(sc)
-        else
-          field = sc.scan(/\S+/)
-        end
-
+        parse_field(sc)
         sc.scan(/\s+\S+\s+/) # operator
         parse_value(sc)
 
         if sc.scan(RPAREN).nil?
           raise "bad scan; #{sc.inspect}"
         end
-        @fields[table] ||= []
-        @fields[table] << field unless @fields[table].include?(field)
       end
     end
   end

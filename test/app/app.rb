@@ -8,6 +8,7 @@ require 'shiba/setup'
 
 require_relative './models/organization'
 require_relative './models/user'
+require_relative './models/comment'
 
 if ENV['SHIBA_DEBUG']
   ActiveRecord::Base.logger = Logger.new('/dev/stdout')
