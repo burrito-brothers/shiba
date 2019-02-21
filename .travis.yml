@@ -13,4 +13,4 @@ before_script:
  - mysql shiba_test -e 'source test/structure.sql'
 
 after_script:
- - bundle exec shiba review --verbose
+ - bundle exec shiba review --submit --verbose
