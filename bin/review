@@ -91,16 +91,20 @@ if !File.exist?(log)
   exit 1
 end
 
-if options["branch"] == nil
-  options["branch"] = ENV['TRAVIS_PULL_REQUEST_SHA']
+pr_sha = ENV['TRAVIS_PULL_REQUEST_SHA']
+
+if options["branch"] == nil && pr_sha && !pr_sha.empty?
+  options["branch"] = pr_sha
 end
 
 if options["token"] == nil
   options["token"] = ENV['GITHUB_TOKEN']
 end
 
-if options["pull_request"] == nil
-  options["pull_request"] = ENV['TRAVIS_PULL_REQUEST']
+pr_id = ENV['TRAVIS_PULL_REQUEST']
+
+if options["pull_request"] == nil && pr_id && !pr_id.empty?
+  options["pull_request"] = pr_id
 end
 
 if options["verbose"]
@@ -148,19 +152,21 @@ end
 # Generate comments for the problem queries
 reviewer = Shiba::Reviewer.new(repo_url, result.problems, options)
 
+if !options["submit"] || options["verbose"]
+  reviewer.comments.each do |c|
+    puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
+    puts c[:body]
+    puts ""
+  end
+end
+
 if options["submit"]
   if reviewer.repo_host.empty? || reviewer.repo_path.empty?
     $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
     exit 1
   end
 
-  reviewer.post_comments
-end
-
-reviewer.comments.each do |c|
-  puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
-  puts c[:body]
-  puts ""
+  reviewer.submit
 end
 
 exit 2

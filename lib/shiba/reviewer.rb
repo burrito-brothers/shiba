@@ -4,6 +4,8 @@ require 'open3'
 require 'yaml'
 require 'shiba'
 require 'shiba/diff'
+require 'net/http'
+require 'uri'
 
 module Shiba
   class Reviewer
@@ -56,10 +58,22 @@ module Shiba
 
     #curl -i -H "Authorization: token #{token}" \
     #    -H "Content-Type: application/json" \
-    #    -X POST -d "{\"body\":\"$ASPELL_RESULTS\"}" \
+    #    -X POST -d "{\"body\":\"\"}" \
     #    url
-    def post_comments
-      puts "Posting to #{api_url}"
+    def submit
+      res = Net::HTTP.start(api_uri.hostname, api_uri.port, :use_ssl => true) do |http|
+        http.request(req)
+      end
+
+      case res
+      when Net::HTTPSuccess, Net::HTTPRedirection
+        if options["verbose"]
+          puts "API success #{res.inspect}"
+        end
+        return true
+      else
+        raise StandardError.new, res.value
+      end
     end
 
     def repo_host
@@ -72,21 +86,36 @@ module Shiba
 
     protected
 
+    def pr_comment_request
+      token = options.fetch(:token)
+
+      req = Net::HTTP::Post.new(api_uri)
+      req['Authorization'] = "token #{token}"
+      req['Content-Type'] = 'application/json'
+
+      # Github doesn't use 'line' key
+      comments.map do |c|
+          c.dup.tap { |dc| dc.delete(:line) }
+      end
+      req.body = JSON.dump(comments)
+      req
+    end
+
     def renderer
       @renderer ||= CommentRenderer.new(TEMPLATE_FILE)
     end
 
-    def api_url
-      return @url if @url
+    def api_uri
+      return @uri if @uri
 
-      @url = if repo_host == 'github.com'
+      url = if repo_host == 'github.com'
         'https://api.github.com'
       else
         "https://#{repo_host}/api/v3"
       end
-      @url << "/repos/#{repo_path}/pulls/#{options["pull_request"]}/comments"
+      url << "/repos/#{repo_path}/pulls/#{options["pull_request"]}/comments"
 
-      @url
+      @uri = URI(url)
     end
 
     def host_and_path
