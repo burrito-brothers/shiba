@@ -19,8 +19,13 @@ module Shiba
 
     def comments
       return @comments if @comments
-      # FIXME: diff output needs to be branch flag aware
-      diff = Shiba::Diff.new(StringIO.new(`git diff`))
+
+      cmd ="git diff origin/HEAD..#{options[:branch]}"
+      if options[:verbose]
+        puts "Finding PR position using: #{cmd}"
+      end
+      output = StringIO.new(`#{cmd}`)
+      diff = Shiba::Diff.new(output)
 
       @comments = problems.map do |path, explain|
         file, line_number = path.split(":")

@@ -19,7 +19,7 @@ parser = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Git diff options:"
 
-  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and BRANCH. Defaults to $TRAVIS_PULL_REQUEST_SHA") do |b|
+  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between origin/HEAD and BRANCH. Defaults to $TRAVIS_PULL_REQUEST_SHA") do |b|
     options["branch"] = b
   end
 

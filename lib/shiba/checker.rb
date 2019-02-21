@@ -117,7 +117,7 @@ module Shiba
       when options["unstaged"]
         ""
       else
-        commit = " HEAD"
+        commit = " origin/HEAD"
         commit << "...#{options["branch"]}" if options["branch"]
         commit
       end
