@@ -24,4 +24,4 @@ ActiveRecord::Base.establish_connection(connection['mysql'])
 org = Organization.create!(name: 'test')
 org.users.create!(email: 'squirrel@example.com')
 
-User.find_by(email: 'squirrel@example.com')
+User.find_by(email: 'squirrel@example.com') # bump

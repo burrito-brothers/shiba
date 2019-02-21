@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'bundler/setup'
+$LOAD_PATH << File.expand_path("../lib", File.dirname(__FILE__))
 require 'optionparser'
 require 'shiba/reviewer'
 require 'shiba/checker'
@@ -75,6 +75,7 @@ end
 log = options["file"]
 
 if log.nil? && Shiba::Configure.ci?
+  $stderr.puts "CI detected, setting file to ci.json"
   options["file"] = File.join(Shiba.path, 'ci.json')
 end
 
