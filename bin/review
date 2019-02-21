@@ -19,7 +19,7 @@ parser = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Git diff options:"
 
-  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between origin/HEAD and BRANCH. Defaults to $TRAVIS_PULL_REQUEST_SHA") do |b|
+  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between origin/HEAD and BRANCH. Attempts to read from CI environment when not set.") do |b|
     options["branch"] = b
   end
 
@@ -38,7 +38,7 @@ parser = OptionParser.new do |opts|
     options["submit"] = true
   end
 
-  opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on. Defaults to $TRAVIS_PULL_REQUEST.") do |p|
+  opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on. Attempts to read from CI environment when not set.") do |p|
     options["pull_request"] = p
   end
 
@@ -83,15 +83,15 @@ if log.nil?
   $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
   $stderr.puts ""
   $stderr.puts parser
-  exit 1
+  exit 2
 end
 
 if !File.exist?(log)
   $stderr.puts "File not found: '#{log}'"
-  exit 1
+  exit 2
 end
 
-pr_sha = ENV['TRAVIS_PULL_REQUEST_SHA']
+pr_sha = ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_BRANCH']
 
 if options["branch"] == nil && pr_sha && !pr_sha.empty?
   options["branch"] = pr_sha
@@ -101,14 +101,16 @@ if options["token"] == nil
   options["token"] = ENV['GITHUB_TOKEN']
 end
 
-pr_id = ENV['TRAVIS_PULL_REQUEST']
+# https://circleci.com/docs/2.0/env-vars/
+# This may be wrong for circle ci
+pr_id = ENV['TRAVIS_PULL_REQUEST'] || ENV['CIRCLE_PR_NUMBER']
 
 if options["pull_request"] == nil && pr_id && !pr_id.empty?
   options["pull_request"] = pr_id
 end
 
 if options["verbose"]
-  $stderr.puts "branch: #{options["branch"]}" if options["branch"]
+  $stderr.puts "branch: #{options["branch"].inspect}" if options["branch"]
   $stderr.puts "pull_request: #{options["pull_request"]}" if options["pull_request"]
 end
 
@@ -123,16 +125,16 @@ def require_option(parser, name)
   $stderr.puts "Required: #{name}"
   $stderr.puts ""
   $stderr.puts parser
-  exit 1
+  exit 2
 end
 
 if repo_url.empty?
   $stderr.puts "'#{Dir.pwd}' does not appear to be a git repo"
-  exit 1
+  exit 2
 end
 
 if options["submit"]
-  require_option(parser, "branch") if options["branch"].nil?
+  require_option(parser, "branch") if options["branch"].nil? || options["branch"].empty?
   require_option(parser, "token") if options["token"].nil?
   require_option(parser, "pull_request") if options["pull_request"].nil?
 end
@@ -163,10 +165,10 @@ end
 if options["submit"]
   if reviewer.repo_host.empty? || reviewer.repo_path.empty?
     $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
-    exit 1
+    exit 2
   end
 
   reviewer.submit
 end
 
-exit 2
+exit 1

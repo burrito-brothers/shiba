@@ -31,7 +31,7 @@ end
 if options['json'] && options['html']
   $stderr.puts "Can only output to json or html, not both"
   $stderr.puts parser.banner
-  exit 1
+  exit 2
 end
 
 if option_file && !options['default_group']
@@ -46,7 +46,7 @@ end
 def require_option(parser, name)
   $stderr.puts "Required: #{name}"
   $stderr.puts parser.banner
-  exit 1
+  exit 2
 end
 
 if !options["username"] && !option_file.include?('user')
@@ -66,7 +66,7 @@ schema_stats_fname = options["stats"]
 
 if schema_stats_fname && !File.exist?(schema_stats_fname)
   $stderr.puts "No such file: #{schema_stats_fname}"
-  exit 1
+  exit 2
 end
 
 file = $stdin if file.nil?
@@ -88,16 +88,16 @@ if problems.any?
   $stderr.puts "#{problems.size} problematic #{query_word} detected"
 
   if options['json']
-    exit 3
+    exit 1
   end
 
   page = Shiba::Output.new(queries, { 'output' => options['html'] }).make_web!
 
   if !File.exist?(page)
     $stderr.puts("Failed to generate #{page}")
-    exit 1
+    exit 2
   end
 
   $stderr.puts "Report available at #{page}"
-  exit 3
+  exit 1
 end
