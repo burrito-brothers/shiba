@@ -51,8 +51,8 @@ module Shiba
         array
       end
 
-      def extract_used_key_parts(node)
-        conds = PostgresExplainIndexConditions.new(node['Index Cond'])
+      def extract_used_key_parts(cond)
+        conds = PostgresExplainIndexConditions.new(cond)
         conds.fields
       end
 
