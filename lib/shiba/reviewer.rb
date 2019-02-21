@@ -61,18 +61,28 @@ module Shiba
     #    -X POST -d "{\"body\":\"\"}" \
     #    url
     def submit
-      res = Net::HTTP.start(api_uri.hostname, api_uri.port, :use_ssl => true) do |http|
-        http.request(pr_comment_request)
+      if options["verbose"]
+        $stderr.puts "Start HTTP request to #{api_uri}"
+      end
+      responses = Net::HTTP.start(api_uri.hostname, api_uri.port, :use_ssl => true) do |http|
+        comments[0,10].map do |c|
+          comment = c.dup.tap { |dc| dc.delete(:line) }
+          req = pr_comment_request(comment)
+          http.request(req)
+        end
       end
 
-      case res
-      when Net::HTTPSuccess, Net::HTTPRedirection
-        if options["verbose"]
-          puts "API success #{res.inspect}"
+      responses.each.with_index do |res,i|
+        case res
+        when Net::HTTPSuccess, Net::HTTPRedirection
+          if options["verbose"]
+            $stderr.puts "API success (i=#{i}) #{res.inspect}"
+          end
+          return true
+        else
+          $stderr.puts "(i=#{i}) #{res.body}"
+          raise StandardError.new, res.body
         end
-        return true
-      else
-        raise StandardError.new, res.value
       end
     end
 
@@ -86,18 +96,18 @@ module Shiba
 
     protected
 
-    def pr_comment_request
+    # FIXME: Only submit 10 comments for now. The rest just vanish.
+    def pr_comment_request(comment)
       token = options.fetch("token")
 
       req = Net::HTTP::Post.new(api_uri)
       req['Authorization'] = "token #{token}"
       req['Content-Type'] = 'application/json'
 
-      # Github doesn't use 'line' key
-      comments.map do |c|
-          c.dup.tap { |dc| dc.delete(:line) }
+      if options[:verbose]
+        comment[:body] += " (verbose mode ts=#{Time.now.to_i})"
       end
-      req.body = JSON.dump(comments)
+      req.body = JSON.dump(comment)
       req
     end
 
