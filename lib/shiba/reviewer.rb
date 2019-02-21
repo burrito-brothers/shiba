@@ -87,7 +87,7 @@ module Shiba
     protected
 
     def pr_comment_request
-      token = options.fetch(:token)
+      token = options.fetch("token")
 
       req = Net::HTTP::Post.new(api_uri)
       req['Authorization'] = "token #{token}"
