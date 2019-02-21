@@ -89,9 +89,15 @@ module Shiba
 
     def changes
       @changes ||= begin
-        result = `git diff#{cmd} --name-only --diff-filter=d`
+        run = "git diff#{cmd} --name-only --diff-filter=d"
+
+        if options[:verbose]
+          $stderr.puts run
+        end
+        result = `#{run}`
         if $?.exitstatus != 0
-          error("Failed to read changes", $?.exitstatus)
+          $stderr.puts result
+          raise StandardError.new "Failed to read changes"
         end
 
         result
@@ -100,8 +106,11 @@ module Shiba
 
     def updated_lines
       return @updated_lines if @updated_lines
-
-      Open3.popen3("git diff#{cmd} --unified=0 --diff-filter=d") {|_,o,_,_|
+      run = "git diff#{cmd} --unified=0 --diff-filter=d"
+      if options[:verbose]
+        $stderr.puts run
+      end
+      Open3.popen3(run) {|_,o,_,_|
         @updated_lines = Shiba::Diff.new(o).updated_lines
       }
 

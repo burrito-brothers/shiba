@@ -103,6 +103,11 @@ if options["pull_request"] == nil
   options["pull_request"] = ENV['TRAVIS_PULL_REQUEST']
 end
 
+if options["verbose"]
+  $stderr.puts "branch: #{options["branch"]}" if options["branch"]
+  $stderr.puts "pull_request: #{options["pull_request"]}" if options["pull_request"]
+end
+
 repo_cmd = "git config --get remote.origin.url"
 repo_url = `#{repo_cmd}`.chomp
 
@@ -123,7 +128,7 @@ if repo_url.empty?
 end
 
 if options["submit"]
-  #require_option(options["branch"], "No branch sha provided")
+  require_option(options["branch"], "No branch provided")
   require_option(parser, "token") if options["token"].nil?
   require_option(parser, "pull_request") if options["pull_request"].nil?
 end
