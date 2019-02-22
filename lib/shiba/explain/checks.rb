@@ -6,17 +6,17 @@ module Shiba
       include CheckSupport
       extend CheckSupport::ClassMethods
 
-      def initialize(rows, index, stats, options)
+      def initialize(rows, index, stats, options, result)
         @rows = rows
         @row = rows[index]
         @index = index
         @stats = stats
         @options = options
-        @messages = []
+        @result = result
         @tbl_message = {}
       end
 
-      attr_reader :messages, :message_data, :cost
+      attr_reader :cost
 
       def table
         @row['table']
@@ -27,7 +27,7 @@ module Shiba
       end
 
       def add_message(tag, extra = {})
-        messages << { tag: tag, size: table_size, table: table }.merge(extra)
+        @result.messages << { tag: tag, size: table_size, table: table }.merge(extra)
       end
 
       check :check_derived
@@ -57,7 +57,7 @@ module Shiba
         if @row['join_ref']
           @access_type.sub!("access_type", "join_type")
           # TODO MAYBE: are multiple-table joins possible?  or does it just ref one table?
-          ref = @row['join_ref'].first
+          ref = @row['join_ref'].find { |r| r != 'const' }
           table = ref.split('.')[1]
           @tbl_message['join_to'] = table
         end
@@ -69,7 +69,7 @@ module Shiba
       def check_index_walk
         if first['index_walk']
           @cost = limit
-          messages << 'index_walk'
+          add_message("index_walk")
         end
       end
 
@@ -79,11 +79,11 @@ module Shiba
         # pick the best key from the list of possibilities.
         #
         if @row['key']
-          @cost = @stats.estimate_key(table, @row['key'], @row['used_key_parts'])
+          rows_read = @stats.estimate_key(table, @row['key'], @row['used_key_parts'])
         else
-          @cost = table_size
+          rows_read = table_size
 =begin
-          TBD: we may want to investigate forcing a bunch of possible keys.
+          TBD: this used to work in the one-row world, how do we adapt this to the new stuff?
           this is all about the optimizer outsmarting us.  So we
           may force the plan, or we may try to fool the optimizer.  dunno.
 
@@ -108,6 +108,25 @@ module Shiba
           end
 =end
         end
+
+        # TBD: this appears to come from a couple of bugs.
+        # one is we're not handling mysql index-merges, the other is that
+        # we're not handling mysql table aliasing.
+        if rows_read.nil?
+          rows_read = 1
+        end
+
+        @result.result_size *= rows_read
+
+        if @row['join_ref']
+          # if we're a join, we'll say that we read X rows per joined row,
+          # up to the size of the table or index
+          @cost = [@result.result_size * rows_read, rows_read].min
+        else
+          @cost = rows_read
+        end
+
+        @result.cost += @cost
 
         @tbl_message['cost'] = @cost
         @tbl_message['index'] = @row['key']

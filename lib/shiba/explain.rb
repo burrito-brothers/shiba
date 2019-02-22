@@ -2,6 +2,7 @@ require 'json'
 require 'shiba/index'
 require 'shiba/explain/check_support'
 require 'shiba/explain/checks'
+require 'shiba/explain/result'
 require 'shiba/explain/mysql_explain'
 require 'shiba/explain/postgres_explain'
 
@@ -25,6 +26,7 @@ module Shiba
       else
         @rows = Shiba::Explain::PostgresExplain.new(@explain_json).transform
       end
+      @result = Result.new
       @stats = stats
 
       run_checks!
@@ -34,8 +36,8 @@ module Shiba
       {
         sql: @sql,
         table: get_table,
-        messages: messages,
-        cost: @cost,
+        messages: @result.messages,
+        cost: @result.cost,
         severity: severity,
         raw_explain: humanized_explain,
         backtrace: @backtrace
@@ -53,37 +55,12 @@ module Shiba
       table
     end
 
-    # [{"id"=>1, "select_type"=>"SIMPLE", "table"=>"interwiki", "partitions"=>nil, "type"=>"const", "possible_keys"=>"PRIMARY", "key"=>"PRIMARY", "key_len"=>"34", "ref"=>"const", "rows"=>1, "filtered"=>100.0, "Extra"=>nil}]
-    attr_reader :cost
-
     def first
       @rows.first
     end
 
-    def first_key
-      first["key"]
-    end
-
     def first_extra
       first["Extra"]
-    end
-
-    def messages
-      @messages ||= []
-    end
-
-    # shiba: {"possible_keys"=>nil, "key"=>nil, "key_len"=>nil, "ref"=>nil, "rows"=>6, "filtered"=>16.67, "Extra"=>"Using where"}
-    def to_log
-      plan = first.symbolize_keys
-      "possible: #{plan[:possible_keys]}, rows: #{plan[:rows]}, filtered: #{plan[:filtered]}, cost: #{self.cost}, access: #{plan[:access_type]}"
-    end
-
-    def to_h
-      first.merge(cost: cost, messages: messages)
-    end
-
-    def table_size
-      @stats.table_count(first['table'])
     end
 
     def no_matching_row_in_const_table?
@@ -91,7 +68,7 @@ module Shiba
     end
 
     def severity
-      case @cost
+      case @result.cost
       when 0..100
         "low"
       when 100..1000
@@ -116,10 +93,29 @@ module Shiba
     end
 
 
+    def ignore?
+      !!ignore_line_and_backtrace_line
+    end
+
+    def ignore_line_and_backtrace_line
+      ignore_files = Shiba.config['ignore']
+      if ignore_files
+        ignore_files.each do |i|
+          file, method = i.split('#')
+          @backtrace.each do |b|
+            next unless b.include?(file)
+            next if method && !b.include?(method)
+            return [i, b]
+          end
+        end
+      end
+      nil
+    end
+
     check :check_query_is_ignored
     def check_query_is_ignored
       if ignore?
-        messages << "ignored"
+        @result.messages << { tag: "ignored" }
         @cost = 0
       end
     end
@@ -127,7 +123,7 @@ module Shiba
     check :check_no_matching_row_in_const_table
     def check_no_matching_row_in_const_table
       if no_matching_row_in_const_table?
-        messages << "access_type_const"
+        @result.messages << { tag: "access_type_const" }
         first['key'] = 'PRIMARY'
         @cost = 1
       end
@@ -159,7 +155,7 @@ module Shiba
     def check_simple_table_scan
       if simple_table_scan?
         if limit
-          messages << { tag: 'limited_scan', cost: limit, table: @rows.first['table'] }
+          @result.messages << { tag: 'limited_scan', cost: limit, table: @rows.first['table'] }
           @cost = limit
         end
       end
@@ -175,7 +171,7 @@ module Shiba
         end
       end
       if h.any?
-        messages << { tag: "fuzzed_data", tables: h }
+        @result.messages << { tag: "fuzzed_data", tables: h }
       end
     end
 
@@ -185,33 +181,14 @@ module Shiba
       elsif aggregation?
         return_size = 1
       else
-        return_size = @cost
+        return_size = @result.result_size
       end
 
       if return_size && return_size > 100
-        messages << { tag: "retsize_bad", size: return_size }
+        @result.messages << { tag: "retsize_bad", size: return_size }
       else
-        messages << { tag: "retsize_good", size: return_size }
+        @result.messages << { tag: "retsize_good", size: return_size }
       end
-    end
-
-    def ignore?
-      !!ignore_line_and_backtrace_line
-    end
-
-    def ignore_line_and_backtrace_line
-      ignore_files = Shiba.config['ignore']
-      if ignore_files
-        ignore_files.each do |i|
-          file, method = i.split('#')
-          @backtrace.each do |b|
-            next unless b.include?(file)
-            next if method && !b.include?(method)
-            return [i, b]
-          end
-        end
-      end
-      nil
     end
 
     def run_checks!
@@ -220,16 +197,14 @@ module Shiba
         :stop if @cost
       end
 
-      if !@cost
-        # now run per-table checks
-        @cost = 0
+      if @cost
+        # we've decided to stop further analysis at the query level
+        @result.cost = @cost
+      else
+        # run per-table checks
         0.upto(@rows.size - 1) do |i|
-          check = Checks.new(@rows, i, @stats, @options)
+          check = Checks.new(@rows, i, @stats, @options, @result)
           check.run_checks!
-
-          messages.concat(check.messages)
-
-          @cost += check.cost if check.cost
         end
       end
 
