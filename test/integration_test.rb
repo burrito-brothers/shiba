@@ -40,7 +40,7 @@ module IntegrationTest
 
       out,_ = run_command({}, "ruby", test_app_path)
 
-      assert File.exist?(File.join(Shiba.path, 'ci.json')), "No log file found at #{Shiba.path}"
+      assert File.exist?(File.join(Shiba.path, 'ci.json')), "No ci log file found at #{Shiba.path}"
     end
 
     it "reviews queries" do
