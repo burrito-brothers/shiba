@@ -44,6 +44,10 @@ module Shiba
       }
     end
 
+    def messages
+      @result.messages
+    end
+
     def get_table
       @sql =~ /\s+from\s*([^\s,]+)/i
       table = $1
