@@ -5,6 +5,8 @@ require 'shiba/diff'
 require 'shiba/backtrace'
 
 module Shiba
+  # Given an explain log and a diff, returns any explain logs
+  # that appear to be caused by the diff.
   class Checker
     MAGIC_COST = 100
 
@@ -25,9 +27,9 @@ module Shiba
         puts cmd
       end
 
-      if changes.empty?
+      if changed_files.empty?
         if options['verbose']
-          msg = "No changes found in git. Are you sure you specified the correct branch?"
+          msg = "No changes found. Are you sure you specified the correct branch?"
         end
         return Result.new(:pass, msg)
       end
@@ -35,12 +37,15 @@ module Shiba
       explains = select_lines_with_changed_files(log)
       problems = explains.select { |explain| explain["cost"] && explain["cost"] > MAGIC_COST }
 
-      if options["verbose"]
-        puts problems
-      end
 
       if options["verbose"]
-        puts updated_lines
+        puts problems
+        puts "Updated lines: #{updated_lines}"
+      end
+
+      if problems.empty?
+        msg = "No problems found caused by the diff"
+        return Result.new(:pass, msg)
       end
 
       problems.map! do |problem|
@@ -52,10 +57,7 @@ module Shiba
       problems.compact!
 
       if problems.empty?
-        if options['verbose']
-          msg = "No problems found"
-        end
-
+        msg = "No problems found caused by the diff"
         return Result.new(:pass, msg)
       end
 
@@ -79,7 +81,7 @@ module Shiba
     end
 
     def select_lines_with_changed_files(log)
-      patterns = changes.split("\n").map { |path| "-e #{path}" }.join(" ")
+      patterns = changed_files.map { |path| "-e #{path}" }.join(" ")
       cmd = "grep #{log} #{patterns}"
       $stderr.puts cmd if options["verbose"]
 
@@ -87,36 +89,66 @@ module Shiba
       json_lines.each_line.map { |line| JSON.parse(line) }
     end
 
-    def changes
-      @changes ||= begin
-        run = "git diff#{cmd} --name-only --diff-filter=d"
-
-        if options[:verbose]
-          $stderr.puts run
-        end
-        result = `#{run}`
-        if $?.exitstatus != 0
-          $stderr.puts result
-          raise StandardError.new "Failed to read changes"
-        end
-
-        result
+    def changed_files
+      @changed_files ||= begin
+        options['diff'] ? file_diff_names : git_diff_names
       end
     end
 
     def updated_lines
       return @updated_lines if @updated_lines
-      run = "git diff#{cmd} --unified=0 --diff-filter=d"
-      if options[:verbose]
-        $stderr.puts run
-      end
-      Open3.popen3(run) {|_,o,_,_|
-        @updated_lines = Shiba::Diff.new(o).updated_lines
-      }
+
+
+      out = options['diff'] ? file_diff_lines : git_diff_lines
+      @updated_lines = Shiba::Diff.new(out).updated_lines
+
 
       @updated_lines.map! do |path, lines|
         [ Shiba::Backtrace.clean!(path), lines ]
       end
+    end
+
+    def file_diff_lines
+      File.open(options['diff'])
+    end
+
+    def git_diff_lines
+      run = "git diff#{cmd} --unified=0 --diff-filter=d"
+      if options[:verbose]
+        $stderr.puts run
+      end
+
+      _, out,_,_ = Open3.popen3(run)
+      out
+    end
+
+    # index ade9b24..661d522 100644
+    # --- a/test/app/app.rb
+    # +++ b/test/app/app.rb
+    # @@ -24,4 +24,4 @@ ActiveRecord::Base...
+    # org = Organization.create!(name: 'test')
+    #
+    # file_diff_lines
+    # => test/app/app.rb
+    def file_diff_names
+      file_name_pattern = /^\+\+\+ b\/(.*?)$/
+      f = File.open(options['diff'])
+      f.grep(file_name_pattern) { $1 }
+    end
+
+    def git_diff_names
+      run = "git diff#{cmd} --name-only --diff-filter=d"
+
+      if options[:verbose]
+        $stderr.puts run
+      end
+      result = `#{run}`
+      if $?.exitstatus != 0
+        $stderr.puts result
+        raise Shiba::Error.new "Failed to read changes"
+      end
+
+      result.split("\n")
     end
 
     def cmd

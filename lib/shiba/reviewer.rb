@@ -18,7 +18,9 @@ module Shiba
       @repo_url = repo_url
       @problems = problems
       @options = options
-      @commit_id = options.fetch("branch")
+      @commit_id = options.fetch("branch") do
+        raise Shiba::Error.new("Must specify a branch") if !options['diff']
+      end
     end
 
     def comments
@@ -96,12 +98,20 @@ module Shiba
 
     def diff
       return @diff if @diff
+      output = options['diff'] ? file_diff : git_diff
+      @diff = Shiba::Diff.new(output)
+    end
 
+    def git_diff
       cmd ="git diff origin/HEAD..#{@commit_id}"
       report("Finding PR position using: #{cmd}")
 
       output = StringIO.new(`#{cmd}`)
-      @diff = Shiba::Diff.new(output)
+    end
+
+    def file_diff
+      report("Finding PR position using file: #{options['diff']}")
+      File.open(options['diff'], 'r')
     end
 
     def api
@@ -115,7 +125,7 @@ module Shiba
     end
 
     def renderer
-      @renderer ||= Review::CommentRenderer.new(@tags)
+      @renderer ||= Review::CommentRenderer.new(tags)
     end
 
     def tags

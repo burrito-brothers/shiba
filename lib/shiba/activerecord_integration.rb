@@ -25,8 +25,7 @@ module Shiba
     protected
 
     def self.start_watcher
-      path = ENV['SHIBA_OUT'] || log_path
-
+      path = log_path
       if ENV['SHIBA_DEBUG']
         $stderr.puts("starting shiba watcher, outputting to #{path}")
       end

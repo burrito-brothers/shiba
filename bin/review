@@ -72,6 +72,7 @@ if options["staged"] && options["unstaged"]
   options.delete("unstaged")
 end
 
+
 log = options["file"]
 
 if log.nil? && Shiba::Configure.ci?
@@ -83,12 +84,12 @@ if log.nil?
   $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
   $stderr.puts ""
   $stderr.puts parser
-  exit 2
+  exit 1
 end
 
 if !File.exist?(log)
   $stderr.puts "File not found: '#{log}'"
-  exit 2
+  exit 1
 end
 
 pr_sha = ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_BRANCH']
@@ -110,6 +111,7 @@ if options["pull_request"] == nil && pr_id && !pr_id.empty?
 end
 
 if options["verbose"]
+  $stderr.puts "DIFF: #{ENV['DIFF']}" if ENV['DIFF']
   $stderr.puts "branch: #{options["branch"].inspect}" if options["branch"]
   $stderr.puts "pull_request: #{options["pull_request"]}" if options["pull_request"]
 end
@@ -125,18 +127,24 @@ def require_option(parser, name)
   $stderr.puts "Required: #{name}"
   $stderr.puts ""
   $stderr.puts parser
-  exit 2
+  exit 1
 end
 
 if repo_url.empty?
   $stderr.puts "'#{Dir.pwd}' does not appear to be a git repo"
-  exit 2
+  exit 1
 end
 
 if options["submit"]
-  require_option(parser, "branch") if options["branch"].nil? || options["branch"].empty?
+  if (options["branch"].nil? || options["branch"].empty?) && ENV['DIFF'].empty?
+    require_option(parser, "branch")
+  end
   require_option(parser, "token") if options["token"].nil?
   require_option(parser, "pull_request") if options["pull_request"].nil?
+end
+
+if ENV['DIFF']
+  options['diff'] = ENV['DIFF']
 end
 
 # Check to see if the log overlaps with the git diff
@@ -147,7 +155,6 @@ if result.message
 end
 
 if result.status == :pass
-  $stderr.puts "No problems found"
   exit
 end
 
@@ -165,10 +172,10 @@ end
 if options["submit"]
   if reviewer.repo_host.empty? || reviewer.repo_path.empty?
     $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
-    exit 2
+    exit 1
   end
 
   reviewer.submit
 end
 
-exit 1
+exit 2

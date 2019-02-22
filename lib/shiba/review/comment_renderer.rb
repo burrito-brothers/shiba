@@ -12,6 +12,7 @@ module Shiba
 
       def render(explain)
         body = ""
+
         data = present(explain)
         explain["tags"].each do |tag|
           body << @templates[tag]["title"]
