@@ -122,14 +122,15 @@ module Shiba
           # true but it feels good enough to start; a decent hash join should
           # nullify the cost of re-reading rows.  I think.
           @cost = [@result.result_size * rows_read, table_size || 2**32].min
+
+          # poke holes in this.  Is this even remotely accurate?
+          # We're saying that if we join to a a table with 100 rows per item
+          # in the index, for each row we'll be joining in 100 more rows.  Is that true?
+          @result.result_size *= rows_read
         else
           @cost = rows_read
+          @result.result_size += rows_read
         end
-
-        # poke holes in this.  Is this even remotely accurate?
-        # We're saying that if we join to a a table with 100 rows per item
-        # in the index, for each row we'll be joining in 100 more rows.  Is that true?
-        @result.result_size *= rows_read
 
         @result.cost += @cost
 

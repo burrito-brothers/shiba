@@ -51,14 +51,16 @@ describe "Explain" do
     end
   end
 
-  describe "a join" do
-    let(:sql) { "SELECT users.* from users INNER JOIN comments on comments.user_id = users.id" }
+  if Shiba.connection.mysql?
+    describe "a join" do
+      let(:sql) { "SELECT users.* from users INNER JOIN comments on comments.user_id = users.id" }
 
-    it "parses" do
-      ret = explain.messages
+      it "parses" do
+        ret = explain.messages
+      end
+
+      it_includes_tag("join_type_ref")
     end
-
-    it_includes_tag("join_type_ref")
   end
 end
 
