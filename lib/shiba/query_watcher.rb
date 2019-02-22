@@ -17,6 +17,12 @@ module Shiba
       sql = payload[:sql]
       return if !sql.start_with?("SELECT")
 
+      if sql.include?("$1")
+        sql = interpolate(sql, payload[:type_casted_binds])
+      end
+
+      sql = sql.gsub(/\n/, ' ')
+
       fingerprint = Query.get_fingerprint(sql)
       return if @queries[fingerprint]
 
@@ -27,5 +33,11 @@ module Shiba
       @queries[fingerprint] = true
     end
 
+    def interpolate(sql, binds)
+      binds.each_with_index do |val, i|
+        sql = sql.sub("$#{i +1}", ActiveRecord::Base.connection.quote(val))
+      end
+      sql
+    end
   end
 end

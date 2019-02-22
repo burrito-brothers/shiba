@@ -6,6 +6,7 @@ module Shiba
       def initialize(h)
         @connection = PG.connect( dbname: h['database'], host: h['host'], user: h['username'], password: h['password'], port: h['port'] )
         @connection.type_map_for_results = PG::BasicTypeMapForResults.new(@connection)
+        query("SET enable_seqscan = OFF")
       end
 
       def query(sql)
@@ -74,6 +75,15 @@ module Shiba
           select tablename as table_name, count(*) as index_count from pg_indexes where schemaname='public' group by 1 order by 2
         EOL
         @connection.query(sql).to_a
+      end
+
+      def explain(sql)
+        rows = query("EXPLAIN (FORMAT JSON) #{sql}").to_a
+        rows.first["QUERY PLAN"]
+      end
+
+      def mysql?
+        false
       end
     end
   end

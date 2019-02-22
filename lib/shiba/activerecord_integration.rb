@@ -25,11 +25,11 @@ module Shiba
     protected
 
     def self.start_watcher
-      if ENV['SHIBA_DEBUG']
-        $stderr.puts("starting shiba watcher")
-      end
+      path = ENV['SHIBA_OUT'] || log_path
 
-      path = log_path
+      if ENV['SHIBA_DEBUG']
+        $stderr.puts("starting shiba watcher, outputting to #{path}")
+      end
 
       file = File.open(path, 'a')
       watcher = QueryWatcher.new(file)

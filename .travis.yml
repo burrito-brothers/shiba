@@ -6,6 +6,11 @@ rvm:
 
 services:
  - mysql
+ - postgresql
+
+env:
+  - SHIBA_TEST_ENV=test_postgres
+  - SHIBA_TEST_ENV=test_mysql
 
 before_script:
  - cp .travis/my.cnf ~/.my.cnf
@@ -14,3 +19,6 @@ before_script:
 
 after_script:
  - bundle exec shiba review --submit --verbose
+
+addons:
+  postgresql: "9.5"
