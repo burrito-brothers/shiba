@@ -43,9 +43,17 @@
         Object.assign(this, obj);
         this.severityIndex = severityIndexes[this.severity];
         this.splitSQL();
+        this.makeSearchString();
       };
 
       Query.prototype = {
+        makeSearchString: function() {
+          var arr = [this.sql];
+          arr = arr.concat(this.messages.map(function(m) { return m.tag }).join(':'));
+          arr = arr.concat(this.backtrace.join(':'));
+
+          this.searchString = arr.join(':').toLowerCase();
+        },
         hasTag: function(tag) {
           return this.messages.find(function(m) {
             m.tag == tag;
@@ -305,7 +313,6 @@
       },
       methods: {
         updateSearch: _.debounce(function (e) {
-          console.log("ok, updating...");
           this.search = e.target.value;
         }, 500)
       },
@@ -315,8 +322,7 @@
             var filtered = [];
             var lcSearch = this.search.toLowerCase();
             this.highQ.concat(this.lowQ).forEach(function(q) {
-              var searchString = q.sql + ":" + q.tags.join(":") + q.backtrace.join(":");
-              if ( searchString.toLowerCase().includes(lcSearch) )
+              if ( q.searchString.includes(lcSearch) )
                 filtered.push(q);
             });
             return filtered;
