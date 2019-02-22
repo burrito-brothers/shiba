@@ -11,6 +11,10 @@ module Shiba
         res['rows'] = t['rows_examined_per_scan']
         res['filtered'] = t['filtered']
 
+        if t['ref'] && t['ref'].any? { |r| r != "const" }
+          res['join_ref'] = t['ref']
+        end
+
         if t['possible_keys'] && t['possible_keys'] != [res['key']]
           res['possible_keys'] = t['possible_keys']
         end

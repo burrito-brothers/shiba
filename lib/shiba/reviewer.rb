@@ -143,7 +143,7 @@ module Shiba
         "key"         => explain["key"],
         "return_size" => explain["return_size"],
         "key_parts"   => used_key_parts.join(","),
-        "cost"        => cost(explain)
+        "formatted_cost"        => cost(explain)
       }
     end
 

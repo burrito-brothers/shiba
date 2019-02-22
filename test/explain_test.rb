@@ -60,6 +60,7 @@ describe "Explain" do
 
     it "parses" do
       ret = explain.messages
+      puts ret
     end
   end
 end

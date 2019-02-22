@@ -47,7 +47,9 @@
 
       Query.prototype = {
         hasTag: function(tag) {
-          return this.tags.includes(tag);
+          return this.messages.find(function(m) {
+            m.tag == tag;
+          });
         },
         splitSQL: function() {
           this.sqlFragments = this.sql.match(/(SELECT\s)(.*?)(\s+FROM .*)/i);
@@ -72,7 +74,7 @@
           queriesByTable.push(q);
         }
 
-        if ( q.hasTag("fuzzed_data" ) )
+        if ( q.hasTag("fuzzed_data") )
           queriesHaveFuzzed = true;
 
         q.expandSelect = false;
@@ -107,8 +109,8 @@
                 </div>
               </div>
               <ul class="shiba-info-list">
-              <li v-for="tag in query.tags">
-                <component v-bind:is="'tag-' + tag" v-bind:query="query"></component>
+              <li v-for="message in query.messages">
+                <component v-bind:is="'tag-' + message.tag" v-bind="message"></component>
               </li>
               </ul>
               <div v-if="!rawExpanded">
@@ -131,38 +133,24 @@
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'query' ],
+        props: [ 'size', 'table', 'cost', 'index', 'join_to', 'index_used' ],
         computed: {
-
-          table: function() {
-            return this.query.table;
-          },
-
-          table_size: function() {
-            return this.query.table_size;
-          },
-
-          key: function() {
-            return this.query.key;
-          },
-
           return_size: function() {
-            return this.query.return_size.toLocaleString();
+            return this.return_size.toLocaleString();
           },
-
           key_parts: function() {
-            if ( this.query.used_key_parts && this.query.used_key_parts.length > 0 )
-              return this.query.used_key_parts.join(',');
+            if ( this.index_used && this.index_used.length > 0 )
+              return this.index_used.join(',');
             else
               return "";
           },
 
-          cost: function() {
-            var costPercentage = (this.query.cost / this.query.table_size) * 100.0;
-            if ( this.query.cost > 100 && costPercentage > 1 ) // todo: make better
-              return `${costPercentage.toFixed()}% (${this.query.cost.toLocaleString()}) of the`;
+          formatted_cost: function() {
+            var costPercentage = (this.cost / this.table_size) * 100.0;
+            if ( this.cost > 100 && costPercentage > 1 ) // todo: make better
+              return `${costPercentage.toFixed()}% (${this.cost.toLocaleString()}) of the`;
             else
-              return this.query.cost.toLocaleString();
+              return this.cost.toLocaleString();
           }
         }
       });
