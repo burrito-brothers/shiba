@@ -116,15 +116,20 @@ module Shiba
           rows_read = 1
         end
 
-        @result.result_size *= rows_read
-
         if @row['join_ref']
-          # if we're a join, we'll say that we read X rows per joined row,
-          # up to the size of the table or index
-          @cost = [@result.result_size * rows_read, rows_read].min
+          # when joining, we'll say we read "@cost" rows -- but up to
+          # a max of the table size.  I'm not sure this assumption is *exactly*
+          # true but it feels good enough to start; a decent hash join should
+          # nullify the cost of re-reading rows.  I think.
+          @cost = [@result.result_size * rows_read, table_size || 2**32].min
         else
           @cost = rows_read
         end
+
+        # poke holes in this.  Is this even remotely accurate?
+        # We're saying that if we join to a a table with 100 rows per item
+        # in the index, for each row we'll be joining in 100 more rows.  Is that true?
+        @result.result_size *= rows_read
 
         @result.cost += @cost
 

@@ -78,6 +78,16 @@
           queriesHaveFuzzed = true;
 
         q.expandSelect = false;
+
+        var rCost = 0;
+        q.messages.forEach(function(m) {
+          if ( m.cost ) {
+            rCost += m.cost;
+            m.running_cost = rCost;
+          } else {
+            m.running_cost = '';
+          }
+        });
       });
 
       var f = sortByFunc(['severityIndex', 'table']);
@@ -127,13 +137,16 @@
     </script>
 
     <% data[:tags].each do |tag, h| %>
-    <script type="text/x-template" id="tag-<%= tag %>-template">
-      <span><a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a><%= h['summary'] %></span>
+      <script type="text/x-template" id="tag-<%= tag %>-template">
+      <div>
+        <span><a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a><%= h['summary'] %></span>
+        <div class="running-totals">{{ running_cost.toLocaleString() }}</div>
+      </div>
     </script>
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'size', 'table', 'cost', 'index', 'join_to', 'index_used' ],
+        props: [ 'size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost' ],
         computed: {
           return_size: function() {
             return this.return_size.toLocaleString();

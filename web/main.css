@@ -47,5 +47,9 @@
   padding: 0;
 }
 
+.running-totals {
+  float: right;
+  font-family: monospace;
+}
 [v-cloak] { display: none }
 

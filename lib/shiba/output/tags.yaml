@@ -46,7 +46,7 @@ access_type_range:
   level: info
 access_type_tablescan:
   title: Table Scan
-  summary: The database reads <b>100%</b> ({{ size }}) of the rows in <b>{{ table }}</b>, skipping any indexes.
+  summary: The database reads {{ formatted_cost }} of the rows in <b>{{ table }}</b>, skipping any indexes.
   description: |
     This query doesn't use any indexes to find data, meaning this query will need to evaluate
     every single row in the table.  This is about the worst of all possible worlds.
