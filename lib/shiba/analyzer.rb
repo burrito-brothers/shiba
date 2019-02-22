@@ -35,24 +35,11 @@ module Shiba
           next
         end
 
-        if @options['limit']
-          return if idx == @options['limit']
-        end
-
-        if @options['index']
-          next unless idx == @options['index']
-        end
-
         sql.chomp!
         query = Shiba::Query.new(sql, @stats)
 
         if !@fingerprints[query.fingerprint]
           if sql.downcase.start_with?("select")
-            if @options['debug']
-              require 'byebug'
-              debugger
-            end
-
             explain = analyze_query(query)
             if explain
               idx += 1

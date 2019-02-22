@@ -97,10 +97,6 @@ module Shiba
 
         next if only_basics
 
-        opts.on("-l", "--limit NUM", "stop after processing NUM queries") do |l|
-          options["limit"] = l.to_i
-        end
-
         opts.on("-f", "--file FILE", "location of file containing queries") do |f|
           options["file"] = f
         end
@@ -113,12 +109,8 @@ module Shiba
           end
         end
 
-        opts.on("-h", "--html FILE", "write html report here. Default to /tmp/explain.html") do |h|
+        opts.on("-h", "--html FILE", "write html report here.") do |h|
           options["html"] = h
-        end
-
-        opts.on("-t", "--test", "analyze queries at --file instead of analyzing a process") do |f|
-          options["test"] = true
         end
 
         opts.on("-v", "--verbose", "print internal runtime information") do
