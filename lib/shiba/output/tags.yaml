@@ -1,7 +1,7 @@
 ---
 fuzzed_data:
   title: Fuzzed Data
-  summary: Shiba doesn't know the size of <b>{{table}}</b>.  For these purposes we set the table size to <b>{{size}}</b>.
+  summary: "Table sizes estimated as follows:  {{ fuzz_table_sizes }}"
   description: |
     We're not sure how much data this table will hold in the future, so we've pretended
     there's 6000 rows in it.  This can lead to a lot of false positives. To

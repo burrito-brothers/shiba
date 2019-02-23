@@ -56,7 +56,7 @@
         },
         hasTag: function(tag) {
           return this.messages.find(function(m) {
-            m.tag == tag;
+            return m.tag == tag;
           });
         },
         splitSQL: function() {
@@ -144,6 +144,48 @@
       </div>
     </script>
 
+    <script>
+      var templateComputedFunctions = {
+        return_size: function() {
+          return this.return_size.toLocaleString();
+        },
+        key_parts: function() {
+          if ( this.index_used && this.index_used.length > 0 )
+            return this.index_used.join(',');
+          else
+            return "";
+        },
+        fuzz_table_sizes: function() {
+          var h = {};
+          var tables = this.tables;
+
+          Object.keys(tables).forEach(function(k) {
+            console.log(k);
+            var size = tables[k];
+            if ( !h[size] )
+              h[size] = [];
+
+            h[size].push(k);
+          });
+
+          var sizesDesc = Object.keys(h).sort(function(a, b) { return b - a });
+          var str = "";
+
+          sizesDesc.forEach(function(size) {
+            str = str + h[size].join(", ") + ": " + size.toLocaleString() + " rows.  ";
+          });
+
+          return str;
+        },
+        formatted_cost: function() {
+          var costPercentage = (this.cost / this.table_size) * 100.0;
+          if ( this.cost > 100 && costPercentage > 1 ) // todo: make better
+            return `${costPercentage.toFixed()}% (${this.cost.toLocaleString()}) of the`;
+          else
+            return this.cost.toLocaleString();
+        }
+      }
+    </script>
     <% data[:tags].each do |tag, h| %>
       <script type="text/x-template" id="tag-<%= tag %>-template">
       <div>
@@ -154,26 +196,8 @@
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost' ],
-        computed: {
-          return_size: function() {
-            return this.return_size.toLocaleString();
-          },
-          key_parts: function() {
-            if ( this.index_used && this.index_used.length > 0 )
-              return this.index_used.join(',');
-            else
-              return "";
-          },
-
-          formatted_cost: function() {
-            var costPercentage = (this.cost / this.table_size) * 100.0;
-            if ( this.cost > 100 && costPercentage > 1 ) // todo: make better
-              return `${costPercentage.toFixed()}% (${this.cost.toLocaleString()}) of the`;
-            else
-              return this.cost.toLocaleString();
-          }
-        }
+        props: [ 'size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables' ],
+        computed: templateComputedFunctions
       });
     </script>
     <% end %>
