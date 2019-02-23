@@ -6,7 +6,7 @@ APP = File.basename(__FILE__)
 
 commands = {
     "explain" => "Generate a report from logged SQL queries",
-    "review"   => "Review staged files for query problems",
+    "review"   => "Review changed files for query problems",
 }
 
 global = OptionParser.new do |opts|
@@ -31,8 +31,8 @@ if command.nil?
 end
 
 if !commands.key?(command)
-    puts "#{APP}: '#{command}' is not a '#{APP}' command. See '#{APP} --help'."
-    exit 1
+  puts "#{APP}: '#{command}' is not a '#{APP}' command. See '#{APP} --help'."
+  exit 2
 end
 
 path = File.join(File.dirname(__FILE__), command)

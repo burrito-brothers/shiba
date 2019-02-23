@@ -101,7 +101,7 @@ This information can be obtained by running the bin/dump_stats command in produc
 production$
 git clone https://github.com/burrito-brothers/shiba.git
 cd shiba ; bundle
-bin/dump_stats DATABASE_NAME [MYSQLOPTS] > ~/shiba_index.yml
+bin/mysql_dump_stats -d DATABASE_NAME -h HOST -u USER -pPASS  > ~/shiba_index.yml
 
 local$
 scp production:~/shiba_index.yml RAILS_PROJECT/config

@@ -30,7 +30,7 @@ module Shiba
         FileUtils.mkdir_p(File.join(logdir, "shiba_results"))
         File.join(Dir.pwd, "log", "shiba_results", default_filename)
       else
-        File.join(Dir.tmpdir, default_filename)
+        File.join(Shiba.path, default_filename)
       end
     end
 

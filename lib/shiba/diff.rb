@@ -111,11 +111,11 @@ module Shiba
     end
 
     def file_header?(line)
-      line.match?(FILE_PATTERN)
+      line =~ FILE_PATTERN
     end
 
     def hunk_header?(line)
-      line.match?(LINE_PATTERN)
+      LINE_PATTERN =~ line
     end
 
     def line_numbers_for_destination(diff_line)

@@ -29,6 +29,10 @@ module Shiba
       raise e, "Cannot load `#{path}`:\n#{e.message}", e.backtrace
     end
 
+    def self.ci?
+      ENV['CI'] || ENV['CONTINUOUS_INTEGRATION']
+    end
+
     # loosely based on https://dev.mysql.com/doc/refman/8.0/en/option-files.html
     def self.mysql_config_path
       paths = [ File.join(Dir.home, '.mylogin.cnf'), File.join(Dir.home, '.my.cnf')  ]
