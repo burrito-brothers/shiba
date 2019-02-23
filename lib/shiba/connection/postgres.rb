@@ -22,13 +22,14 @@ module Shiba
               i.reltuples as numrows,
               ix.indisunique as is_unique,
               ix.indisprimary as is_primary,
-              s.stadistinct as numdistinct
+              s.n_distinct as numdistinct
           from pg_namespace p
           join pg_class t on t.relnamespace = p.oid
           join pg_index ix on ix.indrelid = t.oid
           join pg_class i on i.oid = ix.indexrelid
           join pg_attribute a on a.attrelid = t.oid
-          left join pg_statistic s on s.starelid = t.oid and s.staattnum = a.attnum
+          left join pg_stats s on s.tablename = t.relname
+              AND s.attname = a.attname
           where
               p.nspname = 'public'
               and a.attnum = ANY(ix.indkey)
@@ -88,4 +89,3 @@ module Shiba
     end
   end
 end
-

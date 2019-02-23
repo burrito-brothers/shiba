@@ -29,8 +29,10 @@ def create_test_database(cxspec)
   else
     structure_sql = File.join(File.dirname(__FILE__), "structure_postgres.sql")
     args = cxspec_to_psql_options(cxspec)
-    system("psql #{args} -c 'drop database #{database}'")
-    system("psql #{args} -c 'create database #{database}'")
+    # Creates 'postgres' user without super priv if it doesn't exist
+    result = system("psql -c 'CREATE ROLE postgres NOSUPERUSER CREATEDB NOCREATEROLE NOINHERIT LOGIN;'")
+    system("psql -c 'drop database #{database}'")
+    system("psql -c 'create database #{database}'")
     system("psql #{args} #{database} < #{structure_sql}")
   end
 end
