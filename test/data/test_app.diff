@@ -2,7 +2,7 @@ diff --git a/test/app/app.rb b/test/app/app.rb
 index ade9b24..661d522 100644
 --- a/test/app/app.rb
 +++ b/test/app/app.rb
-@@ -24,4 +24,4 @@ ActiveRecord::Base.establish_connection(connection['mysql'])
+@@ -25,4 +25,4 @@ ActiveRecord::Base.establish_connection(connection['mysql'])
  org = Organization.create!(name: 'test')
  org.users.create!(email: 'squirrel@example.com')
 
