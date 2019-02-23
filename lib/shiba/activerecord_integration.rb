@@ -1,12 +1,13 @@
 require 'shiba/query_watcher'
 require 'active_support/notifications'
 require 'active_support/lazy_load_hooks'
+require 'shiba/configure'
 
 module Shiba
   # Integrates ActiveRecord with the Query Watcher by setting up the query log path, and the
   # connection options for the explain command, which it runs when the process exits.
   #
-  # SHIBA_OUT=<log path> and SHIBA_DEBUG=true environment variables may be set.
+  # SHIBA_OUT and SHIBA_DEBUG=true environment variables may be set.
   class ActiveRecordIntegration
 
     attr_reader :path, :watcher
@@ -24,8 +25,7 @@ module Shiba
     protected
 
     def self.start_watcher
-      path = ENV['SHIBA_OUT'] || make_tmp_path
-
+      path = log_path
       if ENV['SHIBA_DEBUG']
         $stderr.puts("starting shiba watcher, outputting to #{path}")
       end
@@ -40,14 +40,20 @@ module Shiba
       $stderr.puts(e.message, e.backtrace.join("\n"))
     end
 
-    def self.make_tmp_path
-      "/tmp/shiba-query.log-#{Time.now.to_i}"
+    def self.log_path
+      name = ENV["SHIBA_OUT"] || "query.log-#{Time.now.to_i}"
+      File.join(Shiba.path, name)
     end
 
     def self.run_explain(file, path)
       file.close
       puts ""
+
       cmd = "shiba explain #{database_args} --file #{path}"
+      if Shiba::Configure.ci?
+        cmd << " --json #{File.join(Shiba.path, 'ci.json')}"
+      end
+
       if ENV['SHIBA_DEBUG']
         $stderr.puts("running:")
         $stderr.puts(cmd)
@@ -74,7 +80,8 @@ module Shiba
         'server':   c[:server]
       }
 
-      options.reject { |k,v| v.nil? }.map { |k,v| "--#{k} #{v}" }.join(" ")
+      # port can be a Fixnum
+      options.reject { |k,v| v.nil? || v.respond_to?(:empty?) && v.empty? }.map { |k,v| "--#{k} #{v}" }.join(" ")
     end
 
   end

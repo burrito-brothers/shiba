@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 
-require 'bundler/setup'
+$LOAD_PATH << File.expand_path("../lib", File.dirname(__FILE__))
 require 'optionparser'
 require 'shiba/reviewer'
 require 'shiba/checker'
+require 'shiba/configure'
 
 options = {}
 parser = OptionParser.new do |opts|
@@ -11,14 +12,14 @@ parser = OptionParser.new do |opts|
 
   opts.separator "Required:"
 
-  opts.on("-f","--file FILE", "The explain output log to compare with") do |f|
+  opts.on("-f","--file FILE", "The explain output log to compare with. Automatically configured when $CI environment variable is set") do |f|
     options["file"] = f
   end
 
   opts.separator ""
   opts.separator "Git diff options:"
 
-  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between HEAD and BRANCH") do |b|
+  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between origin/HEAD and BRANCH. Attempts to read from CI environment when not set.") do |b|
     options["branch"] = b
   end
 
@@ -37,11 +38,11 @@ parser = OptionParser.new do |opts|
     options["submit"] = true
   end
 
-  opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on") do |p|
+  opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on. Attempts to read from CI environment when not set.") do |p|
     options["pull_request"] = p
   end
 
-  opts.on("-t", "--token TOKEN", "The Github API token to use for commenting") do |t|
+  opts.on("-t", "--token TOKEN", "The Github API token to use for commenting. Defaults to $GITHUB_TOKEN.") do |t|
     options["token"] = t
   end
 
@@ -71,7 +72,13 @@ if options["staged"] && options["unstaged"]
   options.delete("unstaged")
 end
 
+
 log = options["file"]
+
+if log.nil? && Shiba::Configure.ci?
+  log = options["file"] = File.join(Shiba.path, 'ci.json')
+  $stderr.puts "CI detected, setting file to #{log}" if options["verbose"]
+end
 
 if log.nil?
   $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
@@ -85,16 +92,28 @@ if !File.exist?(log)
   exit 1
 end
 
-if options["branch"] == nil
-  options["branch"] = ENV['TRAVIS_PULL_REQUEST_SHA']
+pr_sha = ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_BRANCH']
+
+if options["branch"] == nil && pr_sha && !pr_sha.empty?
+  options["branch"] = pr_sha
 end
 
 if options["token"] == nil
   options["token"] = ENV['GITHUB_TOKEN']
 end
 
-if options["pull_request"] == nil
-  options["pull_request"] = ENV['TRAVIS_PULL_REQUEST']
+# https://circleci.com/docs/2.0/env-vars/
+# This may be wrong for circle ci
+pr_id = ENV['TRAVIS_PULL_REQUEST'] || ENV['CIRCLE_PR_NUMBER']
+
+if options["pull_request"] == nil && pr_id && !pr_id.empty?
+  options["pull_request"] = pr_id
+end
+
+if options["verbose"]
+  $stderr.puts "DIFF: #{ENV['DIFF']}" if ENV['DIFF']
+  $stderr.puts "branch: #{options["branch"].inspect}" if options["branch"]
+  $stderr.puts "pull_request: #{options["pull_request"]}" if options["pull_request"]
 end
 
 repo_cmd = "git config --get remote.origin.url"
@@ -104,16 +123,11 @@ if options["verbose"]
   $stderr.puts "#{repo_cmd}\t#{repo_url}"
 end
 
-
 def require_option(parser, name)
   $stderr.puts "Required: #{name}"
   $stderr.puts ""
   $stderr.puts parser
   exit 1
-end
-
-if options["file"].nil?
-  require_option(parser, "file", "No explain log file provided")
 end
 
 if repo_url.empty?
@@ -122,9 +136,15 @@ if repo_url.empty?
 end
 
 if options["submit"]
-  #require_option(options["branch"], "No branch sha provided")
+  if (options["branch"].nil? || options["branch"].empty?) && (ENV['DIFF'].nil? || ENV['DIFF'].empty?)
+    require_option(parser, "branch")
+  end
   require_option(parser, "token") if options["token"].nil?
   require_option(parser, "pull_request") if options["pull_request"].nil?
+end
+
+if ENV['DIFF']
+  options['diff'] = ENV['DIFF']
 end
 
 # Check to see if the log overlaps with the git diff
@@ -135,12 +155,19 @@ if result.message
 end
 
 if result.status == :pass
-  $stderr.puts "No problems found" if options["verbose"]
   exit
 end
 
 # Generate comments for the problem queries
 reviewer = Shiba::Reviewer.new(repo_url, result.problems, options)
+
+if !options["submit"] || options["verbose"]
+  reviewer.comments.each do |c|
+    puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
+    puts c[:body]
+    puts ""
+  end
+end
 
 if options["submit"]
   if reviewer.repo_host.empty? || reviewer.repo_path.empty?
@@ -148,13 +175,7 @@ if options["submit"]
     exit 1
   end
 
-  reviewer.post_comments
-end
-
-reviewer.comments.each do |c|
-  puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
-  puts c[:body]
-  puts ""
+  reviewer.submit
 end
 
 exit 2

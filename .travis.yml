@@ -15,5 +15,8 @@ env:
 before_script:
  - cp .travis/my.cnf ~/.my.cnf
 
+after_script:
+ - bundle exec shiba review --submit --verbose
+
 addons:
   postgresql: "9.5"
