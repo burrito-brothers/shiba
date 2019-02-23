@@ -1,7 +1,7 @@
 ---
 fuzzed_data:
   title: Fuzzed Data
-  summary: "Table sizes estimated as follows:  {{ fuzz_table_sizes }}"
+  summary: "Table sizes estimated as follows -- {{ fuzz_table_sizes }}"
   description: |
     We're not sure how much data this table will hold in the future, so we've pretended
     there's 6000 rows in it.  This can lead to a lot of false positives. To

@@ -13,8 +13,9 @@ module Shiba
       def render(explain)
         body = ""
 
-        data = present(explain)
-        explain["tags"].each do |tag|
+        explain["messages"].each do |message|
+          tag = message['tag']
+          data = present(message)
           body << @templates[tag]["title"]
           body << ": "
           body << render_template(@templates[tag]["summary"], data)
@@ -32,22 +33,24 @@ module Shiba
         end
         # convert to markdown
         rendered.gsub!(/<\/?b>/, "**")
+        rendered.gsub!(/<\/?i>/, "_")
         rendered
       end
 
-      def present(explain)
-        used_key_parts = explain["used_key_parts"] || []
-
-        { "table"       => explain["table"],
-          "table_size"  => explain["table_size"],
-          "key"         => explain["key"],
-          "return_size" => explain["return_size"],
-          "key_parts"   => used_key_parts.join(","),
-          "cost"        => cost(explain)
+      def present(message)
+        {
+          "fuzz_table_sizes" => fuzzed_sizes(message),
+          "table"           => message["table"],
+          "table_size"      => message["table_size"],
+          "index"           => message["index"],
+          "key_parts"       => (message["index_used"] || []).join(','),
+          "size"            => message["size"],
+          "formatted_cost"  => formatted_cost(message)
         }
       end
 
-      def cost(explain)
+      def formatted_cost(explain)
+        return nil unless explain["cost"] && explain["table_size"]
         percentage = (explain["cost"] / explain["table_size"]) * 100.0;
 
         if explain["cost"] > 100 && percentage > 1
@@ -57,6 +60,12 @@ module Shiba
         end
       end
 
+      def fuzzed_sizes(message)
+        return nil unless message["tables"]
+        message['tables'].group_by { |k, v| v }.map do |size, arr|
+          size.to_s + ": " + arr.map(&:first).join(', ')
+        end.join(". ")
+      end
     end
   end
 end
