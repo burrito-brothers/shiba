@@ -44,10 +44,18 @@ module IntegrationTest
     end
 
     it "reviews queries" do
+      file = Tempfile.new('integration_test_log_queries')
+      test_app_path = File.join(File.dirname(__FILE__), 'app', 'app.rb')
+
+      env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
+      out, status = run_command(env, "ruby", test_app_path)
+      assert_equal 0, status, "Expected exit status 0, got #{status}\n#{out}"
+
+      # Note: log file is auto-removed. Use debugger to debug output issues.
       bin = File.join(Shiba.root, "bin/review")
-      env = { 'DIFF' => "test/data/test_app.diff" }
-      explain_log = File.join(Shiba.root, "test/data/ci.json")
-      out, status = run_command(env, bin, "-f#{explain_log}")
+      env.merge!('DIFF' => "test/data/test_app.diff")
+
+      out, status = run_command(env, bin, "-f#{file.path}.json")
 
       assert_equal 2, status, "Expected exit status 2, got #{status}\n#{out}"
     end

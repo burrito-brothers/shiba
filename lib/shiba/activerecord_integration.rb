@@ -52,6 +52,8 @@ module Shiba
       cmd = "shiba explain #{database_args} --file #{path}"
       if Shiba::Configure.ci?
         cmd << " --json #{File.join(Shiba.path, 'ci.json')}"
+      elsif ENV['SHIBA_OUT']
+        cmd << " --json #{File.join(Shiba.path, "#{ENV["SHIBA_OUT"]}.json")}"
       end
 
       if ENV['SHIBA_DEBUG']
