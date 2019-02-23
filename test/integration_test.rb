@@ -21,7 +21,7 @@ module IntegrationTest
         file = Tempfile.new('integration_test_log_queries')
         test_app_path = File.join(File.dirname(__FILE__), 'app', 'app.rb')
 
-        # This is auto-removed, so uncomment / use debugger to debug output issues.
+        # Note: log file is auto-removed. Use debugger to debug output issues.
         env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
         run_command(env, "ruby", test_app_path)
 

@@ -80,7 +80,8 @@ module Shiba
         'server':   c[:server]
       }
 
-      options.reject { |k,v| v.nil? || v.empty? }.map { |k,v| "--#{k} #{v}" }.join(" ")
+      # port can be a Fixnum
+      options.reject { |k,v| v.nil? || v.respond_to?(:empty?) && v.empty? }.map { |k,v| "--#{k} #{v}" }.join(" ")
     end
 
   end
