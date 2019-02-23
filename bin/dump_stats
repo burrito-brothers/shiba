@@ -10,7 +10,11 @@ parser = Shiba::Configure.make_options_parser(options, only_basics: true)
 parser.banner = "Dump database statistics into yaml file."
 parser.parse!
 
-Shiba.configure(options)
+Shiba.configure(options) do |errmsg|
+  $stderr.puts(errmsg)
+  $stderr.puts(parser.help)
+  exit 1
+end
 
 index = Shiba::Fuzzer.new(Shiba.connection).fetch_index
 puts index.to_yaml

@@ -15,18 +15,6 @@ parser = Shiba::Configure.make_options_parser(options)
 parser.banner = "Run a list of queries through shiba's analyzer."
 parser.parse!
 
-option_path = Shiba::Configure.mysql_config_path
-
-if option_path
-  puts "Found config at #{option_path}" if options["verbose"]
-  options['default_file'] ||= option_path
-end
-
-option_file = if options['default_file'] && File.exist?(options['default_file'])
-   File.read(options['default_file'])
-else
-  ""
-end
 
 if options['json'] && options['html']
   $stderr.puts "Can only output to json or html, not both"
@@ -34,33 +22,14 @@ if options['json'] && options['html']
   exit 1
 end
 
-if option_file && !options['default_group']
-  if option_file.include?("[client]")
-    options['default_group'] = 'client'
-  end
-  if option_file.include?("[mysql]")
-    options['default_group'] = 'mysql'
-  end
-end
-
-def require_option(parser, name)
-  $stderr.puts "Required: #{name}"
-  $stderr.puts parser.banner
-  exit 1
-end
-
-if !options["username"] && !option_file.include?('user')
-  require_option(parser, 'username')
-end
-
-if !options["database"] && !option_file.include?('database')
-  require_option(parser, 'database')
-end
-
 file = options.delete("file")
 file = File.open(file, "r") if file
 
-Shiba.configure(options)
+Shiba.configure(options) do |err_msg|
+  $stderr.puts(err_msg)
+  $stderr.puts(parser)
+  exit 1
+end
 
 schema_stats_fname = options["stats"]
 

@@ -8,10 +8,44 @@ require "byebug" if ENV['SHIBA_DEBUG']
 module Shiba
   class Error < StandardError; end
 
-  def self.configure(options)
+  def self.configure(options, &block)
+    configure_mysql_defaults(options, &block)
+
     @connection_hash = options.select { |k, v| [ 'default_file', 'default_group', 'server', 'username', 'database', 'host', 'password', 'port'].include?(k) }
     @main_config = Configure.read_config_file(options['config'], "config/shiba.yml")
     @index_config = Configure.read_config_file(options['index'], "config/shiba_index.yml")
+  end
+
+  def self.configure_mysql_defaults(options, &block)
+    option_path = Shiba::Configure.mysql_config_path
+
+    if option_path
+      puts "Found config at #{option_path}" if options["verbose"]
+      options['default_file'] ||= option_path
+    end
+
+    option_file = if options['default_file'] && File.exist?(options['default_file'])
+      File.read(options['default_file'])
+    else
+      ""
+    end
+
+    if option_file && !options['default_group']
+      if option_file.include?("[client]")
+        options['default_group'] = 'client'
+      end
+      if option_file.include?("[mysql]")
+        options['default_group'] = 'mysql'
+      end
+    end
+
+    if !options["username"] && !option_file.include?('user')
+      yield('Required: --username')
+    end
+
+    if !options["database"] && !option_file.include?('database')
+      yield('Required: --database')
+    end
   end
 
   def self.config
