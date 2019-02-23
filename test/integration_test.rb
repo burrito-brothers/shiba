@@ -47,9 +47,11 @@ module IntegrationTest
       file = Tempfile.new('integration_test_log_queries')
       test_app_path = File.join(File.dirname(__FILE__), 'app', 'app.rb')
 
+      assert File.exist?(file.path)
       env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
       out, status = run_command(env, "ruby", test_app_path)
       assert_equal 0, status, "Expected exit status 0, got #{status}\n#{out}"
+      assert File.exist?(file.path)
 
       # Note: log file is auto-removed. Use debugger to debug output issues.
       bin = File.join(Shiba.root, "bin/review")
