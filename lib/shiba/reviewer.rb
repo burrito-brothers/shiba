@@ -35,7 +35,7 @@ module Shiba
         position = diff.find_position(file, line_number.to_i)
 
         if options["submit"]
-          explain = keep_only_dangerous_tags(explain)
+          explain = keep_only_dangerous_messages(explain)
         end
 
         { body: renderer.render(explain),
@@ -90,9 +90,12 @@ module Shiba
       end
     end
 
-    def keep_only_dangerous_tags(explain)
+    def keep_only_dangerous_messages(explain)
       explain_b = explain.dup
-      explain_b["tags"] = explain_b["tags"].select { |tag| tags[tag]["level"] == "danger" }
+      explain_b["messages"] = explain_b["messages"].select do |message|
+        tag = message['tag']
+        tags[tag]["level"] == "danger"
+      end
       explain_b
     end
 
