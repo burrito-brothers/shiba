@@ -136,7 +136,7 @@ if repo_url.empty?
 end
 
 if options["submit"]
-  if (options["branch"].nil? || options["branch"].empty?) && ENV['DIFF'].empty?
+  if (options["branch"].nil? || options["branch"].empty?) && (ENV['DIFF'].nil? || ENV['DIFF'].empty?)
     require_option(parser, "branch")
   end
   require_option(parser, "token") if options["token"].nil?
