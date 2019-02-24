@@ -8,7 +8,7 @@ module Shiba
       def initialize
         @messages = []
         @cost = 0
-        @result_size = 1
+        @result_size = 0
       end
 
       attr_accessor :messages, :cost, :result_size
