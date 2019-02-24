@@ -189,9 +189,9 @@ module Shiba
       end
 
       if return_size && return_size > 100
-        @result.messages << { tag: "retsize_bad", size: return_size }
+        @result.messages << { tag: "retsize_bad", result_size: return_size }
       else
-        @result.messages << { tag: "retsize_good", size: return_size }
+        @result.messages << { tag: "retsize_good", result_size: return_size }
       end
     end
 
