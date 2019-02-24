@@ -42,6 +42,7 @@ module Shiba
           "fuzz_table_sizes" => fuzzed_sizes(message),
           "table"           => message["table"],
           "table_size"      => message["table_size"],
+          "result_size"     => message["result_size"],
           "index"           => message["index"],
           "key_parts"       => (message["index_used"] || []).join(','),
           "size"            => message["size"],

@@ -76,9 +76,9 @@ index_walk:
   level: success
 retsize_bad:
   title: Big Results
-  summary: The database returns {{ size }} rows to the client.
+  summary: The database returns {{ result_size }} rows to the client.
   level: danger
 retsize_good:
   title: Small Results
-  summary: The database returns {{ size }} row(s) to the client.
+  summary: The database returns {{ result_size }} row(s) to the client.
   level: success

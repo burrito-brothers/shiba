@@ -27,7 +27,7 @@ module Shiba
       end
 
       def add_message(tag, extra = {})
-        @result.messages << { tag: tag, size: table_size, table: table }.merge(extra)
+        @result.messages << { tag: tag, table_size: table_size, table: table }.merge(extra)
       end
 
       check :check_derived

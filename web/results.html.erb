@@ -146,9 +146,6 @@
 
     <script>
       var templateComputedFunctions = {
-        return_size: function() {
-          return this.return_size.toLocaleString();
-        },
         key_parts: function() {
           if ( this.index_used && this.index_used.length > 0 )
             return this.index_used.join(',');
@@ -196,7 +193,7 @@
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables' ],
+        props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables' ],
         computed: templateComputedFunctions
       });
     </script>
