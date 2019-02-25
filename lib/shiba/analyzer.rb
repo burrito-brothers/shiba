@@ -81,6 +81,10 @@ module Shiba
       end
       return nil unless explain
 
+      if explain.other_paths.any?
+        paths = [explain] + explain.other_paths
+        explain = paths.sort { |a, b| a.cost - b.cost }.first
+      end
       json = JSON.dump(explain.as_json)
       write(json)
       explain.as_json

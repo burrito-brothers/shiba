@@ -75,38 +75,10 @@ module Shiba
 
       check :check_key_size
       def check_key_size
-        # TODO: if possible_keys but mysql chooses NULL, this could be a test-data issue,
-        # pick the best key from the list of possibilities.
-        #
         if @row['key']
           rows_read = @stats.estimate_key(table, @row['key'], @row['used_key_parts'])
         else
           rows_read = table_size
-=begin
-          TBD: this used to work in the one-row world, how do we adapt this to the new stuff?
-          this is all about the optimizer outsmarting us.  So we
-          may force the plan, or we may try to fool the optimizer.  dunno.
-
-          if @row['possible_keys'].nil?
-            # if no possibile we're table scanning, use PRIMARY to indicate that cost.
-            # note that this can be wildly inaccurate bcs of WHERE + LIMIT stuff.
-          else
-            if @options[:force_key]
-              # we were asked to force a key, but mysql still told us to fuck ourselves.
-              # (no index used)
-              #
-              # there seems to be cases where mysql lists `possible_key` values
-              # that it then cannot use, seen this in OR queries.
-              @cost = table_size
-            else
-              possibilities = [table_size]
-              possibilities += @row['possible_keys'].map do |key|
-                estimate_row_count_with_key(key)
-              end
-              @cost = possibilities.compact.min
-            end
-          end
-=end
         end
 
         # TBD: this appears to come from a couple of bugs.

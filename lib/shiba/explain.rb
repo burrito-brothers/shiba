@@ -48,6 +48,10 @@ module Shiba
       @result.messages
     end
 
+    def cost
+      @result.cost
+    end
+
     def get_table
       @sql =~ /\s+from\s*([^\s,]+)/i
       table = $1
@@ -220,6 +224,20 @@ module Shiba
       #%w(select_id cost_info).each { |i| h.delete(i) }
       #h
       @explain_json
+    end
+
+    def other_paths
+      if Shiba.connection.mysql?
+        @rows.map do |r|
+          next [] unless r['possible_keys'] && r['key'].nil?
+          possible = r['possible_keys'] - [r['key']]
+          possible.map do |p|
+            Explain.new(@sql, @stats, @backtrace, force_key: p) rescue nil
+          end.compact
+        end.flatten
+      else
+        []
+      end
     end
   end
 end
