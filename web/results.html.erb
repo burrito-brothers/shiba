@@ -304,13 +304,13 @@
           this.expanded = !this.expanded;
         },
         shortLocation: function(query) {
-          if ( !query.backtrace )
+          if ( !query.backtrace || query.backtrace.length == 0 )
             return null;
           var location = query.backtrace[0];
           return location.match(/([^\/]+:\d+):/)[1];
         },
         makeURL: function(line, content) {
-          if ( !data.url )
+          if ( !data.url || !line )
             return content;
 
           var matches = line.match(/(.+):(\d+):/);
