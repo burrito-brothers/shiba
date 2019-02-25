@@ -16,5 +16,6 @@ Shiba.configure(options) do |errmsg|
   exit 1
 end
 
+Shiba.connection.analyze!
 index = Shiba::Fuzzer.new(Shiba.connection).fetch_index
 puts index.to_yaml
