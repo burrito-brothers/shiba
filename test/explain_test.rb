@@ -6,6 +6,13 @@ require 'shiba/explain/postgres_explain_index_conditions'
 require 'shiba/table_stats'
 
 describe "Explain" do
+  def self.it_includes_tag(tag)
+    it "includes #{tag}" do
+      has_tag = explain.messages.any? { |m| m[:tag] == tag }
+      assert(has_tag, "expected #{explain.messages} to include tag == #{tag}")
+    end
+  end
+
   let(:index_stats) do
     Shiba::TableStats.new({}, Shiba.connection, {})
   end
@@ -13,13 +20,6 @@ describe "Explain" do
   let(:explain) do
     Shiba::Explain.new(sql, index_stats, [])
   end
-
-  def self.it_includes_tag(tag)
-    it "includes #{tag}" do
-      assert_includes(explain.messages, tag)
-    end
-  end
-
   describe "with a SELECT *" do
     let(:sql) { "select * from users" }
     it_includes_tag("access_type_tablescan")
@@ -27,16 +27,12 @@ describe "Explain" do
 
   describe "with a SELECT * / limit 1" do
     let(:sql) { "select * from users limit 1" }
-    it "tags as limited_scan" do
-      assert_includes(explain.messages, "limited_scan")
-    end
+    it_includes_tag("limited_scan")
   end
 
   describe "a select that stays entirely in an index with a limit" do
     let(:sql) { "select 1 from users where organization_id = 1 limit 1" }
-    it "tags as limited_scan" do
-      assert_includes(explain.messages, "limited_scan")
-    end
+    it_includes_tag("limited_scan")
   end
 
   describe "postgres index conditions" do
@@ -55,11 +51,15 @@ describe "Explain" do
     end
   end
 
-  describe "a join" do
-    let(:sql) { "SELECT users.* from users INNER JOIN comments on comments.user_id = users.id" }
+  if Shiba.connection.mysql?
+    describe "a join" do
+      let(:sql) { "SELECT users.* from users INNER JOIN comments on comments.user_id = users.id" }
 
-    it "parses" do
-      ret = explain.messages
+      it "parses" do
+        ret = explain.messages
+      end
+
+      it_includes_tag("join_type_ref")
     end
   end
 end

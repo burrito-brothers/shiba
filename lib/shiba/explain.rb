@@ -1,10 +1,15 @@
 require 'json'
 require 'shiba/index'
+require 'shiba/explain/check_support'
+require 'shiba/explain/checks'
+require 'shiba/explain/result'
 require 'shiba/explain/mysql_explain'
 require 'shiba/explain/postgres_explain'
 
 module Shiba
   class Explain
+    include CheckSupport
+    extend CheckSupport::ClassMethods
     def initialize(sql, stats, backtrace, options = {})
       @sql = sql
       @backtrace = backtrace
@@ -21,7 +26,9 @@ module Shiba
       else
         @rows = Shiba::Explain::PostgresExplain.new(@explain_json).transform
       end
+      @result = Result.new
       @stats = stats
+
       run_checks!
     end
 
@@ -29,17 +36,20 @@ module Shiba
       {
         sql: @sql,
         table: get_table,
-        table_size: table_size,
-        key: first_key,
-        tags: messages,
-        cost: @cost,
-        return_size: @return_size,
+        messages: @result.messages,
+        cost: @result.cost,
         severity: severity,
-        used_key_parts: first['used_key_parts'],
-        possible_keys: first['possible_keys'],
         raw_explain: humanized_explain,
         backtrace: @backtrace
       }
+    end
+
+    def messages
+      @result.messages
+    end
+
+    def cost
+      @result.cost
     end
 
     def get_table
@@ -53,66 +63,20 @@ module Shiba
       table
     end
 
-    # [{"id"=>1, "select_type"=>"SIMPLE", "table"=>"interwiki", "partitions"=>nil, "type"=>"const", "possible_keys"=>"PRIMARY", "key"=>"PRIMARY", "key_len"=>"34", "ref"=>"const", "rows"=>1, "filtered"=>100.0, "Extra"=>nil}]
-    attr_reader :cost
-
     def first
       @rows.first
-    end
-
-    def first_table
-      first["table"]
-    end
-
-    def first_key
-      first["key"]
     end
 
     def first_extra
       first["Extra"]
     end
 
-    def messages
-      @messages ||= []
-    end
-
-    # shiba: {"possible_keys"=>nil, "key"=>nil, "key_len"=>nil, "ref"=>nil, "rows"=>6, "filtered"=>16.67, "Extra"=>"Using where"}
-    def to_log
-      plan = first.symbolize_keys
-      "possible: #{plan[:possible_keys]}, rows: #{plan[:rows]}, filtered: #{plan[:filtered]}, cost: #{self.cost}, access: #{plan[:access_type]}"
-    end
-
-    def to_h
-      first.merge(cost: cost, messages: messages)
-    end
-
-    def table_size
-      @stats.table_count(first['table'])
-    end
-
-    def fuzzed?(table)
-      @stats.fuzzed?(first['table'])
-    end
-
     def no_matching_row_in_const_table?
       first_extra && first_extra =~ /no matching row in const table/
     end
 
-    def ignore_explain?
-    end
-
-    def derived?
-      first['table'] =~ /<derived.*?>/
-    end
-
-    # TODO: need to parse SQL here I think
-    def simple_table_scan?
-      @rows.size == 1 &&  (@sql !~ /order by/i) &&
-        (first['using_index'] || !(@sql =~ /\s+WHERE\s+/i))
-    end
-
     def severity
-      case @cost
+      case @result.cost
       when 0..100
         "low"
       when 100..1000
@@ -133,156 +97,9 @@ module Shiba
     def aggregation?
       @sql =~ /select\s*(.*?)from/i
       select_fields = $1
-      select_fields =~ /min|max|avg|count|sum|group_concat\s*\(.*?\)/i
+      select_fields =~ /(min|max|avg|count|sum|group_concat)\s*\(.*?\)/i
     end
 
-    def self.check(c)
-      @checks ||= []
-      @checks << c
-    end
-
-    def self.get_checks
-      @checks
-    end
-
-    check :check_query_is_ignored
-    def check_query_is_ignored
-      if ignore?
-        messages << "ignored"
-        @cost = 0
-      end
-    end
-
-    check :check_no_matching_row_in_const_table
-    def check_no_matching_row_in_const_table
-      if no_matching_row_in_const_table?
-        messages << "access_type_const"
-        first['key'] = 'PRIMARY'
-        @cost = 1
-      end
-    end
-
-    IGNORE_PATTERNS = [
-      /No tables used/,
-      /Impossible WHERE/,
-      /Select tables optimized away/,
-      /No matching min\/max row/
-    ]
-
-    check :check_query_shortcircuits
-    def check_query_shortcircuits
-      if first_extra && IGNORE_PATTERNS.any? { |p| first_extra =~ p }
-        @cost = 0
-      end
-    end
-
-    check :check_fuzzed
-    def check_fuzzed
-      messages << "fuzzed_data" if fuzzed?(first_table)
-    end
-
-    # TODO: we don't catch some cases like SELECT * from foo where index_col = 1 limit 1
-    # bcs we really just need to parse the SQL.
-    check :check_simple_table_scan
-    def check_simple_table_scan
-      if simple_table_scan?
-        if limit
-          messages << 'limited_scan'
-          @cost = limit
-        end
-      end
-    end
-
-    check :check_derived
-    def check_derived
-      if derived?
-        # select count(*) from ( select 1 from foo where blah )
-        @rows.shift
-        return run_checks!
-      end
-    end
-
-
-    check :tag_query_type
-    def tag_query_type
-      access_type = first['access_type']
-
-      if access_type.nil?
-        @cost = 0
-        return
-      end
-
-      access_type = 'tablescan' if access_type == 'ALL'
-      messages << "access_type_" + access_type
-    end
-
-    #check :check_index_walk
-    # disabling this one for now, it's not quite good enough and has a high
-    # false-negative rate.
-    def check_index_walk
-      if first['index_walk']
-        @cost = limit
-        messages << 'index_walk'
-      end
-    end
-
-    check :check_key_size
-    def check_key_size
-      # TODO: if possible_keys but mysql chooses NULL, this could be a test-data issue,
-      # pick the best key from the list of possibilities.
-      #
-      if first_key
-        @cost = @stats.estimate_key(first_table, first_key, first['used_key_parts'])
-      else
-        if first['possible_keys'].nil?
-          # if no possibile we're table scanning, use PRIMARY to indicate that cost.
-          # note that this can be wildly inaccurate bcs of WHERE + LIMIT stuff.
-          @cost = table_size
-        else
-          if @options[:force_key]
-            # we were asked to force a key, but mysql still told us to fuck ourselves.
-            # (no index used)
-            #
-            # there seems to be cases where mysql lists `possible_key` values
-            # that it then cannot use, seen this in OR queries.
-            @cost = table_size
-          else
-            possibilities = [table_size]
-            possibilities += first['possible_keys'].map do |key|
-              estimate_row_count_with_key(key)
-            end
-            @cost = possibilities.compact.min
-          end
-        end
-      end
-    end
-
-    def check_return_size
-      if limit
-        @return_size = limit
-      elsif aggregation?
-        @return_size = 1
-      else
-        @return_size = @cost
-      end
-
-      if @return_size && @return_size > 100
-        messages << "retsize_bad"
-      else
-        messages << "retsize_good"
-      end
-    end
-
-    def estimate_row_count_with_key(key)
-      explain = Explain.new(@sql, @stats, @backtrace, force_key: key)
-      explain.run_checks!
-    rescue Mysql2::Error => e
-      if /Key .+? doesn't exist in table/ =~ e.message
-        return nil
-      end
-
-      raise e
-    end
 
     def ignore?
       !!ignore_line_and_backtrace_line
@@ -303,13 +120,103 @@ module Shiba
       nil
     end
 
-    def run_checks!
-      self.class.get_checks.each do |check|
-        res = send(check)
-        break if @cost
+    check :check_query_is_ignored
+    def check_query_is_ignored
+      if ignore?
+        @result.messages << { tag: "ignored" }
+        @cost = 0
       end
+    end
+
+    check :check_no_matching_row_in_const_table
+    def check_no_matching_row_in_const_table
+      if no_matching_row_in_const_table?
+        @result.messages << { tag: "access_type_const" }
+        first['key'] = 'PRIMARY'
+        @cost = 1
+      end
+    end
+
+    IGNORE_PATTERNS = [
+      /No tables used/,
+      /Impossible WHERE/,
+      /Select tables optimized away/,
+      /No matching min\/max row/
+    ]
+
+    check :check_query_shortcircuits
+    def check_query_shortcircuits
+      if first_extra && IGNORE_PATTERNS.any? { |p| first_extra =~ p }
+        @cost = 0
+      end
+    end
+
+    # TODO: need to parse SQL here I think
+    def simple_table_scan?
+      @rows.size == 1 &&  (@sql !~ /order by/i) &&
+        (@rows.first['using_index'] || !(@sql =~ /\s+WHERE\s+/i))
+    end
+
+    # TODO: we don't catch some cases like SELECT * from foo where index_col = 1 limit 1
+    # bcs we really just need to parse the SQL.
+    check :check_simple_table_scan
+    def check_simple_table_scan
+      if simple_table_scan?
+        if limit
+          @result.messages << { tag: 'limited_scan', cost: limit, table: @rows.first['table'] }
+          @cost = limit
+        end
+      end
+    end
+
+    check :check_fuzzed
+    def check_fuzzed
+      h = {}
+      @rows.each do |row|
+        t = row['table']
+        if @stats.fuzzed?(t)
+          h[t] = @stats.table_count(t)
+        end
+      end
+      if h.any?
+        @result.messages << { tag: "fuzzed_data", tables: h }
+      end
+    end
+
+    def check_return_size
+      if limit
+        return_size = limit
+      elsif aggregation?
+        return_size = 1
+      else
+        return_size = @result.result_size
+      end
+
+      if return_size && return_size > 100
+        @result.messages << { tag: "retsize_bad", result_size: return_size }
+      else
+        @result.messages << { tag: "retsize_good", result_size: return_size }
+      end
+    end
+
+    def run_checks!
+      # first run top-level checks
+      _run_checks! do
+        :stop if @cost
+      end
+
+      if @cost
+        # we've decided to stop further analysis at the query level
+        @result.cost = @cost
+      else
+        # run per-table checks
+        0.upto(@rows.size - 1) do |i|
+          check = Checks.new(@rows, i, @stats, @options, @result)
+          check.run_checks!
+        end
+      end
+
       check_return_size
-      @cost
     end
 
     def humanized_explain
@@ -317,6 +224,20 @@ module Shiba
       #%w(select_id cost_info).each { |i| h.delete(i) }
       #h
       @explain_json
+    end
+
+    def other_paths
+      if Shiba.connection.mysql?
+        @rows.map do |r|
+          next [] unless r['possible_keys'] && r['key'].nil?
+          possible = r['possible_keys'] - [r['key']]
+          possible.map do |p|
+            Explain.new(@sql, @stats, @backtrace, force_key: p) rescue nil
+          end.compact
+        end.flatten
+      else
+        []
+      end
     end
   end
 end

@@ -16,11 +16,17 @@ module Shiba
       @stats = stats
       @options = options
       @fingerprints = {}
+      @queries = []
     end
 
     def analyze
       idx = 0
-      queries = []
+
+      if @options['sql']
+        analyze_sql(@options['sql'])
+        return @queries
+      end
+
       while line = @file.gets
         # strip out colors
         begin
@@ -35,35 +41,25 @@ module Shiba
           next
         end
 
-        if @options['limit']
-          return if idx == @options['limit']
-        end
-
-        if @options['index']
-          next unless idx == @options['index']
-        end
-
         sql.chomp!
-        query = Shiba::Query.new(sql, @stats)
+        analyze_sql(sql)
+      end
+      @queries
+    end
 
-        if !@fingerprints[query.fingerprint]
-          if sql.downcase.start_with?("select")
-            if @options['debug']
-              require 'byebug'
-              debugger
-            end
+    def analyze_sql(sql)
+      query = Shiba::Query.new(sql, @stats)
 
-            explain = analyze_query(query)
-            if explain
-              idx += 1
-              queries << explain
-            end
+      if !@fingerprints[query.fingerprint]
+        if sql.downcase.start_with?("select")
+          explain = analyze_query(query)
+          if explain
+            @queries << explain
           end
         end
-
-        @fingerprints[query.fingerprint] = true
       end
-      queries
+
+      @fingerprints[query.fingerprint] = true
     end
 
     protected
@@ -85,6 +81,10 @@ module Shiba
       end
       return nil unless explain
 
+      if explain.other_paths.any?
+        paths = [explain] + explain.other_paths
+        explain = paths.sort { |a, b| a.cost - b.cost }.first
+      end
       json = JSON.dump(explain.as_json)
       write(json)
       explain.as_json

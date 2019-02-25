@@ -21,6 +21,13 @@ module Shiba
         @connection.query(sql)
       end
 
+      def analyze!
+        @connection.query("show tables").each do |row|
+          t = row.values.first
+          @connection.query("analyze table `#{t}`") rescue nil
+        end
+      end
+
       def count_indexes_by_table
         sql =<<-EOL
           select TABLE_NAME as table_name, count(*) as index_count

@@ -1,7 +1,7 @@
 ---
 fuzzed_data:
   title: Fuzzed Data
-  summary: Shiba doesn't know the size of <b>{{table}}</b>.  For these purposes we set the table size to <b>{{table_size}}</b>.
+  summary: "Table sizes estimated as follows -- {{ fuzz_table_sizes }}"
   description: |
     We're not sure how much data this table will hold in the future, so we've pretended
     there's 6000 rows in it.  This can lead to a lot of false positives. To
@@ -21,24 +21,32 @@ access_type_const:
     This query selects at *most* one row, which is about as good as things get.
   level: success
 access_type_ref:
-  title: Indexed
-  summary: The database reads {{ cost }} rows in <b>{{ table }}</b> via the <b>{{ key }}</b> index ({{ key_parts }}).
+  title: Index Scan
+  summary: The database reads {{ formatted_cost }} rows in <b>{{ table }}</b> via the <i>{{ index }}</i> index ({{ key_parts }}).
   description: |
     This query uses an index to find rows that match a single value.  Often this
     has very good performance, but it depends on how many rows match that value.
   level: success
+join_type_eq_ref:
+  title: Indexed Join
+  summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via the <i>{{ index }}</i> index, reading 1 row per joined item.
+  level: success
+join_type_ref:
+  title: Indexed Join
+  summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via the <i>{{ index }}</i> index, reading {{ formatted_cost }} rows per joined item.
+  level: success
 access_type_range:
   title: Indexed
-  summary: The database uses a "range scan" to read more than {{ cost }} rows in {{ table }} via the <b>{{ key }}</b> index ({{ key_parts }})
+  summary: The database uses a "range scan" to read more than {{ formatted_cost }} rows in {{ table }} via the <b>{{ index }}</b> index ({{ key_parts }})
   description: |
     This query uses an index to find rows that match a range of values, for instance
     `WHERE indexed_value in (1,2,5,6)` or `WHERE indexed_value >= 5 AND indexed_value <= 15`.
     It's very hard to estimate how many rows this query will consider in production, so we've
-    upped the cost of this query.
+    upped the formatted_cost of this query.
   level: info
 access_type_tablescan:
   title: Table Scan
-  summary: The database reads <b>100%</b> ({{ table_size }}) of the rows in <b>{{ table }}</b>, skipping any indexes.
+  summary: The database reads {{ formatted_cost }} of the rows in <b>{{ table }}</b>, skipping any indexes.
   description: |
     This query doesn't use any indexes to find data, meaning this query will need to evaluate
     every single row in the table.  This is about the worst of all possible worlds.
@@ -49,10 +57,10 @@ access_type_tablescan:
   level: danger
 limited_scan:
   title: Limited Scan
-  summary: The database reads {{ query.cost }} rows from {{ query.table }}.
+  summary: The database reads {{ formatted_cost }} rows from {{ table }}.
   description: |
     This query doesn't use any indexes to find data, but since it doesn't care about
-    ordering and it doesn't have any conditions, it only ever reads {{ query.cost }} rows.
+    ordering and it doesn't have any conditions, it only ever reads {{ formatted_cost }} rows.
   level: info
 ignored:
   title: Ignored
@@ -68,9 +76,9 @@ index_walk:
   level: success
 retsize_bad:
   title: Big Results
-  summary: The database returns {{ return_size }} rows to the client.
+  summary: The database returns {{ result_size }} rows to the client.
   level: danger
 retsize_good:
   title: Small Results
-  summary: The database returns {{ return_size }} row(s) to the client.
+  summary: The database returns {{ result_size }} row(s) to the client.
   level: success

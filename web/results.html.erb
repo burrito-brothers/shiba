@@ -43,11 +43,21 @@
         Object.assign(this, obj);
         this.severityIndex = severityIndexes[this.severity];
         this.splitSQL();
+        this.makeSearchString();
       };
 
       Query.prototype = {
+        makeSearchString: function() {
+          var arr = [this.sql];
+          arr = arr.concat(this.messages.map(function(m) { return m.tag }).join(':'));
+          arr = arr.concat(this.backtrace.join(':'));
+
+          this.searchString = arr.join(':').toLowerCase();
+        },
         hasTag: function(tag) {
-          return this.tags.includes(tag);
+          return this.messages.find(function(m) {
+            return m.tag == tag;
+          });
         },
         splitSQL: function() {
           this.sqlFragments = this.sql.match(/(SELECT\s)(.*?)(\s+FROM .*)/i);
@@ -72,10 +82,20 @@
           queriesByTable.push(q);
         }
 
-        if ( q.hasTag("fuzzed_data" ) )
+        if ( q.hasTag("fuzzed_data") )
           queriesHaveFuzzed = true;
 
         q.expandSelect = false;
+
+        var rCost = 0;
+        q.messages.forEach(function(m) {
+          if ( m.cost ) {
+            rCost += m.cost;
+            m.running_cost = rCost;
+          } else {
+            m.running_cost = '';
+          }
+        });
       });
 
       var f = sortByFunc(['severityIndex', 'table']);
@@ -106,11 +126,9 @@
                   <div v-for="backtrace in query.backtrace" v-html="makeURL(backtrace, backtrace)"></div>
                 </div>
               </div>
-              <ul class="shiba-info-list">
-              <li v-for="tag in query.tags">
-                <component v-bind:is="'tag-' + tag" v-bind:query="query"></component>
-              </li>
-              </ul>
+              <table class="shiba-messages">
+                <component v-for="message in query.messages" v-bind:is="'tag-' + message.tag" v-bind="message"></component>
+              </table>
               <div v-if="!rawExpanded">
                 <a href="#" v-on:click.prevent="rawExpanded = !rawExpanded">See full EXPLAIN</a>
               </div>
@@ -124,47 +142,64 @@
       </div>
     </script>
 
+    <script>
+      var templateComputedFunctions = {
+        key_parts: function() {
+          if ( this.index_used && this.index_used.length > 0 )
+            return this.index_used.join(',');
+          else
+            return "";
+        },
+        fuzz_table_sizes: function() {
+          var h = {};
+          var tables = this.tables;
+
+          Object.keys(tables).forEach(function(k) {
+            console.log(k);
+            var size = tables[k];
+            if ( !h[size] )
+              h[size] = [];
+
+            h[size].push(k);
+          });
+
+          var sizesDesc = Object.keys(h).sort(function(a, b) { return b - a });
+          var str = "";
+
+          sizesDesc.forEach(function(size) {
+            str = str + h[size].join(", ") + ": " + size.toLocaleString() + " rows.  ";
+          });
+
+          return str;
+        },
+        formatted_cost: function() {
+          var costPercentage = (this.cost / this.table_size) * 100.0;
+          if ( this.cost > 100 && costPercentage > 1 ) // todo: make better
+            return `${costPercentage.toFixed()}% (${this.cost.toLocaleString()}) of the`;
+          else
+            return this.cost.toLocaleString();
+        }
+      }
+    </script>
     <% data[:tags].each do |tag, h| %>
-    <script type="text/x-template" id="tag-<%= tag %>-template">
-      <span><a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a><%= h['summary'] %></span>
+      <script type="text/x-template" id="tag-<%= tag %>-template">
+        <tr>
+        <td class="shiba-badge-td">
+          <a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a>
+        </td>
+        <td class="shiba-message">
+          <%= h['summary'] %>
+        </td>
+        <td class="running-totals">
+          {{ running_cost.toLocaleString() }}
+        </td>
+        </tr>
     </script>
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'query' ],
-        computed: {
-
-          table: function() {
-            return this.query.table;
-          },
-
-          table_size: function() {
-            return this.query.table_size;
-          },
-
-          key: function() {
-            return this.query.key;
-          },
-
-          return_size: function() {
-            return this.query.return_size.toLocaleString();
-          },
-
-          key_parts: function() {
-            if ( this.query.used_key_parts && this.query.used_key_parts.length > 0 )
-              return this.query.used_key_parts.join(',');
-            else
-              return "";
-          },
-
-          cost: function() {
-            var costPercentage = (this.query.cost / this.query.table_size) * 100.0;
-            if ( this.query.cost > 100 && costPercentage > 1 ) // todo: make better
-              return `${costPercentage.toFixed()}% (${this.query.cost.toLocaleString()}) of the`;
-            else
-              return this.query.cost.toLocaleString();
-          }
-        }
+        props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables' ],
+        computed: templateComputedFunctions
       });
     </script>
     <% end %>
@@ -269,13 +304,13 @@
           this.expanded = !this.expanded;
         },
         shortLocation: function(query) {
-          if ( !query.backtrace )
+          if ( !query.backtrace || query.backtrace.length == 0 )
             return null;
           var location = query.backtrace[0];
           return location.match(/([^\/]+:\d+):/)[1];
         },
         makeURL: function(line, content) {
-          if ( !data.url )
+          if ( !data.url || !line )
             return content;
 
           var matches = line.match(/(.+):(\d+):/);
@@ -304,7 +339,6 @@
       },
       methods: {
         updateSearch: _.debounce(function (e) {
-          console.log("ok, updating...");
           this.search = e.target.value;
         }, 500)
       },
@@ -314,8 +348,7 @@
             var filtered = [];
             var lcSearch = this.search.toLowerCase();
             this.highQ.concat(this.lowQ).forEach(function(q) {
-              var searchString = q.sql + ":" + q.tags.join(":") + q.backtrace.join(":");
-              if ( searchString.toLowerCase().includes(lcSearch) )
+              if ( q.searchString.includes(lcSearch) )
                 filtered.push(q);
             });
             return filtered;

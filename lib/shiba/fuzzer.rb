@@ -48,6 +48,7 @@ module Shiba
     # The more indexes, the bigger the table. Seems to rank tables fairly well.
     def guess_table_sizes
       index_counts = connection.count_indexes_by_table
+      return if index_counts.empty?
 
       # 90th table percentile based on number of indexes
       # round down so we don't blow up on small tables

@@ -2,7 +2,7 @@
 .query-info-box {
   border: 1px solid black;
   padding: 10px;
-  margin: 20px;
+  margin: 5px;
 }
 
 .backtrace {
@@ -41,11 +41,30 @@
   border-color: #ffb100;
 }
 
-.shiba-info-list {
-  list-style-type:none;
-  margin: 5px;
-  padding: 0;
+.shiba-badge-td {
+  width: 100px;
 }
+
+.shiba-messages {
+  margin: 0px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.shiba-messages td {
+  padding-top: 5px;
+}
+
+.shiba-message {
+  padding-right: 10px;
+  width: 90%;
+}
+
+.running-totals {
+  align: right;
+  font-family: monospace;
+}
+
 
 [v-cloak] { display: none }
 

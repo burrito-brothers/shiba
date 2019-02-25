@@ -45,7 +45,9 @@ module Shiba
       url.chomp!
       url.gsub!('git@github.com:', 'https://github.com/')
       url.gsub!(/\.git$/, '')
-      url + '/blob/master/'
+
+      branch = `git symbolic-ref HEAD`.strip.split('/').last
+      url + "/blob/#{branch}"
     end
 
     def make_web!
