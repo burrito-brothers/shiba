@@ -16,11 +16,17 @@ module Shiba
       @stats = stats
       @options = options
       @fingerprints = {}
+      @queries = []
     end
 
     def analyze
       idx = 0
-      queries = []
+
+      if @options['sql']
+        analyze_sql(@options['sql'])
+        return @queries
+      end
+
       while line = @file.gets
         # strip out colors
         begin
@@ -36,21 +42,24 @@ module Shiba
         end
 
         sql.chomp!
-        query = Shiba::Query.new(sql, @stats)
+        analyze_sql(sql)
+      end
+      @queries
+    end
 
-        if !@fingerprints[query.fingerprint]
-          if sql.downcase.start_with?("select")
-            explain = analyze_query(query)
-            if explain
-              idx += 1
-              queries << explain
-            end
+    def analyze_sql(sql)
+      query = Shiba::Query.new(sql, @stats)
+
+      if !@fingerprints[query.fingerprint]
+        if sql.downcase.start_with?("select")
+          explain = analyze_query(query)
+          if explain
+            @queries << explain
           end
         end
-
-        @fingerprints[query.fingerprint] = true
       end
-      queries
+
+      @fingerprints[query.fingerprint] = true
     end
 
     protected

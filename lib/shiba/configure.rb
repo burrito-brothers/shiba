@@ -101,6 +101,10 @@ module Shiba
 
         next if only_basics
 
+        opts.on("--sql SQL", "analyze this sql") do |s|
+          options["sql"] = s
+        end
+
         opts.on("-f", "--file FILE", "location of file containing queries") do |f|
           options["file"] = f
         end
