@@ -97,7 +97,7 @@ module Shiba
     def aggregation?
       @sql =~ /select\s*(.*?)from/i
       select_fields = $1
-      select_fields =~ /min|max|avg|count|sum|group_concat\s*\(.*?\)/i
+      select_fields =~ /(min|max|avg|count|sum|group_concat)\s*\(.*?\)/i
     end
 
 
