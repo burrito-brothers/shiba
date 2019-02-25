@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec `dirname $0`/dump_stats --server mysql $*
