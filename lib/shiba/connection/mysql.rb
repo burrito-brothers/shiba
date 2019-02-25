@@ -24,7 +24,7 @@ module Shiba
       def analyze!
         @connection.query("show tables").each do |row|
           t = row.values.first
-          @connection.query("analyze table `#{t}`")
+          @connection.query("analyze table `#{t}`") rescue nil
         end
       end
 
