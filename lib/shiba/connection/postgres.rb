@@ -7,6 +7,7 @@ module Shiba
         @connection = PG.connect( dbname: h['database'], host: h['host'], user: h['username'], password: h['password'], port: h['port'] )
         @connection.type_map_for_results = PG::BasicTypeMapForResults.new(@connection)
         query("SET enable_seqscan = OFF")
+        query("SET random_page_cost = 0.01")
       end
 
       def query(sql)
