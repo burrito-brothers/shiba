@@ -126,11 +126,9 @@
                   <div v-for="backtrace in query.backtrace" v-html="makeURL(backtrace, backtrace)"></div>
                 </div>
               </div>
-              <ul class="shiba-info-list">
-              <li v-for="message in query.messages">
-                <component v-bind:is="'tag-' + message.tag" v-bind="message"></component>
-              </li>
-              </ul>
+              <table class="shiba-messages">
+                <component v-for="message in query.messages" v-bind:is="'tag-' + message.tag" v-bind="message"></component>
+              </table>
               <div v-if="!rawExpanded">
                 <a href="#" v-on:click.prevent="rawExpanded = !rawExpanded">See full EXPLAIN</a>
               </div>
@@ -185,10 +183,17 @@
     </script>
     <% data[:tags].each do |tag, h| %>
       <script type="text/x-template" id="tag-<%= tag %>-template">
-      <div>
-        <span><a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a><%= h['summary'] %></span>
-        <div class="running-totals">{{ running_cost.toLocaleString() }}</div>
-      </div>
+        <tr>
+        <td class="shiba-badge-td">
+          <a class="badge shiba-badge-<%= h['level'] %>"><%= h['title'] %></a>
+        </td>
+        <td class="shiba-message">
+          <%= h['summary'] %>
+        </td>
+        <td class="running-totals">
+          {{ running_cost.toLocaleString() }}
+        </td>
+        </tr>
     </script>
     <script>
       Vue.component('tag-<%= tag %>', {
