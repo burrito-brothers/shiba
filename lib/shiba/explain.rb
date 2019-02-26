@@ -131,7 +131,7 @@ module Shiba
     check :check_no_matching_row_in_const_table
     def check_no_matching_row_in_const_table
       if no_matching_row_in_const_table?
-        @result.messages << { tag: "access_type_const" }
+        @result.messages << { tag: "access_type_const", table:  get_table }
         first['key'] = 'PRIMARY'
         @cost = 1
       end
