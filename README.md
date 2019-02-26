@@ -134,3 +134,25 @@ users:
         rows_per: 20% # each organization has, on average, 20% or 2000 users.
       unique: false
 ```
+
+## Automatic pull request reviews
+
+Shiba can automatically comment on Github pull requests when code changes appear to introduce a query issue. The comments are similar to those in the query report dashboard. This guide will walk through setup on Travis CI, but other CI services should work in a similar fashion.
+
+Once Shiba is installed, the `shiba review` command needs to be run after the tests are finished. On Travis, this goes in an after_script setting:
+
+```yml
+# .travis.yml
+after_script:
+ - bundle exec shiba review --submit
+ ```
+ 
+The `--submit` option tells Shiba to comment on the relevant PR when an issue is found. To do this, it will need the Github API token of a user that has access to the repo. Shiba's comments will appear to come from that user, so you'll likely want to setup a bot account on Github with repo access for this.
+ 
+By default, the review script looks for an environment variable named  GITHUB_TOKEN that can be specified at https://travis-ci.com/{organization}/{repo}/settings. The token can be generated on Github at https://github.com/settings/tokens. If you have another environment variable name for your Github token, it can be manually configured using the `--token` flag.
+ 
+```yml
+# .travis.yml
+after_script:
+ - bundle exec shiba review --token $MY_GITHUB_API_TOKEN --submit
+ ```
