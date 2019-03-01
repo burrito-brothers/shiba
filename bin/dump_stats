@@ -10,8 +10,10 @@ parser = Shiba::Configure.make_options_parser(options, only_basics: true)
 parser.banner = "Dump database statistics into yaml file."
 parser.parse!
 
-Shiba.configure(options) do |errmsg|
-  $stderr.puts(errmsg)
+begin
+  Shiba.configure(options)
+rescue Shiba::ConfigError => e
+  $stderr.puts(e.message)
   $stderr.puts(parser.help)
   exit 1
 end

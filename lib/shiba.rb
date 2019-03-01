@@ -7,16 +7,17 @@ require "byebug" if ENV['SHIBA_DEBUG']
 
 module Shiba
   class Error < StandardError; end
+  class ConfigError < StandardError; end
 
-  def self.configure(options, &block)
-    configure_mysql_defaults(options, &block)
+  def self.configure(options)
+    configure_mysql_defaults(options)
 
     @connection_hash = options.select { |k, v| [ 'default_file', 'default_group', 'server', 'username', 'database', 'host', 'password', 'port'].include?(k) }
     @main_config = Configure.read_config_file(options['config'], "config/shiba.yml")
     @index_config = Configure.read_config_file(options['index'], "config/shiba_index.yml")
   end
 
-  def self.configure_mysql_defaults(options, &block)
+  def self.configure_mysql_defaults(options)
     option_path = Shiba::Configure.mysql_config_path
 
     if option_path
@@ -40,11 +41,11 @@ module Shiba
     end
 
     if !options["username"] && !option_file.include?('user')
-      yield('Required: --username')
+      raise Shiba::ConfigError.new('Required: --username')
     end
 
     if !options["database"] && !option_file.include?('database')
-      yield('Required: --database')
+      raise Shiba::ConfigError.new('Required: --database')
     end
   end
 
