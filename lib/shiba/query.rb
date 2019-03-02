@@ -1,17 +1,28 @@
 require 'open3'
 require 'shiba/explain'
+require 'timeout'
+require 'thread'
 
 module Shiba
   class Query
     @@index = 0
     FINGERPRINTER = Shiba.root + "/bin/fingerprint"
 
+    @@fingerprinter_mutex = Mutex.new
     def self.get_fingerprint(query)
-      if !@stdin
-        @stdin, @stdout, _ = Open3.popen2(FINGERPRINTER)
+      @@fingerprinter_mutex.synchronize do
+        if !@stdin
+          @stdin, @stdout, _ = Open3.popen2(FINGERPRINTER)
+        end
+        @stdin.puts(query.gsub(/\n/, ' '))
+        begin
+          Timeout.timeout(2) do
+            @stdout.readline.chomp
+          end
+        rescue StandardError => e
+          $stderr.puts("shiba: timed out waiting for fingerprinter on #{query}...")
+        end
       end
-      @stdin.puts(query.gsub(/\n/, ' '))
-      @stdout.readline.chomp
     end
 
     def initialize(sql, stats)
