@@ -7,11 +7,12 @@ module Shiba
 
       def initialize
         @messages = []
-        @cost = 0
+        @cost = nil
         @result_size = 0
+        @rows_read = 0
       end
 
-      attr_accessor :messages, :cost, :result_size
+      attr_accessor :messages, :cost, :result_size, :rows_read
     end
   end
 end

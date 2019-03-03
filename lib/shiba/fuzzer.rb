@@ -40,8 +40,8 @@ module Shiba
 
     private
 
-    BIG_FUZZ_SIZE   = 5_000
-    SMALL_FUZZ_SIZE = 100
+    BIG_FUZZ_SIZE   = 100_000
+    SMALL_FUZZ_SIZE = 1000
 
 
     # Create fake table sizes based on the table's index count.
@@ -63,11 +63,9 @@ module Shiba
         end
 
         size = sizes[table_name]
-        # Big
         if size >= large_table_index_count
           sizes[table_name] = BIG_FUZZ_SIZE
         else
-        #small
           sizes[table_name] = SMALL_FUZZ_SIZE
         end
       end

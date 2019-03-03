@@ -13,28 +13,23 @@ possible_key_check:
     MySQL reported that it had keys it could have used, but elected not to use them.
     Shiba checked each of the possible keys and returned the results from the best
     key possible.  Sometimes "possible_keys" will be inaccurate and no keys were possible.
-  level: info
 access_type_const:
   title: One row
   summary: The database only needs to read a single row from <b>{{table}}</b>.
   description: |
     This query selects at *most* one row, which is about as good as things get.
-  level: success
 access_type_ref:
   title: Index Scan
   summary: The database reads {{ formatted_cost }} rows in <b>{{ table }}</b> via the <i>{{ index }}</i> index ({{ key_parts }}).
   description: |
     This query uses an index to find rows that match a single value.  Often this
     has very good performance, but it depends on how many rows match that value.
-  level: success
 join_type_eq_ref:
   title: Indexed Join
-  summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via the <i>{{ index }}</i> index, reading 1 row per joined item.
-  level: success
+  summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via <i>{{ index }}</i>, reading 1 row per joined item.
 join_type_ref:
   title: Indexed Join
-  summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via the <i>{{ index }}</i> index, reading {{ formatted_cost }} rows per joined item.
-  level: success
+  summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via <i>{{ index }}</i>, reading {{ formatted_cost }} rows per joined item.
 access_type_range:
   title: Indexed
   summary: The database uses a "range scan" to read more than {{ formatted_cost }} rows in {{ table }} via the <b>{{ index }}</b> index ({{ key_parts }})
@@ -43,7 +38,9 @@ access_type_range:
     `WHERE indexed_value in (1,2,5,6)` or `WHERE indexed_value >= 5 AND indexed_value <= 15`.
     It's very hard to estimate how many rows this query will consider in production, so we've
     upped the formatted_cost of this query.
-  level: info
+access_type_index:
+  title: Index Scan
+  summary: The database reads {{ formatted_cost }} of the rows in <b>{{ table }}</b> via <i>{{ index }}</i>
 access_type_tablescan:
   title: Table Scan
   summary: The database reads {{ formatted_cost }} of the rows in <b>{{ table }}</b>, skipping any indexes.
@@ -54,14 +51,12 @@ access_type_tablescan:
     This *can* be fine if, say, you're querying a tiny table (less than ~500 rows),
     but be aware that if this table is not effectively tiny or constant-sized you're entering
     a world of pain.
-  level: danger
 limited_scan:
   title: Limited Scan
   summary: The database reads {{ formatted_cost }} rows from {{ table }}.
   description: |
     This query doesn't use any indexes to find data, but since it doesn't care about
     ordering and it doesn't have any conditions, it only ever reads {{ formatted_cost }} rows.
-  level: info
 ignored:
   title: Ignored
   summary: This query matched an "ignore" rule in shiba.yml.  Any further analysis was skipped.
@@ -74,11 +69,6 @@ index_walk:
     can read the index and simply pluck {LIMIT} rows out of the index.  It's a very
     fast way to look up stuff by index.
   level: success
-retsize_bad:
-  title: Big Results
-  summary: The database returns {{ result_size }} rows to the client.
-  level: danger
-retsize_good:
-  title: Small Results
+retsize:
+  title: Results
   summary: The database returns {{ result_size }} row(s) to the client.
-  level: success
