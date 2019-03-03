@@ -10,8 +10,11 @@ module Shiba
   class Explain
     include CheckSupport
     extend CheckSupport::ClassMethods
-    def initialize(sql, stats, backtrace, options = {})
-      @sql = sql
+
+    def initialize(query, stats, backtrace, options = {})
+      @query = query
+      @sql = query.sql
+
       @backtrace = backtrace
 
       if options[:force_key]
@@ -35,7 +38,8 @@ module Shiba
     def as_json
       {
         sql: @sql,
-        table: get_table,
+        table: @query.from_table,
+        md5: @query.md5,
         messages: @result.messages,
         cost: @result.cost,
         severity: severity,
@@ -50,17 +54,6 @@ module Shiba
 
     def cost
       @result.cost
-    end
-
-    def get_table
-      @sql =~ /\s+from\s*([^\s,]+)/i
-      table = $1
-      return nil unless table
-
-      table = table.downcase
-      table.gsub!('`', '')
-      table.gsub!(/.*\.(.*)/, '\1')
-      table
     end
 
     def first
@@ -94,13 +87,6 @@ module Shiba
       end
     end
 
-    def aggregation?
-      @sql =~ /select\s*(.*?)from/i
-      select_fields = $1
-      select_fields =~ /(min|max|avg|count|sum|group_concat)\s*\(.*?\)/i
-    end
-
-
     def ignore?
       !!ignore_line_and_backtrace_line
     end
@@ -131,7 +117,7 @@ module Shiba
     check :check_no_matching_row_in_const_table
     def check_no_matching_row_in_const_table
       if no_matching_row_in_const_table?
-        @result.messages << { tag: "access_type_const", table:  get_table }
+        @result.messages << { tag: "access_type_const", table: @query.from_table }
         first['key'] = 'PRIMARY'
         @cost = 1
       end
@@ -184,9 +170,9 @@ module Shiba
     end
 
     def check_return_size
-      if limit
-        return_size = limit
-      elsif aggregation?
+      if @query.limit
+        return_size = [@query.limit, @result.result_size].min
+      elsif @query.aggregation?
         return_size = 1
       else
         return_size = @result.result_size
@@ -232,7 +218,7 @@ module Shiba
           next [] unless r['possible_keys'] && r['key'].nil?
           possible = r['possible_keys'] - [r['key']]
           possible.map do |p|
-            Explain.new(@sql, @stats, @backtrace, force_key: p) rescue nil
+            Explain.new(@query, @stats, @backtrace, force_key: p) rescue nil
           end.compact
         end.flatten
       else

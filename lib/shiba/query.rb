@@ -2,6 +2,7 @@ require 'open3'
 require 'shiba/explain'
 require 'timeout'
 require 'thread'
+require 'digest'
 
 module Shiba
   class Query
@@ -47,12 +48,41 @@ module Shiba
       @fingerprint ||= self.class.get_fingerprint(@sql)
     end
 
+    def md5
+      Digest::MD5.hexdigest(fingerprint)
+    end
+
     def explain
-      Explain.new(@sql, @stats, @backtrace)
+      Explain.new(self, @stats, @backtrace)
     end
 
     def backtrace
       @backtrace
+    end
+
+    def from_table
+      @sql =~ /\s+from\s*([^\s,]+)/i
+      table = $1
+      return nil unless table
+
+      table = table.downcase
+      table.gsub!('`', '')
+      table.gsub!(/.*\.(.*)/, '\1')
+      table
+    end
+
+    def limit
+      if @sql =~ /limit\s*(\d+)\s*(offset \d+)?$/i
+        $1.to_i
+      else
+        nil
+      end
+    end
+
+    def aggregation?
+      @sql =~ /select\s*(.*?)from/i
+      select_fields = $1
+      select_fields =~ /(min|max|avg|count|sum|group_concat)\s*\(.*?\)/i
     end
   end
 end
