@@ -159,6 +159,7 @@ module Shiba
       end
 
       cost = COST_PER_ROW_RETURNED * return_size
+      @result.cost += cost
       @result.messages << { tag: "retsize", result_size: return_size, cost: cost }
     end
 
