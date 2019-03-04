@@ -15,11 +15,11 @@ module Shiba
     include CheckSupport
     extend CheckSupport::ClassMethods
 
-    def initialize(query, stats, backtrace, options = {})
+    def initialize(query, stats, options = {})
       @query = query
       @sql = query.sql
 
-      @backtrace = backtrace
+      @backtrace = query.backtrace
 
       if options[:force_key]
         @sql = @sql.sub(/(FROM\s*\S+)/i, '\1' + " FORCE INDEX(`#{options[:force_key]}`)")
@@ -193,7 +193,7 @@ module Shiba
           next [] unless r['possible_keys'] && r['key'].nil?
           possible = r['possible_keys'] - [r['key']]
           possible.map do |p|
-            Explain.new(@query, @stats, @backtrace, force_key: p) rescue nil
+            Explain.new(@query, @stats, force_key: p) rescue nil
           end.compact
         end.flatten
       else
