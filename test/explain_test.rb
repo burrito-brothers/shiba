@@ -2,6 +2,7 @@ require_relative 'helper'
 
 require 'shiba'
 require 'shiba/explain'
+require 'shiba/query'
 require 'shiba/explain/postgres_explain_index_conditions'
 require 'shiba/table_stats'
 
@@ -17,9 +18,12 @@ describe "Explain" do
     Shiba::TableStats.new({}, Shiba.connection, {})
   end
 
-  let(:explain) do
-    Shiba::Explain.new(sql, index_stats, [])
+  let(:query) do
+    Shiba::Query.new(sql, index_stats)
   end
+
+  let(:explain) { query.explain }
+
   describe "with a SELECT *" do
     let(:sql) { "select * from users" }
     it_includes_tag("access_type_tablescan")
