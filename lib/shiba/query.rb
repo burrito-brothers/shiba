@@ -41,8 +41,7 @@ module Shiba
       @index = @@index
     end
 
-    attr_reader :sql, :index
-
+    attr_reader :sql, :index, :backtrace
 
     def fingerprint
       @fingerprint ||= self.class.get_fingerprint(@sql)
@@ -53,11 +52,7 @@ module Shiba
     end
 
     def explain
-      Explain.new(self, @stats, @backtrace)
-    end
-
-    def backtrace
-      @backtrace
+      Explain.new(self, @stats)
     end
 
     def from_table

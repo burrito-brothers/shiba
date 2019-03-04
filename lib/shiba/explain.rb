@@ -11,11 +11,11 @@ module Shiba
     include CheckSupport
     extend CheckSupport::ClassMethods
 
-    def initialize(query, stats, backtrace, options = {})
+    def initialize(query, stats, options = {})
       @query = query
       @sql = query.sql
 
-      @backtrace = backtrace
+      @backtrace = query.backtrace
 
       if options[:force_key]
          @sql = @sql.sub(/(FROM\s*\S+)/i, '\1' + " FORCE INDEX(`#{options[:force_key]}`)")
@@ -76,14 +76,6 @@ module Shiba
         "medium"
       when 1000..1_000_000_000
         "high"
-      end
-    end
-
-    def limit
-      if @sql =~ /limit\s*(\d+)\s*(offset \d+)?$/i
-        $1.to_i
-      else
-        nil
       end
     end
 
@@ -148,9 +140,9 @@ module Shiba
     check :check_simple_table_scan
     def check_simple_table_scan
       if simple_table_scan?
-        if limit
-          @result.messages << { tag: 'limited_scan', cost: limit, table: @rows.first['table'] }
-          @cost = limit
+        if @query.limit
+          @result.messages << { tag: 'limited_scan', cost: @query.limit, table: @rows.first['table'] }
+          @cost = @query.limit
         end
       end
     end
@@ -218,7 +210,7 @@ module Shiba
           next [] unless r['possible_keys'] && r['key'].nil?
           possible = r['possible_keys'] - [r['key']]
           possible.map do |p|
-            Explain.new(@query, @stats, @backtrace, force_key: p) rescue nil
+            Explain.new(@query, @stats, force_key: p) rescue nil
           end.compact
         end.flatten
       else
