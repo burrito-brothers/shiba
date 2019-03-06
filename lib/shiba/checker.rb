@@ -8,8 +8,6 @@ module Shiba
   # Given an explain log and a diff, returns any explain logs
   # that appear to be caused by the diff.
   class Checker
-    MAGIC_COST = 100
-
     Result = Struct.new(:status, :message, :problems)
 
     attr_reader :options
@@ -35,7 +33,7 @@ module Shiba
       end
 
       explains = select_lines_with_changed_files(log)
-      problems = explains.select { |explain| explain["cost"] && explain["cost"] > MAGIC_COST }
+      problems = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
 
 
       if options["verbose"]

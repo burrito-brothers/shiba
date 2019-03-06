@@ -22,6 +22,7 @@ module Shiba
           body << "\n"
         end
 
+        body << "Estimated query time: %.2fs" % explain['cost']
         body
       end
 
@@ -44,6 +45,7 @@ module Shiba
           "table_size"      => message["table_size"],
           "result_size"     => message["result_size"],
           "index"           => message["index"],
+          "join_to"         => message["join_to"],
           "key_parts"       => (message["index_used"] || []).join(','),
           "size"            => message["size"],
           "formatted_cost"  => formatted_cost(message)
@@ -51,13 +53,13 @@ module Shiba
       end
 
       def formatted_cost(explain)
-        return nil unless explain["cost"] && explain["table_size"]
-        percentage = (explain["cost"] / explain["table_size"]) * 100.0;
+        return nil unless explain["rows_read"] && explain["table_size"]
+        percentage = (explain["rows_read"] / explain["table_size"]) * 100.0;
 
-        if explain["cost"] > 100 && percentage > 1
-          "#{percentage.floor}% (#{explain["cost"]}) of the"
+        if explain["rows_read"] > 100 && percentage > 1
+          "#{percentage.floor}% (#{explain["rows_read"]}) of the"
         else
-          explain["cost"]
+          explain["rows_read"]
         end
       end
 
