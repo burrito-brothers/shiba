@@ -104,7 +104,12 @@ end
 
 # https://circleci.com/docs/2.0/env-vars/
 # This may be wrong for circle ci
-pr_id = ENV['TRAVIS_PULL_REQUEST'] || ENV['CIRCLE_PR_NUMBER']
+
+circle_pr_id = if ENV["CIRCLE_PULL_REQUEST"]
+  URI.parse(ENV["CIRCLE_PULL_REQUEST"]).path.split("/").last
+end
+
+pr_id = ENV['TRAVIS_PULL_REQUEST'] || circle_pr_id
 
 if options["pull_request"] == nil && pr_id && !pr_id.empty?
   options["pull_request"] = pr_id
