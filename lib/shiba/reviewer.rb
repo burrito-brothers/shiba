@@ -1,6 +1,6 @@
 require 'open3'
 require 'shiba'
-require 'shiba/diff'
+require 'shiba/review/diff_parser'
 require 'shiba/review/api'
 require 'shiba/review/comment_renderer'
 
@@ -20,7 +20,9 @@ module Shiba
       @problems = problems
       @options = options
       @commit_id = options.fetch("branch") do
-        raise Shiba::Error.new("Must specify a branch") if !options['diff']
+        if options["submit"]
+          raise Shiba::Error.new("Must specify a branch")
+        end
       end
     end
 
@@ -33,7 +35,11 @@ module Shiba
           raise Shiba::Error.new("Bad path received: #{line_number}")
         end
 
-        position = diff.find_position(file, line_number.to_i)
+        position = if path == "none:-1"
+          nil
+        else
+          diff.find_position(file, line_number.to_i)
+        end
 
         explain = keep_only_dangerous_messages(explain)
 
@@ -100,7 +106,7 @@ module Shiba
     def diff
       return @diff if @diff
       output = options['diff'] ? file_diff : git_diff
-      @diff = Shiba::Diff.new(output)
+      @diff = Shiba::Review::DiffParser.new(output)
     end
 
     def git_diff

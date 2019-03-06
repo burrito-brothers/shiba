@@ -2,171 +2,54 @@
 
 $LOAD_PATH << File.expand_path("../lib", File.dirname(__FILE__))
 require 'optionparser'
-require 'shiba/reviewer'
-require 'shiba/checker'
 require 'shiba/configure'
+require 'shiba/reviewer'
+require 'shiba/review/explain_diff'
+require 'shiba/review/cli'
+require 'json'
 
-options = {}
-parser = OptionParser.new do |opts|
-  opts.banner = "Review changes for query problems. Optionally submit the comments to a Github pull request."
+cli = Shiba::Review::CLI.build
 
-  opts.separator "Required:"
-
-  opts.on("-f","--file FILE", "The explain output log to compare with. Automatically configured when $CI environment variable is set") do |f|
-    options["file"] = f
-  end
-
-  opts.separator ""
-  opts.separator "Git diff options:"
-
-  opts.on("-b", "--branch GIT_BRANCH", "Compare to changes between origin/HEAD and BRANCH. Attempts to read from CI environment when not set.") do |b|
-    options["branch"] = b
-  end
-
-  opts.on("--staged", "Only check files that are staged for commit") do
-    options["staged"] = true
-  end
-
-  opts.on("--unstaged", "Only check files that are not staged for commit") do
-    options["unstaged"] = true
-  end
-
-  opts.separator ""
-  opts.separator "Github options:"
-
-  opts.on("--submit", "Submit comments to Github") do
-    options["submit"] = true
-  end
-
-  opts.on("-p", "--pull-request PR_ID", "The ID of the pull request to comment on. Attempts to read from CI environment when not set.") do |p|
-    options["pull_request"] = p
-  end
-
-  opts.on("-t", "--token TOKEN", "The Github API token to use for commenting. Defaults to $GITHUB_TOKEN.") do |t|
-    options["token"] = t
-  end
-
-  opts.separator ""
-  opts.separator "Common options:"
-
-  opts.on("--verbose", "Verbose/debug mode") do
-    options["verbose"] = true
-  end
-
-  opts.on_tail("-h", "--help", "Show this message") do
-    puts opts
-    exit
-  end
-
-  opts.on_tail("--version", "Show version") do
-    require 'shiba/version'
-    puts Shiba::VERSION
-    exit
-  end
-end
-parser.parse!
-
-# This is a noop since it's the default behavior. Ignore.
-if options["staged"] && options["unstaged"]
-  options.delete("staged")
-  options.delete("unstaged")
-end
-
-
-log = options["file"]
-
-if log.nil? && Shiba::Configure.ci?
-  log = options["file"] = File.join(Shiba.path, 'ci.json')
-  $stderr.puts "CI detected, setting file to #{log}" if options["verbose"]
-end
-
-if log.nil?
-  $stderr.puts "Provide an explain log, or run 'shiba explain' to generate one."
-  $stderr.puts ""
-  $stderr.puts parser
+if !cli.valid?
+  $stderr.puts cli.failure
   exit 1
 end
 
-if !File.exist?(log)
-  $stderr.puts "File not found: '#{log}'"
-  exit 1
-end
+problems = if cli.options["branch"] || cli.options["diff"]
+  # Check to see if the log overlaps with the git diff
+  result = Shiba::Review::ExplainDiff.new(cli.options).explains(cli.options["file"])
 
-pr_sha = ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_BRANCH']
+  if result.message
+    $stderr.puts result.message
+  end
 
-if options["branch"] == nil && pr_sha && !pr_sha.empty?
-  options["branch"] = pr_sha
-end
+  if result.status == :pass
+    exit
+  end
 
-if options["token"] == nil
-  options["token"] = ENV['GITHUB_TOKEN']
-end
-
-# https://circleci.com/docs/2.0/env-vars/
-# This may be wrong for circle ci
-
-circle_pr_id = if ENV["CIRCLE_PULL_REQUEST"]
-  URI.parse(ENV["CIRCLE_PULL_REQUEST"]).path.split("/").last
-end
-
-pr_id = ENV['TRAVIS_PULL_REQUEST'] || circle_pr_id
-
-if options["pull_request"] == nil && pr_id && !pr_id.empty?
-  options["pull_request"] = pr_id
-end
-
-if options["verbose"]
-  $stderr.puts "DIFF: #{ENV['DIFF']}" if ENV['DIFF']
-  $stderr.puts "branch: #{options["branch"].inspect}" if options["branch"]
-  $stderr.puts "pull_request: #{options["pull_request"]}" if options["pull_request"]
+  result.problems
+else
+  explains = File.read(cli.options["file"]).each_line.map { |json| JSON.parse(json) }
+  bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
+  bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
 end
 
 repo_cmd = "git config --get remote.origin.url"
+
+if cli.options["verbose"]
+  report("#{repo_cmd}\t#{repo_url}")
+end
 repo_url = `#{repo_cmd}`.chomp
-
-if options["verbose"]
-  $stderr.puts "#{repo_cmd}\t#{repo_url}"
-end
-
-def require_option(parser, name)
-  $stderr.puts "Required: #{name}"
-  $stderr.puts ""
-  $stderr.puts parser
-  exit 1
-end
 
 if repo_url.empty?
   $stderr.puts "'#{Dir.pwd}' does not appear to be a git repo"
   exit 1
 end
 
-if options["submit"]
-  if (options["branch"].nil? || options["branch"].empty?) && (ENV['DIFF'].nil? || ENV['DIFF'].empty?)
-    require_option(parser, "branch")
-  end
-  require_option(parser, "token") if options["token"].nil?
-  require_option(parser, "pull_request") if options["pull_request"].nil?
-end
-
-if ENV['DIFF']
-  options['diff'] = ENV['DIFF']
-end
-
-# Check to see if the log overlaps with the git diff
-result = Shiba::Checker.new(options).run(log)
-
-if result.message
-  $stderr.puts result.message
-end
-
-if result.status == :pass
-  exit
-end
-
 # Generate comments for the problem queries
-reviewer = Shiba::Reviewer.new(repo_url, result.problems, options)
+reviewer = Shiba::Reviewer.new(repo_url, problems, cli.options)
 
-if !options["submit"] || options["verbose"]
+if !cli.options["submit"] || cli.options["verbose"]
   reviewer.comments.each do |c|
     puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
     puts c[:body]
@@ -174,7 +57,7 @@ if !options["submit"] || options["verbose"]
   end
 end
 
-if options["submit"]
+if cli.options["submit"]
   if reviewer.repo_host.empty? || reviewer.repo_path.empty?
     $stderr.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
     exit 1
