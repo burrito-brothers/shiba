@@ -191,7 +191,7 @@ module Shiba
     def other_paths
       if Shiba.connection.mysql?
         @rows.map do |r|
-          next [] unless r['possible_keys'] && r['key'].nil?
+          next [] unless r['possible_keys']
           possible = r['possible_keys'] - [r['key']]
           possible.map do |p|
             Explain.new(@query, @stats, force_key: p) rescue nil
