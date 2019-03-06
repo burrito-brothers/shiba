@@ -13,7 +13,7 @@ module Shiba
       @tables.any?
     end
 
-    Table = Struct.new(:name, :count, :indexes) do
+    Table = Struct.new(:name, :count, :indexes, :average_row_size) do
       def encode_with(coder)
         coder.map = self.to_h.stringify_keys
         coder.map.delete('name')

@@ -52,7 +52,7 @@ end
 table_stats = Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})
 queries = Shiba::Analyzer.analyze(file, json, table_stats, options)
 
-problems = queries.select { |q| q[:cost] && q[:cost] > 100 }
+problems = queries.select { |q| q[:severity] && q[:severity] != 'none' }
 
 if problems.any?
   query_word = problems.size == 1 ? 'query' : 'queries'

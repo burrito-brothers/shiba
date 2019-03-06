@@ -25,7 +25,7 @@
       var queriesByTable = [];
       var queriesByTableLow = [];
       var queriesHaveFuzzed = false;
-      var severityIndexes = { high: 1, medium: 2, low: 3 };
+      var severityIndexes = { high: 1, medium: 2, low: 3, none: 4 };
 
       function sortByFunc(fields) {
         return function(a, b) {
@@ -76,7 +76,7 @@
       data.queries.forEach(function(query) {
         var q = new Query(query);
 
-        if ( q.cost < 100 ) {
+        if ( q.severity == "none" ) {
           queriesByTableLow.push(q);
         } else {
           queriesByTable.push(q);
@@ -89,11 +89,11 @@
 
         var rCost = 0;
         q.messages.forEach(function(m) {
-          if ( m.cost ) {
+          if ( m.cost && m.cost != 0) {
             rCost += m.cost;
             m.running_cost = rCost;
           } else {
-            m.running_cost = '';
+            m.running_cost = undefined;
           }
         });
       });
@@ -129,6 +129,9 @@
               <table class="shiba-messages">
                 <component v-for="message in query.messages" v-bind:is="'tag-' + message.tag" v-bind="message"></component>
               </table>
+              <% if ENV['SHIBA_DEBUG'] %>
+              <div style="font-size: 10px">md5: {{ query.md5 }}</div>
+              <% end %>
               <div v-if="!rawExpanded">
                 <a href="#" v-on:click.prevent="rawExpanded = !rawExpanded">See full EXPLAIN</a>
               </div>
@@ -178,24 +181,31 @@
           return str;
         },
         formatted_cost: function() {
-          var costPercentage = (this.cost / this.table_size) * 100.0;
-          if ( this.cost > 100 && costPercentage > 1 ) // todo: make better
-            return `${costPercentage.toFixed()}% (${this.cost.toLocaleString()}) of the`;
+          var readPercentage = (this.rows_read / this.table_size) * 100.0;
+          if ( this.rows_read > 100 && readPercentage > 1 ) // todo: make better
+            return `${readPercentage.toFixed()}% (${this.rows_read.toLocaleString()}) of the`;
           else
-            return this.cost.toLocaleString();
+            return this.rows_read.toLocaleString();
         },
         costToColor: function() {
           var goodColor = [34, 160, 60];
           var endColor = [255, 0, 0];
-          var costScale = this.cost ? this.cost / 5000 : 0;
+          var costScale = this.cost ? this.cost / 0.5 : 0;
 
           if ( costScale > 1 )
             costScale = 1;
 
           var pos =  (costScale * (greenToRedGradient.length - 1)).toFixed();
 
-          debugger;
           return "border-color: " + greenToRedGradient[pos];
+        },
+        formattedRunningCost: function() {
+          if ( this.running_cost === undefined )
+            return "-";
+          else if ( this.running_cost < 1.0 )
+            return (this.running_cost * 100).toFixed() + "ms";
+          else
+            return this.running_cost.toFixed(1) + "s";
         }
       }
     </script>
@@ -209,15 +219,18 @@
           <%= h['summary'] %>
         </td>
         <td class="running-totals">
-          {{ running_cost.toLocaleString() }}
+          {{ formattedRunningCost }}
         </td>
         </tr>
     </script>
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables' ],
-        computed: templateComputedFunctions
+        props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables', 'rows_read' ],
+        computed: templateComputedFunctions,
+        data: function () {
+          return { lastRunnningCost: undefined };
+        }
       });
     </script>
     <% end %>

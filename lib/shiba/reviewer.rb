@@ -11,6 +11,7 @@ module Shiba
   # is semi-corrected but still a problem
   class Reviewer
     TEMPLATE_FILE = File.join(Shiba.root, 'lib/shiba/output/tags.yaml')
+    MESSAGE_FILTER_THRESHOLD = 0.005
 
     attr_reader :repo_url, :problems, :options
 
@@ -34,9 +35,7 @@ module Shiba
 
         position = diff.find_position(file, line_number.to_i)
 
-        if options["submit"]
-          explain = keep_only_dangerous_messages(explain)
-        end
+        explain = keep_only_dangerous_messages(explain)
 
         { body: renderer.render(explain),
           commit_id: @commit_id,
@@ -93,8 +92,7 @@ module Shiba
     def keep_only_dangerous_messages(explain)
       explain_b = explain.dup
       explain_b["messages"] = explain_b["messages"].select do |message|
-        tag = message['tag']
-        tags[tag]["level"] == "danger"
+        message['cost'] && message['cost'] > MESSAGE_FILTER_THRESHOLD
       end
       explain_b
     end

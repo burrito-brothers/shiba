@@ -8,6 +8,10 @@ require 'shiba/explain/postgres_explain'
 
 module Shiba
   class Explain
+    COST_PER_ROW_READ = 2.5e-07 # TBD; data size would be better
+    COST_PER_ROW_SORT = 1.0e-07
+    COST_PER_ROW_RETURNED = 3.0e-05
+
     include CheckSupport
     extend CheckSupport::ClassMethods
 
@@ -18,7 +22,7 @@ module Shiba
       @backtrace = query.backtrace
 
       if options[:force_key]
-         @sql = @sql.sub(/(FROM\s*\S+)/i, '\1' + " FORCE INDEX(`#{options[:force_key]}`)")
+        @sql = @sql.sub(/(FROM\s*\S+)/i, '\1' + " FORCE INDEX(`#{options[:force_key]}`)")
       end
 
       @options = options
@@ -70,11 +74,13 @@ module Shiba
 
     def severity
       case @result.cost
-      when 0..100
+      when 0..0.01
+        "none"
+      when 0.01..0.10
         "low"
-      when 100..1000
+      when 0.1..1.0
         "medium"
-      when 1000..1_000_000_000
+      else
         "high"
       end
     end
@@ -102,7 +108,7 @@ module Shiba
     def check_query_is_ignored
       if ignore?
         @result.messages << { tag: "ignored" }
-        @cost = 0
+        @result.cost = 0
       end
     end
 
@@ -111,7 +117,7 @@ module Shiba
       if no_matching_row_in_const_table?
         @result.messages << { tag: "access_type_const", table: @query.from_table }
         first['key'] = 'PRIMARY'
-        @cost = 1
+        @result.cost = 0
       end
     end
 
@@ -125,25 +131,7 @@ module Shiba
     check :check_query_shortcircuits
     def check_query_shortcircuits
       if first_extra && IGNORE_PATTERNS.any? { |p| first_extra =~ p }
-        @cost = 0
-      end
-    end
-
-    # TODO: need to parse SQL here I think
-    def simple_table_scan?
-      @rows.size == 1 &&  (@sql !~ /order by/i) &&
-        (@rows.first['using_index'] || !(@sql =~ /\s+WHERE\s+/i))
-    end
-
-    # TODO: we don't catch some cases like SELECT * from foo where index_col = 1 limit 1
-    # bcs we really just need to parse the SQL.
-    check :check_simple_table_scan
-    def check_simple_table_scan
-      if simple_table_scan?
-        if @query.limit
-          @result.messages << { tag: 'limited_scan', cost: @query.limit, table: @rows.first['table'] }
-          @cost = @query.limit
-        end
+        @result.cost = 0
       end
     end
 
@@ -170,28 +158,24 @@ module Shiba
         return_size = @result.result_size
       end
 
-      if return_size && return_size > 100
-        @result.messages << { tag: "retsize_bad", result_size: return_size }
-      else
-        @result.messages << { tag: "retsize_good", result_size: return_size }
-      end
+      cost = COST_PER_ROW_RETURNED * return_size
+      @result.cost += cost
+      @result.messages << { tag: "retsize", result_size: return_size, cost: cost }
     end
 
     def run_checks!
       # first run top-level checks
       _run_checks! do
-        :stop if @cost
+        :stop if @result.cost
       end
 
-      if @cost
-        # we've decided to stop further analysis at the query level
-        @result.cost = @cost
-      else
-        # run per-table checks
-        0.upto(@rows.size - 1) do |i|
-          check = Checks.new(@rows, i, @stats, @options, @result)
-          check.run_checks!
-        end
+      return if @result.cost
+
+      @result.cost = 0
+      # run per-table checks
+      0.upto(@rows.size - 1) do |i|
+        check = Checks.new(@rows, i, @stats, @options, @query, @result)
+        check.run_checks!
       end
 
       check_return_size
