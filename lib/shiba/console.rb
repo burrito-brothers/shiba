@@ -58,10 +58,10 @@ module Shiba
 
       def message
         msg = "\n"
-        msg << "Severity: #{severity}"
-        msg << "----------------------------"
+        msg << "Severity: #{severity}\n"
+        msg << "----------------------------\n"
         msg << comments
-        msg << "\n"
+        msg << "\n\n"
       end
 
       def help
@@ -151,7 +151,8 @@ module Shiba
       end
 
       def puts(message)
-        @context.puts(message)
+        out = @context.respond_to?(:puts) ? @context : $stdout
+        out.puts(message)
       end
 
     end
