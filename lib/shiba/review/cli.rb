@@ -4,7 +4,7 @@ module Shiba
     # Automatically infers options from environment variables on CI.
     #
     # Example:
-    # cli = CLI.build
+    # cli = CLI.new
     # cli.valid?
     # => true
     # cli.options
@@ -17,12 +17,6 @@ module Shiba
     # cli.failure
     # => "An error message with command line help."
     class CLI
-
-      def self.build
-        cli = new
-        cli.report_options("diff", "branch", "pull_request")
-        cli
-      end
 
       attr_reader :errors
 
@@ -167,7 +161,7 @@ module Shiba
       end
 
       def ci_branch
-        ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_BRANCH']
+        ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_SHA1']
       end
 
       def ci_pull_request

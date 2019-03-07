@@ -8,7 +8,8 @@ require 'shiba/review/explain_diff'
 require 'shiba/review/cli'
 require 'json'
 
-cli = Shiba::Review::CLI.build
+cli = Shiba::Review::CLI.new
+cli.report_options("diff", "branch", "pull_request")
 
 if !cli.valid?
   $stderr.puts cli.failure
