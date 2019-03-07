@@ -167,3 +167,24 @@ To integrate with CircleCI, add this after the the test run step in `.circleci/c
 
 An environment variable named `GITHUB_TOKEN` will need to be configured on CircleCI under *Project settings > Environment Variables*
 
+### Analyze queries from the developer console
+
+For quick analysis, queries can be analyzed from the Rails console.
+```ruby
+# rails console
+[1] pry(main)> require 'shiba/console'
+=> true
+[2] pry(main)> shiba User.where(email: "squirrel@example.com")
+
+Severity: high
+----------------------------
+Fuzzed Data: Table sizes estimated as follows -- 100000: users
+Table Scan: The database reads 100% (100000) of the of the rows in **users**, skipping any indexes.
+Results: The database returns 100000 row(s) to the client.
+Estimated query time: 3.02s
+
+=> #<Shiba::Console::ExplainRecord:0x00007ffc154e6128>: 'SELECT `users`.* FROM `users` WHERE `users`.`email` = 'squirrel@example.com''. Call the 'help' method on this object for more info.
+[3] pry(main)> 
+```
+
+Raw query strings are also supported, e.g. `shiba "select * from users where users.email = 'squirrel@example.com'"`
