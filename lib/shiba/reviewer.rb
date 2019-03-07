@@ -10,7 +10,6 @@ module Shiba
   # 2. May make sense to edit the comment on a commit line when the code
   # is semi-corrected but still a problem
   class Reviewer
-    TEMPLATE_FILE = File.join(Shiba.root, 'lib/shiba/output/tags.yaml')
     MESSAGE_FILTER_THRESHOLD = 0.005
 
     attr_reader :repo_url, :problems, :options
@@ -132,7 +131,7 @@ module Shiba
     end
 
     def tags
-      @tags ||= YAML.load_file(TEMPLATE_FILE)
+      @tags ||= YAML.load_file(Shiba::TEMPLATE_FILE)
     end
 
   end

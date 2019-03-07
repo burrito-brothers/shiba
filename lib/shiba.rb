@@ -8,6 +8,7 @@ require "byebug" if ENV['SHIBA_DEBUG']
 module Shiba
   class Error < StandardError; end
   class ConfigError < StandardError; end
+  TEMPLATE_FILE = File.join(File.dirname(__dir__), 'lib/shiba/output/tags.yaml')
 
   def self.configure(options)
     configure_mysql_defaults(options)
