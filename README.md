@@ -39,7 +39,13 @@ SHIBA_DEBUG=true ruby test/controllers/users_controller_test.rb
 # Report available at /tmp/shiba-explain.log-1550099512
 ```
 
-## Typical query problems
+## Next steps
+* [Integrate with Github pull requests](#automatic-pull-request-reviews)
+* [Add production stats for realistic analysis](#going-beyond-table-scans)
+* [Read more about typical query problems](#typical-query-problems)
+
+
+### Typical query problems
 
 Here are some typical query problems Shiba can detect. We'll assume the following schema:
 
@@ -82,7 +88,7 @@ Normally a query like this would only become a problem as the app grows in popul
 
 With more data, Shiba can help detect this issue when it appears in a pull request.
 
-## Going beyond table scans
+### Going beyond table scans
 
 Without more information, Shiba acts as a simple missed index detector. To catch other problems that can bring down production (or at least cause some performance issues), Shiba requires general statistics about production data, such as the number of rows in a table and how unique columns are.
 
@@ -126,7 +132,7 @@ users:
       unique: false
 ```
 
-## Automatic pull request reviews
+### Automatic pull request reviews
 
 Shiba can automatically comment on Github pull requests when code changes appear to introduce a query issue. The comments are similar to those in the query report dashboard. This guide will walk through setup on Travis CI, but other CI services should work in a similar fashion.
 
@@ -148,7 +154,7 @@ after_script:
  - bundle exec shiba review --token $MY_GITHUB_API_TOKEN --submit
  ```
  
-### CircleCI Integration
+#### CircleCI Integration
  
 To integrate with CircleCI, add this after the the test run step in `.circleci/config.yml`.
  
