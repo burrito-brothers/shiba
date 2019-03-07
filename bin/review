@@ -36,11 +36,11 @@ else
 end
 
 repo_cmd = "git config --get remote.origin.url"
+repo_url = `#{repo_cmd}`.chomp
 
 if cli.options["verbose"]
-  report("#{repo_cmd}\t#{repo_url}")
+  $stderr.puts "#{repo_cmd}\t#{repo_url}"
 end
-repo_url = `#{repo_cmd}`.chomp
 
 if repo_url.empty?
   $stderr.puts "'#{Dir.pwd}' does not appear to be a git repo"

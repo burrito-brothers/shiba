@@ -55,7 +55,7 @@ module IntegrationTest
       bin = File.join(Shiba.root, "bin/review")
       env.merge!('DIFF' => "test/data/test_app.diff")
 
-      out, status = run_command(env, bin, "-f#{file.path}.json")
+      out, status = run_command(env, bin, "-f#{file.path}.json", "--verbose")
 
       assert_equal 2, status, "Expected exit status 2, got #{status}\n. Backtrace: #{out.join}"
       assert_match(/Table Scan/, out.join)
