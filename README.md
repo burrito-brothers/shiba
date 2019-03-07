@@ -156,3 +156,17 @@ By default, the review script looks for an environment variable named  GITHUB_TO
 after_script:
  - bundle exec shiba review --token $MY_GITHUB_API_TOKEN --submit
  ```
+ 
+### CircleCI Integration
+ 
+To integrate with CircleCI, add this after the the test run step in `.circleci/config.yml`.
+ 
+ ```yml
+# .circleci/config.yml
+- run:
+    name: Review SQL queries
+    command: bundle exec shiba review --submit
+```
+
+An environment variable named `GITHUB_TOKEN` will need to be configured on CircleCI under *Project settings > Environment Variables*
+
