@@ -4,8 +4,6 @@
 
 Shiba is a tool (currently in alpha) that automatically reviews SQL queries before they cause problems in production. It uses production statistics for realistic query analysis. It catches missing indexes, overly broad indexes, and queries that return too much data.
 
-By default, it will pretty much only detect queries that miss indexes. As it's fed more information, it warns about advanced problems, such as queries that use indexes but are still very expensive. To help find such queries, Shiba can be integerated with CI and report problems to Github pull requests. 
-
 ![screenshot](https://shiba-sql.com/wp-content/uploads/2019/03/shiba-screenshot-1024x581.png)
 
 ## Installation
@@ -26,8 +24,7 @@ require 'shiba/setup'
 
 ## Usage
 
-A report will only be generated when problem queries are detected.
-To verify shiba is actually running, you can run your tests with SHIBA_DEBUG=true.
+To get started, try out shiba locally. To verify shiba is actually running, you can run your tests with SHIBA_DEBUG=true.
 
 ```ruby
 # Install
