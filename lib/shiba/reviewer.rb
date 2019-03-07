@@ -1,6 +1,6 @@
 require 'open3'
 require 'shiba'
-require 'shiba/review/diff_parser'
+require 'shiba/review/diff'
 require 'shiba/review/api'
 require 'shiba/review/comment_renderer'
 
@@ -38,7 +38,7 @@ module Shiba
         position = if path == "none:-1"
           nil
         else
-          diff.find_position(file, line_number.to_i)
+          diff_parser.find_position(file, line_number.to_i)
         end
 
         explain = keep_only_dangerous_messages(explain)
@@ -103,22 +103,18 @@ module Shiba
       explain_b
     end
 
+    def diff_parser
+      @diff_parser ||= Review::Diff::Parser.new(diff.file)
+    end
+
     def diff
-      return @diff if @diff
-      output = options['diff'] ? file_diff : git_diff
-      @diff = Shiba::Review::DiffParser.new(output)
-    end
-
-    def git_diff
-      cmd ="git diff origin/HEAD..#{@commit_id}"
-      report("Finding PR position using: #{cmd}")
-
-      output = StringIO.new(`#{cmd}`)
-    end
-
-    def file_diff
-      report("Finding PR position using file: #{options['diff']}")
-      File.open(options['diff'], 'r')
+      @diff ||= if options['diff']
+        report("Finding PR position using file: #{options['diff']}")
+        Review::Diff::FileDiff.new(options['diff'])
+      else
+        report("Finding PR position using git")
+        Review::Diff::GitDiff.new(options)
+      end
     end
 
     def api
@@ -136,7 +132,7 @@ module Shiba
     end
 
     def tags
-      @tags ||=  YAML.load_file(TEMPLATE_FILE)
+      @tags ||= YAML.load_file(TEMPLATE_FILE)
     end
 
   end
