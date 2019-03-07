@@ -27,10 +27,18 @@ describe "Console shiba helper" do
   end
 
   it "returns an error when given bad sql" do
-    explain = console.shiba("select * from no_such_table")
-    assert_nil explain
-    error = ["Unable to analyze query, please check the SQL syntax for typos."]
-    assert_equal error, console.messages
+    begin
+      explain = console.shiba("select * from no_such_table")
+      assert_nil explain
+      error = ["Unable to analyze query, please check the SQL syntax for typos."]
+      assert_equal error, console.messages
+    rescue Exception => e
+      if defined?(PG::UndefinedTable) && e.class == PG::UndefinedTable
+        assert true
+      else
+        raise e
+      end
+    end
   end
 
   it "returns an error when given unsupported sql" do
