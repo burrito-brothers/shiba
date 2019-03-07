@@ -42,6 +42,7 @@ SHIBA_DEBUG=true ruby test/controllers/users_controller_test.rb
 ## Next steps
 * [Integrate with Github pull requests](#automatic-pull-request-reviews)
 * [Add production stats for realistic analysis](#going-beyond-table-scans)
+* [Preview queries from the developer console](#analyze-queries-from-the-developer-console)
 * [Read more about typical query problems](#typical-query-problems)
 
 
