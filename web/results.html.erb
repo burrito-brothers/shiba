@@ -206,6 +206,20 @@
             return (this.running_cost * 100).toFixed() + "ms";
           else
             return this.running_cost.toFixed(1) + "s";
+        },
+        formatted_result: function() {
+          var rb = this.result_bytes;
+          var result;
+          if ( rb == 0 )
+            return "" + this.result_size + " rows";
+          else if ( rb < 1000 )
+            result = rb + " bytes ";
+          else if ( rb < 1000000 )
+            result = (rb / 1000).toFixed() + "kb ";
+          else
+            result = (rb / 1000000 ).toFixed(1) + "mb ";
+
+          return result + " (" + this.result_size.toLocaleString() + " rows)";
         }
       }
     </script>
@@ -226,7 +240,7 @@
     <script>
       Vue.component('tag-<%= tag %>', {
         template: '#tag-<%= tag %>-template',
-        props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables', 'rows_read' ],
+        props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables', 'rows_read', 'result_bytes' ],
         computed: templateComputedFunctions,
         data: function () {
           return { lastRunnningCost: undefined };

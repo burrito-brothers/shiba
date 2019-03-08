@@ -13,7 +13,7 @@ module Shiba
       @tables.any?
     end
 
-    Table = Struct.new(:name, :count, :indexes, :average_row_size) do
+    Table = Struct.new(:name, :count, :indexes) do
       def encode_with(coder)
         coder.map = self.to_h.stringify_keys
         coder.map.delete('name')
@@ -23,6 +23,7 @@ module Shiba
           self.count = indexes.map { |i, parts| parts.columns.map { |v| v.raw_cardinality } }.flatten.max
         end
 
+        coder.map['column_sizes'] = column_sizes
         coder.tag = nil
       end
 
@@ -38,6 +39,10 @@ module Shiba
           # set row count from unique index
           self.count = cardinality
         end
+      end
+
+      def column_sizes
+        @column_sizes ||= {}
       end
     end
 
@@ -150,6 +155,20 @@ module Shiba
     def add_index_column(table, index_name, column_name, cardinality, is_unique)
       table = build_table(table)
       table.add_index_column(index_name, column_name, nil, cardinality, is_unique)
+    end
+
+    def get_column_size(table_name, column)
+      table = @tables[table_name]
+      return nil unless table
+
+      table.column_sizes[column]
+    end
+
+    def set_column_size(table_name, column, size)
+      table = @tables[table_name]
+      raise "couldn't find table: #{table_name}" unless table
+
+      table.column_sizes[column] = size
     end
 
     def estimate_key(table_name, key, parts)

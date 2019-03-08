@@ -12,6 +12,8 @@ module Shiba
     COST_PER_ROW_SORT = 1.0e-07
     COST_PER_ROW_RETURNED = 3.0e-05
 
+    COST_PER_KB_RETURNED = 0.0004
+
     include CheckSupport
     extend CheckSupport::ClassMethods
 
@@ -26,7 +28,8 @@ module Shiba
       end
 
       @options = options
-      @explain_json = Shiba.connection.explain(@sql)
+
+      @explain_json, @select_fields = Shiba.connection.explain(@sql)
 
       if Shiba.connection.mysql?
         @rows = Shiba::Explain::MysqlExplain.new.transform_json(@explain_json['query_block'])
@@ -149,18 +152,30 @@ module Shiba
       end
     end
 
+    def select_row_size
+      size = 0
+      @select_fields.each do |table, fields|
+        fields.each do |f|
+          size += @stats.get_column_size(table, f) || 0
+        end
+      end
+      size
+    end
+
     def check_return_size
       if @query.limit
-        return_size = [@query.limit, @result.result_size].min
+        result_size = [@query.limit, @result.result_size].min
       elsif @query.aggregation?
-        return_size = 1
+        result_size = 1
       else
-        return_size = @result.result_size
+        result_size = @result.result_size
       end
 
-      cost = COST_PER_ROW_RETURNED * return_size
+      result_bytes = select_row_size * result_size
+      cost = (result_bytes / 1024.0) * COST_PER_KB_RETURNED
+
       @result.cost += cost
-      @result.messages << { tag: "retsize", result_size: return_size, cost: cost }
+      @result.messages << { tag: "retsize", result_size: result_size, result_bytes: result_bytes, cost: cost }
     end
 
     def run_checks!

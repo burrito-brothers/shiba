@@ -71,4 +71,4 @@ index_walk:
   level: success
 retsize:
   title: Results
-  summary: The database returns {{ result_size }} row(s) to the client.
+  summary: The database returns {{ formatted_result }} to the client.
