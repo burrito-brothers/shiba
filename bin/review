@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 $LOAD_PATH << File.expand_path("../lib", File.dirname(__FILE__))
-require 'optionparser'
 require 'shiba/configure'
 require 'shiba/reviewer'
 require 'shiba/review/explain_diff'

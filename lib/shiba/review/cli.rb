@@ -1,3 +1,5 @@
+require 'optionparser'
+
 module Shiba
   module Review
     # Builds options for interacting with the reviewer via the command line.
