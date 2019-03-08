@@ -3,7 +3,7 @@ require_relative 'helper'
 require 'shiba'
 require 'shiba/explain'
 require 'shiba/query'
-require 'shiba/explain/postgres_explain_index_conditions'
+require 'shiba/parsers/postgres_explain_index_conditions'
 require 'shiba/table_stats'
 
 describe "Explain" do
@@ -41,7 +41,7 @@ describe "Explain" do
 
   describe "postgres index conditions" do
     def parse_conditions(conds)
-      Shiba::Explain::PostgresExplainIndexConditions.new(conds).fields
+      Shiba::Parsers::PostgresExplainIndexConditions.new(conds).fields
     end
 
     it "parses some index conditions" do
