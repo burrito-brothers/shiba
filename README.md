@@ -132,7 +132,11 @@ To run on other servers, two steps are required:
 1. Ensure an environment variable named `CI` is set when the tests and shiba script are run.
 2. Run the `shiba review` command after tests are run, supplying the required arguments to `--submit, --token, --branch, and --pull-request`. For example:
 
-```bundle exec shiba review --submit --token $MY_GITHUB_TOKEN --branch $(git rev-parse HEAD) --pull-request $MY_PR_NUMBER```
+```bash
+CI=true
+rake test
+bundle exec shiba review --submit --token $MY_GITHUB_TOKEN --branch $(git rev-parse HEAD) --pull-request $MY_PR_NUMBER
+```
 
 ### Analyze queries from the developer console
 
