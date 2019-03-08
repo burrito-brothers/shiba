@@ -7,18 +7,24 @@ module Shiba
 
     # avoiding Rails dependency on the cli tools for now.
     # yanked from https://github.com/rails/rails/blob/v5.0.5/railties/lib/rails/application/configuration.rb
-    def self.activerecord_configuration
-      yaml = Pathname.new("config/database.yml")
+    def self.activerecord_configuration(config_path = "config/database.yml")
+      yaml = Pathname.new(config_path)
 
       config = if yaml && yaml.exist?
                  require "yaml"
                  require "erb"
                  YAML.load(ERB.new(yaml.read).result) || {}
-               elsif ENV['DATABASE_URL']
-                 # Value from ENV['DATABASE_URL'] is set to default database connection
-                 # by Active Record.
-                 {}
                end
+
+      env     = ENV["RAILS_ENV"] || "test"
+      config  = config[env]
+      adapter = config.delete("adapter")
+
+      if adapter == "mysql2"
+        config["server"] = "mysql"
+      else
+        config["server"] = adapter
+      end
 
       config
     rescue Psych::SyntaxError => e

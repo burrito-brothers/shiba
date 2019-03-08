@@ -8,13 +8,17 @@ require "byebug" if ENV['SHIBA_DEBUG']
 module Shiba
   class Error < StandardError; end
   class ConfigError < StandardError; end
+  TEMPLATE_FILE = File.join(File.dirname(__dir__), 'lib/shiba/output/tags.yaml')
 
   def self.configure(options)
+    return false if @connection_hash
+
     configure_mysql_defaults(options)
 
     @connection_hash = options.select { |k, v| [ 'default_file', 'default_group', 'server', 'username', 'database', 'host', 'password', 'port'].include?(k) }
     @main_config = Configure.read_config_file(options['config'], "config/shiba.yml")
     @index_config = Configure.read_config_file(options['index'], "config/shiba_index.yml")
+    true
   end
 
   def self.configure_mysql_defaults(options)

@@ -16,9 +16,10 @@ if !cli.valid?
   exit 1
 end
 
-problems = if cli.options["branch"] || cli.options["diff"]
-  # Check to see if the log overlaps with the git diff
-  result = Shiba::Review::ExplainDiff.new(cli.options).explains(cli.options["file"])
+explain_diff = Shiba::Review::ExplainDiff.new(cli.options["file"], cli.options)
+
+problems = if explain_diff.diff_requested_by_user?
+  result = explain_diff.result
 
   if result.message
     $stderr.puts result.message
@@ -28,9 +29,9 @@ problems = if cli.options["branch"] || cli.options["diff"]
     exit
   end
 
-  result.problems
+  explain_diff.problems
 else
-  explains = File.read(cli.options["file"]).each_line.map { |json| JSON.parse(json) }
+  explains = File.open(cli.options["file"]).each_line.map { |json| JSON.parse(json) }
   bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
   bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
 end

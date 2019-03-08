@@ -22,6 +22,26 @@ module Shiba
       @installed = true
     end
 
+    def self.connection_options
+        cx = ActiveRecord::Base.connection.raw_connection
+        if cx.respond_to?(:query_options)
+          # mysql
+          c = cx.query_options.merge(server: 'mysql')
+        else
+          # postgres
+          c = { host: cx.host, database: cx.db, username: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
+        end
+
+        options = {
+          'host' =>     c[:host],
+          'database' => c[:database],
+          'user' =>     c[:username],
+          'password' => c[:password],
+          'port' =>     c[:port],
+          'server' =>   c[:server],
+        }
+    end
+
     protected
 
     def self.start_watcher
@@ -64,26 +84,8 @@ module Shiba
     end
 
     def self.database_args
-      cx = ActiveRecord::Base.connection.raw_connection
-      if cx.respond_to?(:query_options)
-        # mysql
-        c = cx.query_options.merge(server: 'mysql')
-      else
-        # postgres
-        c = { host: cx.host, database: cx.db, username: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
-      end
-
-      options = {
-        'host':     c[:host],
-        'database': c[:database],
-        'user':     c[:username],
-        'password': c[:password],
-        'port':     c[:port],
-        'server':   c[:server]
-      }
-
       # port can be a Fixnum
-      options.reject { |k,v| v.nil? || v.respond_to?(:empty?) && v.empty? }.map { |k,v| "--#{k} #{v}" }.join(" ")
+      connection_options.reject { |k,v| v.nil? || v.respond_to?(:empty?) && v.empty? }.map { |k,v| "--#{k} #{v}" }.join(" ")
     end
 
   end
