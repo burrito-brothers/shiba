@@ -4,22 +4,24 @@ module Shiba
 
       def fetch_indexes
         result = Shiba.connection.query(sql)
-        rows = result.to_a.map { |row| normalize(row) }
-
-        #TODO: estimate multi-index column cardinality
+        rows = result.to_a.each { |row| normalize(row) }
         rows
       end
 
       HEADERS = [ "table_name", "index_name", "column_name", "numrows", "is_unique", "is_primary", "numdistinct"]
       # Parses the raw commandline output of running the stats query.
       def parse(raw)
-        headers = raw.lines.first.split("|").map(&:strip)
+        raw.strip!
+        lines       = raw.lines
+        header_line = lines.shift
+        headers     = header_line.split("|").map(&:strip)
+
         if headers != HEADERS
-          return false
+          return header_line
         end
 
         records = []
-        raw.each_line do |line|
+        lines.each do |line|
           row = line.split("|")
           next if row.size != HEADERS.size
 
@@ -27,6 +29,7 @@ module Shiba
           records << parse_record(row)
         end
 
+        records.each { |row| normalize(row) }
         records
       end
 

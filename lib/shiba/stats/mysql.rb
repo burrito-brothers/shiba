@@ -20,19 +20,22 @@ module Shiba
       # def\tzammad_test\tactivity_streams\t0\tzammad_test\tPRIMARY\t1\tid\tA\t0\tNULL\tNULL\t\tBTREE\t\t\tYES\tNULL\n
       def parse(raw)
         raw.strip! # avoid whitespace issues
-        headers = raw.lines.first.chomp("\n").split("\t").map(&:downcase)
+        lines       = raw.lines
+        header_line = lines.shift
+        headers =     header_line.chomp("\n").split("\t").map(&:downcase)
+
         if headers != HEADERS
           return false
         end
 
         records = []
-        raw.each_line do |line|
+        lines.each do |line|
           row = line.chomp("\n").split("\t")
           if row.size != HEADERS.size
             return false
           end
 
-          row.map!(&:strip!)
+          row.map!(&:strip)
           records << parse_record(row)
         end
 

@@ -4,6 +4,7 @@ require 'active_support/core_ext/hash/keys'
 module Shiba
   class IndexStats
 
+    #TODO: estimate multi-index column cardinality
     def self.from_records(records)
       stats = new
       records.each do |h|

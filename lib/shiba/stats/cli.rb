@@ -87,7 +87,7 @@ module Shiba
             @user_options[:script] = true
           end
 
-          opts.on("--client CLIENT", "The client command to run, defaults to 'rails dbconsole'") do |c|
+          opts.on("--client CLIENT", "The client command to run, defaults to 'rails dbconsole'. Can use 'mysql' and 'psql'.") do |c|
             @user_options[:client] = c
           end
 
