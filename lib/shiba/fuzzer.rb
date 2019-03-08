@@ -26,16 +26,8 @@ module Shiba
     end
 
     def fetch_index
-      stats = Shiba::IndexStats.new
       records = connection.fetch_indexes
-      tables = {}
-      records.each do |h|
-        h.keys.each { |k| h[k.downcase] = h.delete(k) }
-        h["cardinality"] = h["cardinality"].to_i
-
-        stats.add_index_column(h['table_name'], h['index_name'], h['column_name'], h['cardinality'], h['non_unique'] == 0)
-      end
-      stats
+      Shiba::IndexStats.from_records(records)
     end
 
     private

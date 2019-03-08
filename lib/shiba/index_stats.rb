@@ -4,6 +4,17 @@ require 'active_support/core_ext/hash/keys'
 module Shiba
   class IndexStats
 
+    def self.from_records(records)
+      stats = new
+      records.each do |h|
+        h.keys.each { |k| h[k.downcase] = h.delete(k) }
+        h["cardinality"] = h["cardinality"].to_i
+
+        stats.add_index_column(h['table_name'], h['index_name'], h['column_name'], h['cardinality'], h['non_unique'] == 0)
+      end
+      stats
+    end
+
     def initialize(tables = {})
       @tables = tables
       build_from_hash!

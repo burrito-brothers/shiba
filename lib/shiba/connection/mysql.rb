@@ -1,5 +1,6 @@
 require 'mysql2'
 require 'json'
+require 'shiba/stats/mysql'
 
 module Shiba
   class Connection
@@ -13,12 +14,8 @@ module Shiba
       end
 
       def fetch_indexes
-        sql =<<-EOL
-          select * from information_schema.statistics where
-          table_schema = DATABASE()
-          order by table_name, if(index_name = 'PRIMARY', '', index_name), seq_in_index
-        EOL
-        @connection.query(sql)
+        stats = Stats::Mysql.new
+        stats.fetch_indexes
       end
 
       def analyze!

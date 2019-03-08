@@ -3,35 +3,80 @@ module Shiba
     class Postgres
 
       def fetch_indexes
-        result = Shiba.connection.query(fetch_indexes_sql)
-        rows = result.to_a.map do |row|
-          # TBD: do better than this, have them return something objecty
-          if row['is_primary'] == "t"
-            row['index_name'] = "PRIMARY"
-            row['non_unique'] = 0
-          elsif row['is_unique']
-            row['non_unique'] = 0
-          end
-
-          if row['numdistinct'].nil?
-            # meaning the table's empty.
-            row['cardinality'] = 0
-          elsif row['numdistinct'] == 0
-            # numdistinct is 0 if there's rows in the table but all values are null
-            row['cardinality'] = 1
-          elsif row['numdistinct'] < 0
-            # postgres talks about either cardinality or selectivity (depending.  what's their heuristic?)
-            # in the same way we do in the yaml file!
-            # if less than zero, it's negative selectivity.
-            row['cardinality'] = -(row['numrows'] * row['numdistinct'])
-          else
-            row['cardinality'] = row['numdistinct']
-          end
-          row
-        end
+        result = Shiba.connection.query(sql)
+        rows = result.to_a.map { |row| normalize(row) }
 
         #TODO: estimate multi-index column cardinality
         rows
+      end
+
+      HEADERS = [ "table_name", "index_name", "column_name", "numrows", "is_unique", "is_primary", "numdistinct"]
+      # Parses the raw commandline output of running the stats query.
+      def parse(raw)
+        headers = raw.lines.first.split("|").map(&:strip)
+        if headers != HEADERS
+          return false
+        end
+
+        records = []
+        raw.each_line do |line|
+          row = line.split("|")
+          next if row.size != HEADERS.size
+
+          row.map!(&:strip!)
+          records << parse_record(row)
+        end
+
+        records
+      end
+
+      def parse_record(row)
+        record = Hash[HEADERS.zip(row)]
+        record["numrows"]   = record["numrows"].to_i
+        record["is_unique"] = cast_bool(record["is_unique"])
+        record["numdistinct"] = cast_int(record["numdistinct"])
+
+        record
+      end
+
+      def cast_int(value)
+        return nil if value == ""
+        return value.to_i
+      end
+
+      def cast_bool(value)
+        case value
+        when "t" then true
+        when "f" then false
+        else
+          nil
+        end
+      end
+
+      def normalize(row)
+        # TBD: do better than this, have them return something objecty
+        if row['is_primary'] == "t"
+          row['index_name'] = "PRIMARY"
+          row['non_unique'] = 0
+        elsif row['is_unique']
+          row['non_unique'] = 0
+        end
+
+        if row['numdistinct'].nil?
+          # meaning the table's empty.
+          row['cardinality'] = 0
+        elsif row['numdistinct'] == 0
+          # numdistinct is 0 if there's rows in the table but all values are null
+          row['cardinality'] = 1
+        elsif row['numdistinct'] < 0
+          # postgres talks about either cardinality or selectivity (depending.  what's their heuristic?)
+          # in the same way we do in the yaml file!
+          # if less than zero, it's negative selectivity.
+          row['cardinality'] = -(row['numrows'] * row['numdistinct'])
+        else
+          row['cardinality'] = row['numdistinct']
+        end
+        row
       end
 
       def sql

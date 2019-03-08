@@ -4,23 +4,22 @@ $LOAD_PATH << File.expand_path("../lib", File.dirname(__FILE__))
 require 'optionparser'
 require 'shiba'
 require 'shiba/stats/cli'
+require 'shiba/index_stats'
 
 cli = Shiba::Stats::CLI.new
 options = cli.options
 
-puts "Got:"
-puts options.inspect
+if options[:verbose]
+  puts "Options: #{options.inspect}"
+end
 
 if !cli.valid?
   $stderr.puts cli.failure
   exit 1
 end
 
-# TODO:
-# Figure out testing
-
 cmd = ""
-if options[:host] != 'localhost'
+output = if options[:host] != 'localhost'
   if options[:proxy]
     cmd << "ssh -o ProxyCommand='ssh -W' %h:%p #{options[:proxy]} -t #{options[:host]}"
   else
@@ -28,10 +27,22 @@ if options[:host] != 'localhost'
   end
 
   cmd << " '#{cli.query_script}'"
-  puts cmd
+  puts cmd if options[:verbose]
 else
-  puts script
-  if !options[:script]
-    puts `#{cli.query_script}`
+  if options[:script]
+    puts cli.query_script
+    exit
   end
+
+
+  `#{cli.query_script}`
 end
+
+records = if options[:server] == "mysql"
+  Shiba::Stats::Mysql.new.parse(output)
+else
+  Shiba::Stats::Postgres.new.parse(output)
+end
+
+index = Shiba::IndexStats.from_records(records)
+puts index.to_yaml

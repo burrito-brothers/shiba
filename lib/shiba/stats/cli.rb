@@ -25,6 +25,11 @@ module Shiba
           error("--server must be one of 'mysql' or 'postgres', got '#{options[:server]}'")
         end
 
+        # Verbose breaks the printed script
+        if options[:script] && options[:verbose]
+          error("specify one of --script or --verbose, not both")
+        end
+
         @errors.empty?
       end
 
@@ -38,6 +43,17 @@ module Shiba
         end
 
         message
+      end
+
+      # cd path/to/app
+      # echo "select stats sql |"
+      # rails dbconsole
+      def query_script
+        script = ""
+        script = "cd #{options[:directory]};\n" if options[:directory]
+        script << "echo \"#{stats_sql.strip}\" |\n"
+        script << "#{options[:client]}"
+        script
       end
 
       protected
@@ -109,15 +125,14 @@ module Shiba
           environment: env }
       end
 
-      # cd path/to/app
-      # echo "select stats sql |"
-      # rails dbconsole
-      def query_script
-        script = ""
-        script = "cd #{options[:directory]};\n" if options[:directory]
-        script << "echo \"#{stats_sql.strip}\" |\n"
-        script << "#{options[:client]}"
-        script
+      def stats_sql
+        if options[:server] == "mysql"
+          require 'shiba/stats/mysql'
+          Shiba::Stats::Mysql.new.sql
+        else
+          require 'shiba/stats/postgres'
+          Shiba::Stats::Postgres.new.sql
+        end
       end
 
       def normalize_server(name)
