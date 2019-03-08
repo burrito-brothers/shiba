@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH << File.expand_path("../lib", File.dirname(__FILE__))
+require 'optionparser'
+require 'shiba'
+require 'shiba/stats/cli'
+
+cli = Shiba::Stats::CLI.new
+options = cli.options
+
+puts "Got:"
+puts options.inspect
+
+if !cli.valid?
+  $stderr.puts cli.failure
+  exit 1
+end
+
+# TODO:
+# Figure out testing
+
+cmd = ""
+if options[:host] != 'localhost'
+  if options[:proxy]
+    cmd << "ssh -o ProxyCommand='ssh -W' %h:%p #{options[:proxy]} -t #{options[:host]}"
+  else
+    cmd << "ssh #{options[:host]}"
+  end
+
+  cmd << " '#{cli.query_script}'"
+  puts cmd
+else
+  puts script
+  if !options[:script]
+    puts `#{cli.query_script}`
+  end
+end
