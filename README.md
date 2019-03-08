@@ -134,6 +134,7 @@ To run on other servers, two steps are required:
 
 ```bash
 CI=true
+export CI
 rake test
 bundle exec shiba review --submit --token $MY_GITHUB_TOKEN --branch $(git rev-parse HEAD) --pull-request $MY_PR_NUMBER
 ```
