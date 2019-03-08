@@ -43,13 +43,30 @@ module Shiba
           "fuzz_table_sizes" => fuzzed_sizes(message),
           "table"           => message["table"],
           "table_size"      => message["table_size"],
-          "result_size"     => message["result_size"],
           "index"           => message["index"],
           "join_to"         => message["join_to"],
           "key_parts"       => (message["index_used"] || []).join(','),
           "size"            => message["size"],
-          "formatted_cost"  => formatted_cost(message)
+          "formatted_cost"  => formatted_cost(message),
+          "formatted_result" => formatted_result(message)
         }
+      end
+
+      def formatted_result(explain)
+        return nil unless explain['result_bytes'] && explain['result_size']
+
+        bytes = explain['result_bytes']
+        return "%d rows" % explain['result_size'] if bytes == 0
+
+        if bytes < 1000
+          result = "%d bytes" % bytes
+        elsif bytes < 1000000
+          result = "%dkb" % (bytes / 1000)
+        else
+          result = "%.1fmb" % (bytes / 1000000.0 )
+        end
+
+        "%s (%d rows)" % [result, explain['result_size']]
       end
 
       def formatted_cost(explain)

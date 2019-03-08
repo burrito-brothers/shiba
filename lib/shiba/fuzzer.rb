@@ -35,6 +35,11 @@ module Shiba
 
         stats.add_index_column(h['table_name'], h['index_name'], h['column_name'], h['cardinality'], h['non_unique'] == 0)
       end
+
+      connection.each_column_size do |table, column, size|
+        stats.set_column_size(table, column, size)
+      end
+
       stats
     end
 

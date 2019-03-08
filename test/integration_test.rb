@@ -68,6 +68,7 @@ end
 def run_command(env, *argv)
   out    = nil
   thread = nil
+
   Open3.popen2e(env, *argv) {|_,eo,th|
     out = eo.readlines
     thread = th

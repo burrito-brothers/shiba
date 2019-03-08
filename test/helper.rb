@@ -42,6 +42,7 @@ database_yml = database_yml + ".example" unless File.exist?(database_yml)
 
 connection = YAML.load_file(database_yml)
 
-TEST_ENV = ENV['SHIBA_TEST_ENV'] || 'test'
-Shiba.configure(connection[TEST_ENV])
-create_test_database(connection[TEST_ENV])
+test_env = ENV['SHIBA_TEST_ENV'] || 'test'
+test_env = "test_#{test_env}" unless test_env.start_with?("test")
+Shiba.configure(connection[test_env])
+create_test_database(connection[test_env])
