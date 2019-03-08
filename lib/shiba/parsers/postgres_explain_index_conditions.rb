@@ -1,11 +1,11 @@
-require 'strscan'
+require 'shiba/parsers/shiba_string_scanner'
 
 module Shiba
-  class Explain
+  module Parsers
     class PostgresExplainIndexConditions
       def initialize(string)
         @string = string
-        @sc = StringScanner.new(string)
+        @sc = ShibaStringScanner.new(string)
         @fields = nil
       end
 
@@ -41,23 +41,10 @@ module Shiba
       RPAREN = /\)/
 
       def parse_string(sc)
-        v = ""
-        qchar = sc.getch
-        double_quote = qchar * 2
-        while true
-          if sc.peek(1) == qchar
-            if sc.peek(2) == double_quote
-              sc.scan(/#{double_quote}/)
-            else
-              # end of string
-              sc.getch
-              # optional type hint
-              sc.scan(/::\w+(\[\])?/)
-              return v
-            end
-          end
-          v += sc.getch
-        end
+        quote_char = sc.peek(1)
+        v = sc.match_quoted_double_escape(quote_char)
+        sc.scan(/::\w+(\[\])?/)
+        v
       end
 
       def parse_value(sc)

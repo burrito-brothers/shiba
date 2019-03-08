@@ -1,4 +1,4 @@
-require 'shiba/explain/postgres_explain_index_conditions'
+require 'shiba/parsers/postgres_explain_index_conditions'
 
 module Shiba
   class Explain
@@ -67,12 +67,12 @@ module Shiba
       end
 
       def extract_used_key_parts(cond)
-        conds = PostgresExplainIndexConditions.new(cond)
+        conds = Parsers::PostgresExplainIndexConditions.new(cond)
         conds.fields
       end
 
       def extract_join_key_parts(cond)
-        conds = PostgresExplainIndexConditions.new(cond)
+        conds = Parsers::PostgresExplainIndexConditions.new(cond)
         conds.join_fields
       end
 
