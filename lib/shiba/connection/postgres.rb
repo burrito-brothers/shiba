@@ -81,7 +81,10 @@ module Shiba
 
       def explain(sql)
         rows = query("EXPLAIN (FORMAT JSON) #{sql}").to_a
-        rows.first["QUERY PLAN"]
+        [rows.first["QUERY PLAN"], {}]
+      end
+
+      def each_column_size
       end
 
       def mysql?
