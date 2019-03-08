@@ -93,9 +93,16 @@ users:
 
 ### Automatic pull request reviews
 
-Shiba can automatically comment on Github pull requests when code changes appear to introduce a query issue. The comments are similar to those in the query report dashboard. This guide will walk through setup on Travis CI, but other CI services should work in a similar fashion.
+Shiba can automatically comment on Github pull requests when code changes appear to introduce a query issue. To do this, it will need the Github API token of a user that has access to the repo. Shiba's comments will appear to come from that user, so you'll likely want to setup a bot account on Github with repo access for this. The token can be generated on Github at https://github.com/settings/tokens.
 
-Once Shiba is installed, the `shiba review` command needs to be run after the tests are finished. On Travis, this goes in an after_script setting:
+Once the token is ready, you can integrate Shiba on your CI server by following these steps:
+* [Travis CI](#travis-integration)
+* [CircleCI](#circleci-integration)
+* [Customized CI](#custom-ci-integration)
+
+#### Travis Integration
+
+On Travis, add this to the after_script setting:
 
 ```yml
 # .travis.yml
@@ -103,15 +110,7 @@ after_script:
  - bundle exec shiba review --submit
  ```
  
-The `--submit` option tells Shiba to comment on the relevant PR when an issue is found. To do this, it will need the Github API token of a user that has access to the repo. Shiba's comments will appear to come from that user, so you'll likely want to setup a bot account on Github with repo access for this.
- 
-By default, the review script looks for an environment variable named  GITHUB_TOKEN that can be specified at https://travis-ci.com/{organization}/{repo}/settings. The token can be generated on Github at https://github.com/settings/tokens. If you have another environment variable name for your Github token, it can be manually configured using the `--token` flag.
- 
-```yml
-# .travis.yml
-after_script:
- - bundle exec shiba review --token $MY_GITHUB_API_TOKEN --submit
- ```
+Add the Github API token you've generated as an environment variable named `GITHUB_TOKEN` at https://travis-ci.com/{organization}/{repo}/settings.
  
 #### CircleCI Integration
  
@@ -126,7 +125,7 @@ To integrate with CircleCI, add this after the the test run step in `.circleci/c
 
 An environment variable named `GITHUB_TOKEN` will need to be configured on CircleCI under *Project settings > Environment Variables*
 
-#### Custom Integration
+#### Custom CI Integration
 
 To run on other servers, two steps are required:
 1. Ensure an environment variable named `CI` is set when the tests and shiba script are run.
@@ -138,6 +137,9 @@ export CI
 rake test
 bundle exec shiba review --submit --token $MY_GITHUB_TOKEN --branch $(git rev-parse HEAD) --pull-request $MY_PR_NUMBER
 ```
+
+The `--submit` option tells Shiba to comment on the relevant PR when an issue is found. 
+
 
 ### Analyze queries from the developer console
 
