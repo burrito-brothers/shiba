@@ -126,6 +126,14 @@ To integrate with CircleCI, add this after the the test run step in `.circleci/c
 
 An environment variable named `GITHUB_TOKEN` will need to be configured on CircleCI under *Project settings > Environment Variables*
 
+#### Custom Integration
+
+To run on other servers, two steps are required:
+1. Ensure an environment variable named `CI` is set when the tests and shiba script are run.
+2. Run the `shiba review` command after tests are run, supplying the required arguments to `--submit, --token, --branch, and --pull-request`. For example:
+
+```bundle exec shiba review --submit --token $MY_GITHUB_TOKEN --branch $(git rev-parse HEAD) --pull-request $MY_PR_NUMBER```
+
 ### Analyze queries from the developer console
 
 For quick analysis, queries can be analyzed from the Rails console.
