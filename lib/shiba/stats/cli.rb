@@ -50,6 +50,29 @@ module Shiba
         message
       end
 
+      def run(command)
+        out    = nil
+        thread = nil
+
+        Open3.popen2e(command) {|_,eo,th|
+          out    = eo.readlines
+          thread = th
+        }
+
+        return out, thread.value.exitstatus
+      end
+
+      def raw_stats_to_yaml(output)
+        records = if options[:server] == "mysql"
+          Shiba::Stats::Mysql.new.parse(output)
+        else
+          Shiba::Stats::Postgres.new.parse(output)
+        end
+
+        index = Shiba::IndexStats.from_records(records)
+        index.to_yaml
+      end
+
       # cd path/to/app
       # echo "select stats sql |"
       # rails dbconsole

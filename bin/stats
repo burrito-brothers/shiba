@@ -19,32 +19,9 @@ if !cli.valid?
   exit 1
 end
 
-def run(command)
-  out    = nil
-  thread = nil
-
-  Open3.popen2e(command) {|_,eo,th|
-    out    = eo.readlines
-    thread = th
-  }
-
-  return out, thread.value.exitstatus
-end
-
-def to_yaml(output)
-  records = if options[:server] == "mysql"
-    Shiba::Stats::Mysql.new.parse(output)
-  else
-    Shiba::Stats::Postgres.new.parse(output)
-  end
-
-  index = Shiba::IndexStats.from_records(records)
-  index.to_yaml
-end
-
 if options[:file]
   output = File.read(options[:file])
-  puts to_yaml(output)
+  puts cli.raw_stats_to_yaml(output)
   exit
 end
 
@@ -67,7 +44,7 @@ if options[:script]
   exit
 end
 
-out, status = run(cmd)
+out, status = cli.run(cmd)
 if status != 0
   $stderr.puts "Error during stats import:"
   $stderr.puts out
@@ -76,4 +53,4 @@ if status != 0
   exit 1
 end
 
-puts to_yaml(out)
+puts cli.raw_stats_to_yaml(out)
