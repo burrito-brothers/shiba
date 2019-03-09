@@ -19,7 +19,7 @@ if !cli.valid?
 end
 
 cmd = ""
-output = if options[:host] != 'localhost'
+output = File.read(options[:file]) || if options[:host] != 'localhost'
   if options[:proxy]
     cmd << "ssh -o ProxyCommand='ssh -W' %h:%p #{options[:proxy]} -t #{options[:host]}"
   else

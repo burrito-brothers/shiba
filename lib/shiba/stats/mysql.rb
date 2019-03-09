@@ -42,6 +42,17 @@ module Shiba
         records
       end
 
+      def detect_parse_error(file)
+        raw = file.read
+        result = parse(raw)
+
+        if result == false
+          return "Expected first line to be these tab seperated headers:\n#{HEADERS.join("\t")}"
+        end
+
+        return nil
+      end
+
       #
       def parse_record(row)
         record = Hash[HEADERS.zip(row)]

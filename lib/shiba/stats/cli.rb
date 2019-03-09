@@ -19,8 +19,13 @@ module Shiba
         return false if @errors.any?
 
         require_option(:server)
-        require_option(:directory)
+        # When a file is given, all other options are ignored.
+        if options[:file]
+          validate_file
+          return @errors.empty?
+        end
 
+        require_option(:directory)
         if ![ 'mysql', 'postgres' ].include?(options[:server])
           error("--server must be one of 'mysql' or 'postgres', got '#{options[:server]}'")
         end
@@ -51,7 +56,7 @@ module Shiba
       def query_script
         script = ""
         script = "cd #{options[:directory]};\n" if options[:directory]
-        script << "echo \"#{stats_sql.strip}\" |\n"
+        script << "echo \"#{stats_engine.sql.strip}\" |\n"
         script << "#{options[:client]}"
         script
       end
@@ -83,8 +88,15 @@ module Shiba
             @user_options[:environment] = e
           end
 
+          opts.separator ""
+          opts.separator "Advanced options:"
+
           opts.on("--script", "Print a customizable script instead of executing.") do
             @user_options[:script] = true
+          end
+
+          opts.on("-f", "--file FILE", "Converts the output file from a customized script to usable stats.") do |f|
+            @user_options[:file] = f
           end
 
           opts.on("--client CLIENT", "The client command to run, defaults to 'rails dbconsole'. Can use 'mysql' and 'psql'.") do |c|
@@ -125,13 +137,25 @@ module Shiba
           environment: env }
       end
 
-      def stats_sql
-        if options[:server] == "mysql"
+      def validate_file
+        if !File.exist?(options[:file])
+          error("Could not find file on local machine: '#{options[:file]}'")
+          return
+        end
+
+        file = File.open(options[:file])
+        if error = stats_engine.detect_parse_error(file)
+          error(error)
+        end
+      end
+
+      def stats_engine
+        @stats_engine ||= if options[:server] == "mysql"
           require 'shiba/stats/mysql'
-          Shiba::Stats::Mysql.new.sql
+          Shiba::Stats::Mysql.new
         else
           require 'shiba/stats/postgres'
-          Shiba::Stats::Postgres.new.sql
+          Shiba::Stats::Postgres.new
         end
       end
 

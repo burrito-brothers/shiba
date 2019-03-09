@@ -17,7 +17,7 @@ module Shiba
         headers     = header_line.split("|").map(&:strip)
 
         if headers != HEADERS
-          return header_line
+          return false
         end
 
         records = []
@@ -31,6 +31,17 @@ module Shiba
 
         records.each { |row| normalize(row) }
         records
+      end
+
+      def detect_parse_error(file)
+        raw = file.read
+        result = parse(raw)
+
+        if result == false
+          return "Expected first line to be these pipe '|' seperated headers:\n#{HEADERS.join(" | ")}"
+        end
+
+        return nil
       end
 
       def parse_record(row)
