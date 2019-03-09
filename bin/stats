@@ -25,31 +25,17 @@ if options[:file]
   exit
 end
 
-script = if options[:host] != 'localhost'
-  cmd = ""
-  if options[:proxy]
-    cmd << "ssh -o ProxyCommand='ssh -W' %h:%p #{options[:proxy]} -t #{options[:host]}"
-  else
-    cmd << "ssh #{options[:host]}"
-  end
-
-  cmd << " '#{cli.query_script}'"
-  cmd
-else
-  cli.query_script
-end
-
 if options[:script]
-  puts cmd
+  puts cli.script
   exit
 end
 
-out, status = cli.run(cmd)
+out, status = cli.run(cli.script)
 if status != 0
   $stderr.puts "Error during stats import:"
   $stderr.puts out
   $stderr.puts "--- script --- "
-  $stderr.puts cmd
+  $stderr.puts cli.script
   exit 1
 end
 

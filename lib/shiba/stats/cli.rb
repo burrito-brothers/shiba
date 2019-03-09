@@ -73,6 +73,27 @@ module Shiba
         index.to_yaml
       end
 
+      def script
+        if options[:host] == 'localhost'
+          return query_script
+        end
+
+        # ssh remote.host 'cd app;
+        # echo "select stats sql |"
+        # rails dbconsole'
+        cmd = ""
+        if options[:proxy]
+          cmd << "ssh -o ProxyCommand='ssh -W' %h:%p #{options[:proxy]} -t #{options[:host]}"
+        else
+          cmd << "ssh #{options[:host]}"
+        end
+
+        cmd << " '#{query_script}'"
+        cmd
+      end
+
+      protected
+
       # cd path/to/app
       # echo "select stats sql |"
       # rails dbconsole
@@ -83,8 +104,6 @@ module Shiba
         script << "#{options[:client]}"
         script
       end
-
-      protected
 
       def parser
         @parser ||= OptionParser.new do |opts|
