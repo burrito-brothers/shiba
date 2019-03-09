@@ -31,10 +31,25 @@ def run(command)
   return out, thread.value.exitstatus
 end
 
-cmd = ""
-output = nil
-output = File.read(options[:file]) if options[:file]
-output ||= if options[:host] != 'localhost'
+def to_yaml(output)
+  records = if options[:server] == "mysql"
+    Shiba::Stats::Mysql.new.parse(output)
+  else
+    Shiba::Stats::Postgres.new.parse(output)
+  end
+
+  index = Shiba::IndexStats.from_records(records)
+  index.to_yaml
+end
+
+if options[:file]
+  output = File.read(options[:file])
+  puts to_yaml(output)
+  exit
+end
+
+script = if options[:host] != 'localhost'
+  cmd = ""
   if options[:proxy]
     cmd << "ssh -o ProxyCommand='ssh -W' %h:%p #{options[:proxy]} -t #{options[:host]}"
   else
@@ -42,43 +57,23 @@ output ||= if options[:host] != 'localhost'
   end
 
   cmd << " '#{cli.query_script}'"
-
-  if options[:script]
-    puts cmd
-    exit
-  end
-
-  out, status = run(cmd)
-  if status != 0
-    $stderr.puts "Error during stats import:"
-    $stderr.puts out
-    $stderr.puts "--- script --- "
-    $stderr.puts cmd
-    exit 1
-  end
-  out
+  cmd
 else
-  if options[:script]
-    puts cli.query_script
-    exit
-  end
-
-  out, status = run(cli.query_script)
-  if status != 0
-    $stderr.puts "Error during stats import:"
-    $stderr.puts out
-    $stderr.puts "--- script --- "
-    $stderr.puts cli.query_script
-    exit 1
-  end
-  out
+  cli.query_script
 end
 
-records = if options[:server] == "mysql"
-  Shiba::Stats::Mysql.new.parse(output)
-else
-  Shiba::Stats::Postgres.new.parse(output)
+if options[:script]
+  puts cmd
+  exit
 end
 
-index = Shiba::IndexStats.from_records(records)
-puts index.to_yaml
+out, status = run(cmd)
+if status != 0
+  $stderr.puts "Error during stats import:"
+  $stderr.puts out
+  $stderr.puts "--- script --- "
+  $stderr.puts cmd
+  exit 1
+end
+
+puts to_yaml(out)
