@@ -83,7 +83,20 @@ module Shiba
 
       if explain.severity != 'none' && explain.other_paths.any?
         paths = [explain] + explain.other_paths
-        explain = paths.sort { |a, b| a.cost - b.cost }.first
+        explain = paths.sort do |a, b|
+          if a.cost == b.cost
+            case
+            when a == explain
+              -1
+            when b == explain
+              1
+            else
+              0
+            end
+          else
+            a.cost - b.cost
+          end
+        end.first
       end
       json = JSON.dump(explain.as_json)
       write(json)
