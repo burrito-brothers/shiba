@@ -26,8 +26,8 @@ module IntegrationTest
         run_command(env, "ruby", test_app_path)
 
         queries = File.read(file.path)
-        # Should be 1, but there's schema loading garbage that's hard to remove
-        assert_equal 3, queries.lines.size, "No queries logged, got:\n#{queries.inspect}"
+        # Should be 2, but there's schema loading garbage that's hard to remove
+        assert_equal 4, queries.lines.size, "Expected 2 legit queries, got:\n#{queries}"
       ensure
         file.close
         file.unlink

@@ -1,3 +1,9 @@
+require 'optionparser'
+require 'shiba/configure'
+require 'shiba/reviewer'
+require 'shiba/review/explain_diff'
+require 'json'
+
 module Shiba
   module Review
     # Builds options for interacting with the reviewer via the command line.
@@ -18,13 +24,98 @@ module Shiba
     # => "An error message with command line help."
     class CLI
 
-      attr_reader :errors
+      attr_reader :out, :err
 
-      def initialize
-        @user_options = {}
+      # Options may be provided for testing, in which case the option parser is skipped.
+      def initialize(out: $stdout, err: $stderr, stdin: $stdin, options: nil)
+        @out = out
+        @err = err
+        @user_options = options || {}
         @errors = []
-        parser.parse!
+        parser.parse! if options.nil?
         @options = default_options.merge(@user_options)
+      end
+
+      # Generates the review, returning an exit status code.
+      # Prints to @out / @err, which default to STDOUT/STDERR.
+      def run
+        report_options("diff", "branch", "pull_request")
+
+        if !valid?
+          err.puts failure
+          return 1
+        end
+
+        explain_diff = Shiba::Review::ExplainDiff.new(options["file"], options)
+
+        problems = if explain_diff.diff_requested_by_user?
+          result = explain_diff.result
+
+          if result.message
+            @err.puts result.message
+          end
+
+          if result.status == :pass
+            return 0
+          end
+
+          explain_diff.problems
+        else
+          # Find all problem explains
+          explains = File.open(options["file"]).each_line.map { |json| JSON.parse(json) }
+          bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
+          bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
+        end
+
+        if problems.empty?
+          return 0
+        end
+
+        # Output problem explains, this can be provided as a file to shiba review for comments.
+        if options["raw"]
+          pr = options["pull_request"]
+          if pr
+            problems.each { |_,problem| problem["pull_request"] = pr }
+          end
+
+
+          problems.each { |_,problem| @out.puts JSON.dump(problem) }
+          return 2
+        end
+
+        # Generate comments for the problem queries
+        repo_cmd = "git config --get remote.origin.url"
+        repo_url = `#{repo_cmd}`.chomp
+
+        if options["verbose"]
+          @err.puts "#{repo_cmd}\t#{repo_url}"
+        end
+
+        if repo_url.empty?
+          @err.puts "'#{Dir.pwd}' does not appear to be a git repo"
+          return 1
+        end
+
+        reviewer = Shiba::Reviewer.new(repo_url, problems, options)
+
+        if !options["submit"] || options["verbose"]
+          reviewer.comments.each do |c|
+            @out.puts "#{c[:path]}:#{c[:line]} (#{c[:position]})"
+            @out.puts c[:body]
+            @out.puts ""
+          end
+        end
+
+        if options["submit"]
+          if reviewer.repo_host.empty? || reviewer.repo_path.empty?
+            @err.puts "Invalid repo url '#{repo_url}' from git config --get remote.origin.url"
+            return 1
+          end
+
+          reviewer.submit
+        end
+
+        return 2
       end
 
       def options
@@ -36,14 +127,12 @@ module Shiba
 
         validate_log_path
         #validate_git_repo if branch || options["submit"]
-        description = "Provide an explain log, or run 'shiba explain' to generate one."
-
-        require_option("file", description: description)
 
         if options["submit"]
           require_option("branch") if options["diff"].nil?
           require_option("token")
           require_option("pull_request")
+          error("Must specify either 'submit' or 'raw' output option, not both") if options["raw"]
         end
 
         @errors.empty?
@@ -71,12 +160,17 @@ module Shiba
 
       def parser
         @parser ||= OptionParser.new do |opts|
-          opts.banner = "Review changes for query problems. Optionally submit the comments to a Github pull request."
+          opts.banner = "Reads from a file or stdin to review changes for query problems. Optionally submit the comments to a Github pull request."
 
-          opts.separator "Required:"
+          opts.separator ""
+          opts.separator "IO options:"
 
           opts.on("-f","--file FILE", "The explain output log to compare with. Automatically configured when $CI environment variable is set") do |f|
             @user_options["file"] = f
+          end
+
+          opts.on("--raw", "Print the raw JSON with the pull request id") do |r|
+            @user_options["raw"] = r
           end
 
           opts.separator ""
@@ -117,13 +211,13 @@ module Shiba
           end
 
           opts.on_tail("-h", "--help", "Show this message") do
-            puts opts
+            @out.puts opts
             exit
           end
 
           opts.on_tail("--version", "Show version") do
             require 'shiba/version'
-            puts Shiba::VERSION
+            @out.puts Shiba::VERSION
             exit
           end
         end
@@ -139,9 +233,9 @@ module Shiba
         if Shiba::Configure.ci?
           report("Finding default options from CI environment.")
 
-          defaults["file"]         = ci_explain_log_path
-          defaults["pull_request"] = ci_pull_request
-          defaults["branch"]       = ci_branch if !defaults['diff']
+          defaults["file"]         = ci_explain_log_path if ci_explain_log_path
+          defaults["pull_request"] = ci_pull_request     if ci_pull_request
+          defaults["branch"]       = ci_branch           if !defaults['diff'] && ci_branch
         end
 
         defaults["token"] = ENV['GITHUB_TOKEN'] if ENV['GITHUB_TOKEN']
@@ -184,7 +278,7 @@ module Shiba
       end
 
       def report(message)
-        $stderr.puts message if @user_options["verbose"]
+        @err.puts message if @user_options["verbose"]
       end
 
       def error(message, help: false)
