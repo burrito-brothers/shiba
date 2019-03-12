@@ -7,8 +7,6 @@ require 'shiba/table_stats'
 require 'shiba/configure'
 require 'shiba/output'
 
-require 'optionparser'
-
 options = {}
 
 parser = Shiba::Configure.make_options_parser(options)

@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'shiba/output'
+require 'json'
+require 'optionparser'
+require 'set'
+
+options = {}
+
+parser = OptionParser.new do |opts|
+  opts.on("-h", "--html FILE", "write html report here.") do |h|
+    options["html"] = h
+  end
+end
+
+parser.banner = "Shiba web: accept JSON-explain on stdin, write out an HTML report"
+parser.parse!
+
+if !options['html']
+  $stderr.puts parser.help
+  $stderr.puts "required option: --html"
+  exit 2
+end
+
+queries = []
+query_md5s = Set.new
+
+while line = $stdin.gets
+  query = JSON.parse(line)
+  next if query_md5s.include?(query['md5'])
+  queries << JSON.parse(line)
+  query_md5s << query['md5']
+end
+
+page = Shiba::Output.new(queries, { 'output' => options['html'] }).make_web!
+if !File.exist?(page)
+  $stderr.puts("Failed to generate #{page}")
+  exit 2
+end
+
+$stderr.puts "Report available at #{page}"
+
