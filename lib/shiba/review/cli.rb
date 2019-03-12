@@ -24,16 +24,18 @@ module Shiba
     # => "An error message with command line help."
     class CLI
 
-      attr_reader :out, :err
+      attr_reader :out, :err, :input
 
       # Options may be provided for testing, in which case the option parser is skipped.
-      def initialize(out: $stdout, err: $stderr, stdin: $stdin, options: nil)
+      # When this happens, default options are also skipped.
+      def initialize(out: $stdout, err: $stderr, input: $stdin, options: nil)
         @out = out
         @err = err
+        @input = input
         @user_options = options || {}
         @errors = []
         parser.parse! if options.nil?
-        @options = default_options.merge(@user_options)
+        @options = options || default_options.merge(@user_options)
       end
 
       # Generates the review, returning an exit status code.
@@ -62,7 +64,7 @@ module Shiba
           explain_diff.problems
         else
           # Find all problem explains
-          explains = File.open(options["file"]).each_line.map { |json| JSON.parse(json) }
+          explains = explain_file.each_line.map { |json| JSON.parse(json) }
           bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
           bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
         end
@@ -157,6 +159,10 @@ module Shiba
       end
 
       protected
+
+      def explain_file
+        options.key?('file') ? File.open(options['file']) : @input
+      end
 
       def parser
         @parser ||= OptionParser.new do |opts|

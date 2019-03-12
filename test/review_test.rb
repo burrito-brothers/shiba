@@ -5,7 +5,7 @@ describe "Review" do
   let(:memout)  { StringIO.new }
   let(:memerr)  { StringIO.new }
   let(:memin)   { StringIO.new }
-  let(:cli)     { Shiba::Review::CLI.new(out: memout, err: memerr, stdin: memin, options: options) }
+  let(:cli)     { Shiba::Review::CLI.new(out: memout, err: memerr, input: memin, options: options) }
   let(:options) { Hash.new }
 
   describe "with the raw option" do
@@ -29,7 +29,7 @@ describe "Review" do
       status, out, _ = run_cli(cli)
       assert_equal 2, status
 
-      cli2 = Shiba::Review::CLI.new(out: memout, err: memerr, stdin: memin, options: {})
+      cli2 = Shiba::Review::CLI.new(out: memout, err: memerr, input: memin, options: {})
       memin.puts out
       status, out, err = run_cli(cli2)
       assert_equal 2, status, "Wrong status. err: #{err}, out: #{out}"
@@ -60,6 +60,8 @@ describe "Review" do
   end
 
   def run_cli(cli)
+    cli.input.rewind
+
     r = cli.run
     cli.err.rewind
     cli.out.rewind
