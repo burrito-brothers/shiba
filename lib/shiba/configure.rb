@@ -123,6 +123,10 @@ module Shiba
           end
         end
 
+        opts.on("--example_data_json FILE", "(dev only) generate example data for vue development testing") do |f|
+          options['example_data_json'] = f
+        end
+
         opts.on("-h", "--html FILE", "write html report here.") do |h|
           options["html"] = h
         end

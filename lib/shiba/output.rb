@@ -50,17 +50,21 @@ module Shiba
       url + "/blob/#{branch}"
     end
 
-    def make_web!
+    def as_json
       js  = Dir.glob(File.join(WEB_PATH, "dist", "*.js"))
       css = Dir.glob(File.join(WEB_PATH, "*.css"))
 
-      data = {
+      {
         js: js,
         css: css,
         queries: @queries,
         tags: self.class.tags,
         url: remote_url
       }
+    end
+
+    def make_web!
+      data = as_json
 
       erb = ERB.new(File.read(File.join(WEB_PATH, "..", "web", "results.html.erb")))
       File.open(output_path, "w+") do |f|
