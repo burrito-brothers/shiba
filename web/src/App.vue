@@ -100,18 +100,24 @@ export default {
       nanoajax.ajax({url:'/example_data.json'}, function (code, responseText) {
         if ( code == 200 ) {
           var data = JSON.parse(responseText);
-          this.url = data.url;
-          this.tags = data.tags;
-
-          Object.keys(this.tags).forEach((k) => {
-            registerMessage(k, this.tags[k].title, this.tags[k].summary);
-          })
-          categorizeQueries(this, data.queries);
+          this.setupData(data);
         }
       }.bind(this));
+    } else {
+      // eslint-disable-next-line
+      this.setupData(shibaData);
     }
   },
   methods: {
+    setupData: function(data) {
+      this.url = data.url;
+      this.tags = data.tags;
+
+      Object.keys(this.tags).forEach((k) => {
+        registerMessage(k, this.tags[k].title, this.tags[k].summary);
+      })
+      categorizeQueries(this, data.queries);
+    },
     updateSearch: _.debounce(function (e) {
       this.search = e.target.value;
     }, 500)
@@ -140,10 +146,6 @@ export default {
 </script>
 
 <style>
-  body {
-    font-size: 80%;
-  }
-
   .sql {
     font-family: monospace;
   }

@@ -1,3 +1,11 @@
 module.exports = {
-  runtimeCompiler: true
+  runtimeCompiler: true,
+	configureWebpack: {
+    optimization: {
+      splitChunks: false
+    }
+  },
+	css: {
+    extract: false
+  }
 }
