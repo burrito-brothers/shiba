@@ -29,6 +29,13 @@ describe "Explain" do
     it_includes_tag("access_type_tablescan")
   end
 
+  describe "a table scan on a small table" do
+    let(:sql) { "select * from organizations" }
+    it "should report as at least 10ms" do
+      assert_operator(0.010, :<=, explain.cost)
+    end
+  end
+
   describe "with a SELECT * / limit 1" do
     let(:sql) { "select * from users limit 1" }
     it_includes_tag("limited_scan")
