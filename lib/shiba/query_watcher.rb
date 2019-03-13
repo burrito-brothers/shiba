@@ -24,13 +24,13 @@ module Shiba
       sql = sql.gsub(/\n/, ' ')
 
       fingerprint = Query.get_fingerprint(sql)
-      return if @queries[fingerprint]
-
       lines = Backtrace.from_app
-      return if !lines
+
+      return unless lines
+      return if @queries[fingerprint] && @queries[fingerprint] > lines.size
 
       @file.puts("#{sql} /*shiba#{lines}*/")
-      @queries[fingerprint] = true
+      @queries[fingerprint] = lines.size
     end
 
     def interpolate(sql, binds)

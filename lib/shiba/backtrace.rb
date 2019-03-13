@@ -3,6 +3,7 @@ require 'open3'
 module Shiba
   module Backtrace
 
+    BACKTRACE_SIZE = 8
     def self.ignore
       @ignore ||= [ '.rvm', 'gem', 'vendor', 'rbenv', 'seed',
         'db', 'test', 'spec', 'lib/shiba' ]
@@ -10,22 +11,39 @@ module Shiba
 
     # 8 backtrace lines starting from the app caller, cleaned of app/project cruft.
     def self.from_app
-      app_line_idx = caller_locations.index { |line| line.to_s !~ ignore_pattern }
-      if app_line_idx == nil
-        return
-      end
+      locations = caller_locations
 
-      caller_locations(app_line_idx+1, 8).map do |loc|
-        clean!(loc.to_s)
+      bt = []
+      locations.each do |loc|
+        line = loc.to_s
+        if bt.empty?
+          bt << clean(line) unless line =~ ignore_pattern
+        else
+          line = clean(line)
+          bt << line
+        end
       end
+      bt.any? && bt
     end
 
-    def self.clean!(line)
-      line.sub!(backtrace_clean_pattern, '')
-      line
+    def self.clean(line)
+      line.sub(backtrace_clean_pattern, '')
     end
 
     protected
+
+    IGNORE_GEMS = %w(activesupport railties activerecord actionpack rake rspec-core factory_bot rspec-rails)
+
+    def self.reject_gem?(line)
+      @gem_regexp ||= Regexp.new("gems/(" + IGNORE_GEMS.join("|") + ")")
+      line =~ @gem_regexp
+    end
+
+    def self.reject?(line)
+      reject_gem?(line) ||
+        line =~ %r{core_ext/kernel_require.rb} ||
+        line =~ %r{mon_synchronize}
+    end
 
     def self.ignore_pattern
       @pattern ||= Regexp.new(ignore.map { |word| Regexp.escape(word) }.join("|"))
@@ -37,6 +55,7 @@ module Shiba
         paths << Rails.root.to_s if defined?(Rails.root)
         paths << repo_root
         paths << ENV['HOME']
+
         paths.uniq!
         paths.compact!
         # match and replace longest path first
