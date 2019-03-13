@@ -69,13 +69,17 @@ module Shiba
             bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
             bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
           rescue Interrupt
-            @err.puts "Canceled reading from STDIN. To read from an explain file, provide the --file option."
+            @err.puts "SIGINT: Canceled reading from STDIN. To read from an explain log, provide the --file option."
+            exit 1
           end
         end
 
         if problems.empty?
           return 0
         end
+
+        # Dedup
+        problems.uniq! { |_,p| p["md5"] }
 
         # Output problem explains, this can be provided as a file to shiba review for comments.
         if options["raw"]

@@ -8,13 +8,30 @@ describe "Review" do
   let(:cli)     { Shiba::Review::CLI.new(out: memout, err: memerr, input: memin, options: options) }
   let(:options) { Hash.new }
 
+  it "removes duplicate logs" do
+    options["raw"]     = true
+    options["file"]    = "test/data/ci.json"
+    status, out, err = run_cli(cli)
+    assert_equal 2, status, "Wrong status. err: #{err}, out: #{out}"
+    problem_count = out.lines.size
+
+    options.delete("file")
+    explains = File.read("test/data/ci.json")
+    explains *= 2
+    memin.puts explains
+
+    status, out, err = run_cli(cli)
+    assert_equal 2, status, "Wrong status. err: #{err}, out: #{out}"
+
+    assert_equal problem_count, out.lines.size
+  end
+
   describe "with the raw option" do
     it "prints the raw explains for problems when enabled" do
       options["raw"]     = true
       options["file"]    = "test/data/ci.json"
 
       status, out, err = run_cli(cli)
-      status = cli.run
       assert_equal 2, status, "Wrong status. err: #{err}, out: #{out}"
 
       problems = File.read(options["file"]).lines.select { |line| !line.include?('"severity":"none"') }
