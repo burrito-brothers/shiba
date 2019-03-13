@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    shiba (0.8.0)
+    shiba (0.8.1)
       activesupport
       mysql2
       pg
