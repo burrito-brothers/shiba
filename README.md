@@ -110,7 +110,7 @@ after_script:
  - bundle exec shiba review --submit
  ```
  
-Add the Github API token you've generated as an environment variable named `GITHUB_TOKEN` at https://travis-ci.com/{organization}/{repo}/settings.
+Add the Github API token you've generated as an environment variable named `SHIBA_GITHUB_TOKEN` at https://travis-ci.com/{organization}/{repo}/settings.
  
 #### CircleCI Integration
  
@@ -123,7 +123,7 @@ To integrate with CircleCI, add this after the the test run step in `.circleci/c
     command: bundle exec shiba review --submit
 ```
 
-An environment variable named `GITHUB_TOKEN` will need to be configured on CircleCI under *Project settings > Environment Variables*
+An environment variable named `SHIBA_GITHUB_TOKEN` will need to be configured on CircleCI under *Project settings > Environment Variables*
 
 #### Custom CI Integration
 
