@@ -9,3 +9,5 @@
 .*.sw*
 node_modules
 test/database.yml
+web/dist/
+logs
