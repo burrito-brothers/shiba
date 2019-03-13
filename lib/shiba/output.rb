@@ -61,7 +61,11 @@ module Shiba
     def make_web!
       data = as_json
 
-      index = File.read(File.join(WEB_PATH, "dist", "index.html"))
+      index_path = File.join(WEB_PATH, "dist", "index.html")
+      if !File.exist?(index_path)
+        raise Shiba::Error.new("dist/index.html not found. Try running 'rake build_web'")
+      end
+      index = File.read(index_path)
       data_block = "var shibaData = #{JSON.dump(as_json)};\n"
 
       index.sub!(%r{<script src=(.*?)>}) do |match|
