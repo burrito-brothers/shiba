@@ -20,7 +20,7 @@ module Shiba
           bt << clean(line) unless line =~ ignore_pattern
         else
           line = clean(line)
-          bt << line unless reject?(line)
+          bt << line
         end
       end
       bt.any? && bt
