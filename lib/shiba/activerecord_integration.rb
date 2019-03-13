@@ -71,12 +71,6 @@ module Shiba
 
     def self.run_explain(file, path)
       file.close
-      if !File.size?(path)
-        $stderr.puts("No queries were logged. Skipping explain step.") if ENV['SHIBA_DEBUG']
-        return
-      end
-
-      puts ""
 
       cmd = "shiba explain #{database_args} --file #{path}"
       if ENV['SHIBA_QUERY_LOG_NAME']
