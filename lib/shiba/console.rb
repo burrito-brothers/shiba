@@ -125,7 +125,7 @@ module Shiba
       def explain(query)
         query = query.to_sql if query.respond_to?(:to_sql)
         Shiba.configure(connection_options)
-        analyzer = Shiba::Analyzer.new(nil, null, stats, { 'sql' => query })
+        analyzer = Shiba::Analyzer.new(nil, stats, { 'sql' => query })
         result = analyzer.analyze.first
       end
 
@@ -144,10 +144,6 @@ module Shiba
 
       def stats
         @stats ||= Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})
-      end
-
-      def null
-        @null ||= File.open(File::NULL, "w")
       end
 
       def puts(message)

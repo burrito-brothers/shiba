@@ -6,13 +6,12 @@ require 'logger'
 module Shiba
   class Analyzer
 
-    def self.analyze(file, output, stats, options)
-      new(file, output, stats, options).analyze
+    def self.analyze(file, stats, options)
+      new(file, stats, options).analyze
     end
 
-    def initialize(file, output, stats, options)
+    def initialize(file, stats, options)
       @file = file
-      @output = output
       @stats = stats
       @options = options
       @fingerprints = {}
@@ -98,13 +97,7 @@ module Shiba
           end
         end.first
       end
-      json = JSON.dump(explain.as_json)
-      write(json)
       explain.as_json
-    end
-
-    def write(line)
-      @output.puts(line)
     end
 
     def verbose?

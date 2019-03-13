@@ -41,8 +41,6 @@ if schema_stats_fname && !File.exist?(schema_stats_fname)
 end
 
 file = $stdin if file.nil?
-json = options['json']
-json = File.open('/dev/null', 'w') if json.nil?
 
 if options["verbose"]
   $stderr.puts "Reading queries from '#{file.inspect}'..."
@@ -50,25 +48,32 @@ if options["verbose"]
 end
 
 table_stats = Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})
-queries = Shiba::Analyzer.analyze(file, json, table_stats, options)
+queries = Shiba::Analyzer.analyze(file, table_stats, options)
 
-problems = queries.select { |q| q[:severity] && q[:severity] != 'none' }
+if options['example_data_json']
+  output = Shiba::Output.new(queries)
+  File.open(options['example_data_json'], "w+") do |f|
+    f.write(JSON.dump(output.as_json))
+  end
+elsif options['json']
+  queries.each do |q|
+    options['json'].puts(JSON.dump(q))
+  end
+else
+  problems = queries.select { |q| q[:severity] && q[:severity] != 'none' }
 
-if problems.any?
-  query_word = problems.size == 1 ? 'query' : 'queries'
-  $stderr.puts "#{problems.size} problematic #{query_word} detected"
+  if problems.any?
+    query_word = problems.size == 1 ? 'query' : 'queries'
+    $stderr.puts "#{problems.size} problematic #{query_word} detected"
 
-  if options['json']
+    page = Shiba::Output.new(queries, { 'output' => options['html'] }).make_web!
+
+    if !File.exist?(page)
+      $stderr.puts("Failed to generate #{page}")
+      exit 2
+    end
+
+    $stderr.puts "Report available at #{page}"
     exit 1
   end
-
-  page = Shiba::Output.new(queries, { 'output' => options['html'] }).make_web!
-
-  if !File.exist?(page)
-    $stderr.puts("Failed to generate #{page}")
-    exit 2
-  end
-
-  $stderr.puts "Report available at #{page}"
-  exit 1
 end
