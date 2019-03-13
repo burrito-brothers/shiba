@@ -140,7 +140,7 @@ module Shiba
 
         if options["submit"]
           require_option("branch") if options["diff"].nil?
-          require_option("token")
+          require_option("token", description: "This can be read from the $SHIBA_GITHUB_TOKEN environment variable.")
           require_option("pull_request")
           error("Must specify either 'submit' or 'raw' output option, not both") if options["raw"]
         end
@@ -252,8 +252,6 @@ module Shiba
           defaults["branch"]       = ci_branch           if !defaults['diff'] && ci_branch
         end
 
-        # FIXME: Remove GITHUB_TOKEN support
-        defaults["token"] = ENV['GITHUB_TOKEN'] if ENV['GITHUB_TOKEN']
         defaults["token"] = ENV['SHIBA_GITHUB_TOKEN'] if ENV['SHIBA_GITHUB_TOKEN']
 
         defaults
