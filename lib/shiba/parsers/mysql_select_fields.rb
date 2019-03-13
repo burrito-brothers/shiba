@@ -52,7 +52,10 @@ module Shiba
             tables[table] << col
           elsif sc.scan(/(\d+|NULL|'.*?') AS `(.*?)`/m)
           else
-            raise "unknown stuff: in #{@sql}: #{@sc.rest}"
+            if ENV['SHIBA_DEBUG']
+              raise Shiba::Error.new("unknown stuff: in #{@sql}: #{@sc.rest}")
+            end
+            return {}
           end
 
           sc.scan(/,/)
