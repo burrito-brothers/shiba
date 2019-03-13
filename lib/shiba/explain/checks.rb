@@ -129,6 +129,12 @@ module Shiba
         end
 
         @cost = Shiba::Explain::COST_PER_ROW_READ * rows_read
+
+        # pin fully missed indexes to a 'low' threshold
+        if @access_type == 'access_type_tablescan'
+          @cost = [0.01, @cost].max
+        end
+
         @result.cost += @cost
 
         @tbl_message['cost'] = @cost
