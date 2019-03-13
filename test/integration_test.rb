@@ -49,7 +49,8 @@ module IntegrationTest
 
       env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
       out, status = run_command(env, "ruby", test_app_path)
-      assert_equal 0, status, "Expected exit status 0, got #{status}\n#{out}"
+      assert_equal 0, status, "Expected exit status 0, got #{status}\n#{out.join}"
+      assert File.size?(file.path), "No queries found at specified log path: #{file.path}"
 
       # Note: log file is auto-removed. Use debugger to debug output issues.
       bin = File.join(Shiba.root, "bin/review")
