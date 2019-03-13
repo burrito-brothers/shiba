@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(data|test|spec|features)/}) }
   end
 
-  spec.files        += Dir.glob(File.join(File.dirname(__FILE__), "web", "dist", "**/**"))
+  spec.files        += Dir.glob(File.join("web", "dist", "**/**"))
   spec.bindir        = "bin"
   spec.executables   = ["shiba"]
   spec.require_paths = ["lib"]
