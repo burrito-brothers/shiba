@@ -12,7 +12,7 @@ Install using bundler. Note: this gem is not designed to be run on production.
 
 ```ruby
 # Gemfile
-gem 'shiba', :group => :test
+gem 'shiba', :group => :test, :require => 'shiba/setup'
 ```
 
 If your application lazy loads gems, you will to manually require it.
