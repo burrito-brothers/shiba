@@ -27,7 +27,7 @@ module Shiba
       lines = Backtrace.from_app
 
       return unless lines
-      return if @queries[fingerprint] && @queries[fingerprint] > lines.size
+      return if @queries[fingerprint] && @queries[fingerprint] >= lines.size
 
       @file.puts("#{sql} /*shiba#{lines}*/")
       @queries[fingerprint] = lines.size

@@ -27,7 +27,7 @@ module IntegrationTest
 
         queries = File.read(file.path)
         # Should be 1, but there's schema loading garbage that's hard to remove
-        assert_equal 3, queries.lines.size, "No queries logged, got:\n#{queries.inspect}"
+        assert_equal 4, queries.lines.size, "No queries logged, got:\n#{queries.inspect}"
       ensure
         file.close
         file.unlink

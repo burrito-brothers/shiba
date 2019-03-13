@@ -17,17 +17,18 @@ module Shiba
       locations.each do |loc|
         line = loc.to_s
         if bt.empty?
-          bt << clean(line) unless line =~ ignore_pattern
+          bt << clean!(line) unless line =~ ignore_pattern
         else
-          line = clean(line)
+          line = clean!(line)
           bt << line
         end
       end
       bt.any? && bt
     end
 
-    def self.clean(line)
-      line.sub(backtrace_clean_pattern, '')
+    def self.clean!(line)
+      line.sub!(backtrace_clean_pattern, '')
+      line
     end
 
     protected
