@@ -7,7 +7,7 @@ module Shiba
   # Integrates ActiveRecord with the Query Watcher by setting up the query log path, and the
   # connection options for the explain command, which it runs when the process exits.
   #
-  # SHIBA_OUT and SHIBA_DEBUG=true environment variables may be set.
+  # SHIBA_DIR, SHIBA_QUERY_LOG_NAME and SHIBA_DEBUG=true environment variables may be set.
   class ActiveRecordIntegration
 
     attr_reader :path, :watcher
@@ -65,7 +65,7 @@ module Shiba
     end
 
     def self.log_path
-      name = ENV["SHIBA_OUT"] || "query.log-#{Time.now.to_i}"
+      name = ENV["SHIBA_QUERY_LOG_NAME"] || "query.log-#{Time.now.to_i}"
       File.join(Shiba.path, name)
     end
 
@@ -79,8 +79,8 @@ module Shiba
       puts ""
 
       cmd = "shiba explain #{database_args} --file #{path}"
-      if ENV['SHIBA_OUT']
-        cmd << " --json #{File.join(Shiba.path, "#{ENV["SHIBA_OUT"]}.json")}"
+      if ENV['SHIBA_QUERY_LOG_NAME']
+        cmd << " --json #{File.join(Shiba.path, "#{ENV["SHIBA_QUERY_LOG_NAME"]}.json")}"
       elsif Shiba::Configure.ci?
         cmd << " --json #{File.join(Shiba.path, 'ci.json')}"
       end

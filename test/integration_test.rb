@@ -22,7 +22,7 @@ module IntegrationTest
         test_app_path = File.join(File.dirname(__FILE__), 'app', 'app.rb')
 
         # Note: log file is auto-removed. Use debugger to debug output issues.
-        env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
+        env = { 'SHIBA_DIR' => File.dirname(file.path), 'SHIBA_QUERY_LOG_NAME' => File.basename(file.path)}
         run_command(env, "ruby", test_app_path)
 
         queries = File.read(file.path)
@@ -47,7 +47,7 @@ module IntegrationTest
       file = Tempfile.new('integration_test_log_queries')
       test_app_path = File.join(File.dirname(__FILE__), 'app', 'app.rb')
 
-      env = { 'SHIBA_PATH' => File.dirname(file.path), 'SHIBA_OUT' => File.basename(file.path)}
+      env = { 'SHIBA_DIR' => File.dirname(file.path), 'SHIBA_QUERY_LOG_NAME' => File.basename(file.path)}
       out, status = run_command(env, "ruby", test_app_path)
       assert_equal 0, status, "Expected exit status 0, got #{status}\n#{out.join}"
       assert File.size?(file.path), "No queries found at specified log path: #{file.path}"

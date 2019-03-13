@@ -64,9 +64,13 @@ module Shiba
           explain_diff.problems
         else
           # Find all problem explains
-          explains = explain_file.each_line.map { |json| JSON.parse(json) }
-          bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
-          bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
+          begin
+            explains = explain_file.each_line.map { |json| JSON.parse(json) }
+            bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
+            bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
+          rescue Interrupt
+            @err.puts "Canceled reading from STDIN. To read from an explain file, provide the --file option."
+          end
         end
 
         if problems.empty?
@@ -171,7 +175,7 @@ module Shiba
           opts.separator ""
           opts.separator "IO options:"
 
-          opts.on("-f","--file FILE", "The explain output log to compare with. Automatically configured when $CI environment variable is set") do |f|
+          opts.on("-f","--file FILE", "The JSON explain log to compare with. Automatically configured when $CI environment variable is set") do |f|
             @user_options["file"] = f
           end
 
@@ -205,7 +209,7 @@ module Shiba
             @user_options["pull_request"] = p
           end
 
-          opts.on("-t", "--token TOKEN", "The Github API token to use for commenting. Defaults to $GITHUB_TOKEN.") do |t|
+          opts.on("-t", "--token TOKEN", "The Github API token to use for commenting. Defaults to $SHIBA_GITHUB_TOKEN.") do |t|
             @user_options["token"] = t
           end
 
@@ -244,7 +248,9 @@ module Shiba
           defaults["branch"]       = ci_branch           if !defaults['diff'] && ci_branch
         end
 
+        # FIXME: Remove GITHUB_TOKEN support
         defaults["token"] = ENV['GITHUB_TOKEN'] if ENV['GITHUB_TOKEN']
+        defaults["token"] = ENV['SHIBA_GITHUB_TOKEN'] if ENV['SHIBA_GITHUB_TOKEN']
 
         defaults
       end
@@ -257,7 +263,8 @@ module Shiba
       end
 
       def ci_explain_log_path
-        File.join(Shiba.path, 'ci.json')
+        name = ENV['SHIBA_QUERY_LOG_NAME'] || 'ci'
+        File.join(Shiba.path, "#{name}.json")
       end
 
       def ci_branch

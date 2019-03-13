@@ -75,7 +75,7 @@ module Shiba
   end
 
   def self.path
-    @log_path ||= ENV['SHIBA_PATH'] || try_tmp || use_tmpdir
+    @log_path ||= ENV['SHIBA_DIR'] || try_tmp || use_tmpdir
   end
 
   private
