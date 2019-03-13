@@ -27,8 +27,6 @@ module Shiba
     end
 
     def self.connection_options
-        return @connection_options if @connection_options
-
         cx = ActiveRecord::Base.connection.raw_connection
         if cx.respond_to?(:query_options)
           # mysql
@@ -38,7 +36,7 @@ module Shiba
           c = { host: cx.host, database: cx.db, username: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
         end
 
-        @connection_options = {
+        {
           'host' =>     c[:host],
           'database' => c[:database],
           'user' =>     c[:username],
