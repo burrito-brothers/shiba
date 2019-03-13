@@ -95,9 +95,3 @@ module Shiba
     path
   end
 end
-
-# This goes at the end so that Shiba.root is defined.
-if defined?(ActiveSupport.on_load)
-  require 'shiba/activerecord_integration'
-  Shiba::ActiveRecordIntegration.install!
-end
