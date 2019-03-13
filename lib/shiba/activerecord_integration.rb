@@ -14,6 +14,10 @@ module Shiba
 
     def self.install!
       return false if @installed
+      if defined?(Rails.env) && Rails.env.production?
+        Rails.logger.error("Shiba watcher is not intended to run in production, stopping install.")
+        return false
+      end
 
       ActiveSupport.on_load(:active_record) do
         Shiba::ActiveRecordIntegration.start_watcher
@@ -32,7 +36,7 @@ module Shiba
           c = { host: cx.host, database: cx.db, username: cx.user, password: cx.pass, port: cx.port, server: 'postgres' }
         end
 
-        options = {
+        {
           'host' =>     c[:host],
           'database' => c[:database],
           'user' =>     c[:username],
@@ -67,6 +71,11 @@ module Shiba
 
     def self.run_explain(file, path)
       file.close
+      if !File.size?(path)
+        $stderr.puts("No queries were logged. Skipping explain step.") if ENV['SHIBA_DEBUG']
+        return
+      end
+
       puts ""
 
       cmd = "shiba explain #{database_args} --file #{path}"
