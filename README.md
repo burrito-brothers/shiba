@@ -8,7 +8,7 @@ Shiba is a tool (currently in alpha) that automatically reviews SQL queries befo
 
 ## Installation
 
-Install using bundler. Note: this gem is not designed to be run on production.
+Install using bundler. Note: this gem is not designed to be run on production. It should be required after minitest/rspec.
 
 ```ruby
 # Gemfile
