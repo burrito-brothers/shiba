@@ -58,7 +58,7 @@ module Shiba
       watcher = QueryWatcher.new(file)
 
       ActiveSupport::Notifications.subscribe('sql.active_record', watcher)
-      at_exit { run_explain(file, path) }
+      when_done { run_explain(file, path) }
     rescue => e
       $stderr.puts("Shiba failed to load")
       $stderr.puts(e.message, e.backtrace.join("\n"))
@@ -67,6 +67,26 @@ module Shiba
     def self.log_path
       name = ENV["SHIBA_QUERY_LOG_NAME"] || "query.log-#{Time.now.to_i}"
       File.join(Shiba.path, name)
+    end
+
+    def self.when_done
+      return false if @done_hook
+
+      case
+      when defined?(Minitest.after_run)
+        MiniTest.after_run { yield }
+        @done_hook = :minitest
+      when defined?(RSpec.configure)
+        RSpec.configure do |config|
+          config.after(:suite) { yield }
+        end
+        @done_hook = :rspec
+      else
+        $stderr.puts "Warning: shiba could not find Minitest or RSpec."
+        $stderr.puts "If tests are running with one of these libraries, ensure shiba is required after them."
+        at_exit { yield }
+        @done_hook = :at_exit
+      end
     end
 
     def self.run_explain(file, path)

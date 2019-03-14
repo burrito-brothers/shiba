@@ -3,8 +3,6 @@ PATH
   specs:
     shiba (0.8.1)
       activesupport
-      mysql2
-      pg
 
 GEM
   remote: https://rubygems.org/
@@ -40,6 +38,8 @@ DEPENDENCIES
   activerecord
   bundler (~> 2.0)
   byebug
+  mysql2
+  pg
   rake (~> 10.0)
   shiba!
 
