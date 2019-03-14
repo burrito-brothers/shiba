@@ -3,7 +3,6 @@ require_relative 'helper'
 require 'shiba'
 require 'shiba/explain'
 require 'shiba/query'
-require 'shiba/parsers/postgres_explain_index_conditions'
 require 'shiba/table_stats'
 
 describe "Explain" do

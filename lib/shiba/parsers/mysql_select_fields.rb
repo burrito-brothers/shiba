@@ -50,6 +50,12 @@ module Shiba
 
             tables[table] ||= []
             tables[table] << col
+          elsif sc.scan(/\(`(.*?)`\.`(.*?)` collate \w+\) AS `(.*?)`/)
+            table = sc[1]
+            col = sc[2]
+
+            tables[table] ||= []
+            tables[table] << col
           elsif sc.scan(/(\d+|NULL|'.*?') AS `(.*?)`/m)
           else
             if ENV['SHIBA_DEBUG']
