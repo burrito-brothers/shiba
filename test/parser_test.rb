@@ -18,6 +18,10 @@ describe "Parsing" do
       assert_equal(%w(role_id tracker_id old_status_id), parse_conditions("((role_id = 1) AND (tracker_id = 2) AND (old_status_id = 1))"))
       assert_equal(["odd column_name"], parse_conditions("(\"odd column_name\" = 123)"))
     end
+
+    it "parses functions on the left-hand-side" do
+      assert_equal([nil], parse_conditions("(lower((name)::text) = 'application_secret'::text)"))
+    end
   end
 
   describe "mysql select fields" do

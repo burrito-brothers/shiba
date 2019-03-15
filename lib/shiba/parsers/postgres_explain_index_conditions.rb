@@ -1,4 +1,5 @@
 require 'shiba/parsers/shiba_string_scanner'
+require 'shiba/parsers/bad_parse'
 
 module Shiba
   module Parsers
@@ -43,6 +44,7 @@ module Shiba
       def parse_string(sc)
         quote_char = sc.peek(1)
         v = sc.match_quoted_double_escape(quote_char)
+        sc.scan(/::timestamp without time zone/)
         sc.scan(/::\w+(\[\])?/)
         v
       end
@@ -73,13 +75,22 @@ module Shiba
         peek = sc.peek(1)
         if peek == "("
           sc.getch
+          ident = sc.scan(/[^\(\)]+/)
+
           # typed column like (name)::text = 'ben'
-          ident = sc.scan(/[^\)]+/)
           sc.scan(/\)::\S+/)
         elsif peek == '"'
           ident = parse_string(sc)
         else
-          ident = sc.scan(/[^ \.\)\[]+/)
+          ident = sc.scan(/[^ \(\.\)\[]+/)
+
+          # function, lower((name)::text)
+          if sc.scan(/\(/)
+            ident = nil
+            parse_ident(sc)
+            sc.scan(/\)/)
+          end
+
           # field[1] for array fields, not bothering to do brace matching here yet, oy vey
           sc.scan(/\[.*?\]/)
         end
@@ -112,11 +123,15 @@ module Shiba
         table = nil
 
         parse_field(sc)
-        sc.scan(/\s+\S+\s+/) # operator
-        parse_value(sc)
+        sc.scan(/\s+/)
+
+        if !sc.scan(/IS NOT NULL/)
+          sc.scan(/\S+\s+/) # operator
+          parse_value(sc)
+        end
 
         if sc.scan(RPAREN).nil?
-          raise "bad scan; #{sc.inspect}"
+          raise BadParse.new(@sc.peek(15), @string)
         end
       end
     end
