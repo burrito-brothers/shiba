@@ -65,7 +65,7 @@ function categorizeQueries(v, queries) {
     }
 
     if ( q.hasTag("fuzzed_data") )
-      this.hasFuzzed = true;
+      v.hasFuzzed = true;
 
     var rCost = 0;
     q.messages.forEach(function(m) {
