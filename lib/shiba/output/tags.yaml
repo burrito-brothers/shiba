@@ -15,12 +15,12 @@ possible_key_check:
     key possible.  Sometimes "possible_keys" will be inaccurate and no keys were possible.
 access_type_const:
   title: One row
-  summary: The database only needs to read a single row from <b>{{table}}</b>.
+  summary: "{{ server }} reads one row from <b>{{table}}</b>."
   description: |
     This query selects at *most* one row, which is about as good as things get.
 access_type_ref:
   title: Index Scan
-  summary: The database reads {{ formatted_cost }} rows in <b>{{ table }}</b> via the <i>{{ index }}</i> index ({{ key_parts }}).
+  summary: "{{ server }} reads {{ formatted_cost }} rows from <b>{{ table }}</b> via <i>{{ index }}</i> ({{ key_parts }})."
   description: |
     This query uses an index to find rows that match a single value.  Often this
     has very good performance, but it depends on how many rows match that value.
@@ -31,8 +31,8 @@ join_type_ref:
   title: Indexed Join
   summary: <b>{{ table }}</b> is joined to <b>{{ join_to }}</b> via <i>{{ index }}</i>, reading {{ formatted_cost }} rows per joined item.
 access_type_range:
-  title: Indexed
-  summary: The database uses a "range scan" to read more than {{ formatted_cost }} rows in {{ table }} via the <b>{{ index }}</b> index ({{ key_parts }})
+  title: Range Scan
+  summary: "{{ server }} reads more than {{ formatted_cost }} rows from {{ table }} via <i>{{ index }}</i> ({{ key_parts }})"
   description: |
     This query uses an index to find rows that match a range of values, for instance
     `WHERE indexed_value in (1,2,5,6)` or `WHERE indexed_value >= 5 AND indexed_value <= 15`.
@@ -40,10 +40,10 @@ access_type_range:
     upped the formatted_cost of this query.
 access_type_index:
   title: Index Scan
-  summary: The database reads {{ formatted_cost }} of the rows in <b>{{ table }}</b> via <i>{{ index }}</i>
+  summary: "{{ server }} reads {{ formatted_cost }} of the rows in <b>{{ table }}</b> via <i>{{ index }}</i>"
 access_type_tablescan:
   title: Table Scan
-  summary: The database reads {{ formatted_cost }} of the rows in <b>{{ table }}</b>, skipping any indexes.
+  summary: "{{ server }} reads {{ formatted_cost }} of the rows in <b>{{ table }}</b>, skipping any indexes."
   description: |
     This query doesn't use any indexes to find data, meaning this query will need to evaluate
     every single row in the table.  This is about the worst of all possible worlds.
@@ -53,7 +53,7 @@ access_type_tablescan:
     a world of pain.
 limited_scan:
   title: Limited Scan
-  summary: The database reads {{ formatted_cost }} rows from {{ table }}.
+  summary: "{{ server }} reads {{ formatted_cost }} rows from {{ table }}."
   description: |
     This query doesn't use any indexes to find data, but since it doesn't care about
     ordering and it doesn't have any conditions, it only ever reads {{ formatted_cost }} rows.
@@ -71,4 +71,4 @@ index_walk:
   level: success
 retsize:
   title: Results
-  summary: The database returns {{ formatted_result }} to the client.
+  summary: "{{ server }} returns {{ formatted_result }} to the client."

@@ -19,7 +19,7 @@
             <backtrace v-bind:backtrace="query.backtrace" v-bind:url="url"></backtrace>
           </div>
           <table class="shiba-messages">
-            <component v-for="message in query.messages" v-bind:is="'tag-' + message.tag" v-bind="message" v-bind:key="query.md5 + ':' + message.tag"></component>
+            <component v-for="message in messages" v-bind:is="'tag-' + message.tag" v-bind="message" v-bind:key="query.md5 + ':' + message.tag"></component>
           </table>
           <div v-if="debug" style="font-size: 10px">md5: {{ query.md5 }}</div>
           <div v-if="!rawExpanded">
@@ -42,7 +42,7 @@
   export default {
     name: 'Query',
     template: '#query-template',
-    props: ['query', 'tags', 'url', 'debug'],
+    props: ['query', 'tags', 'url', 'debug', 'global'],
     data: function () {
       return {
         expanded: false,
@@ -95,6 +95,12 @@
       },
     },
     computed: {
+      messages: function () {
+        var array = this.query.messages.map((m) =>
+          Object.assign({}, { server: 'MySQL' }, m)
+        );
+        return array;
+      },
       expandText: function() {
         return this.expanded ? "-" : "+";
       }

@@ -40,6 +40,10 @@ describe "Review" do
       assert problems == out, "Output does not match. expected: #{problems.inspect},\n\noutput: #{out.inspect}"
     end
 
+    def strip_lines(str)
+      str.split("\n").map(&:strip).join("\n")
+    end
+
     it "is able to comment on its own output" do
       options["raw"]     = true
       options["file"]    = "test/data/ci.json"
@@ -54,14 +58,13 @@ describe "Review" do
 
       comments = <<-EOF
         SELECT `users`.* FROM `users` WHERE `users`.`email` = 'squirrel@example.com':-2 ()
-        Table Scan: The database reads 100% (100000) of the of the rows in **users**, skipping any indexes.
-        Results: The database returns 4.4mb (100000 rows) to the client.
-        Estimated query time: 1.74s
+        * Table Scan: mysql reads 100% (100000) of the of the rows in **users**, skipping any indexes.
+        * Results: mysql returns 4.4mb (100000 rows) to the client.
+        * Estimated query time: 1.74s
       EOF
-      comments = comments.split("\n").map(&:strip).join("\n")
-      comments << "\n\n"
+      comments = strip_lines(comments)
 
-      assert_equal comments, out, out.inspect
+      assert_equal comments, strip_lines(out), out.inspect
     end
 
     it "includes the PR number when available" do
