@@ -67,6 +67,7 @@ module Shiba
           begin
             explains = explain_file.each_line.map { |json| JSON.parse(json) }
             bad = explains.select { |explain| explain["severity"] && explain["severity"] != 'none' }
+            bad = bad.sort_by { |explain| explain["cost"] }
             bad.map { |explain| [ "#{explain["sql"]}:-2", explain ] }
           rescue Interrupt
             @err.puts "SIGINT: Canceled reading from STDIN. To read from an explain log, provide the --file option."
