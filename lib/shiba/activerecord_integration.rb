@@ -72,16 +72,28 @@ module Shiba
     def self.when_done
       return false if @done_hook
 
-      case
-      when defined?(Minitest.after_run)
-        MiniTest.after_run { yield }
+      # define both minitest and rspec hooks -- it can be
+      # unclear in some envs which one is active.  maybe even both could run in one process?  not sure.
+      @shiba_done = false
+      if defined?(Minitest.after_run)
+        MiniTest.after_run do
+          yield unless @shiba_done
+          @shiba_done = true
+        end
         @done_hook = :minitest
-      when defined?(RSpec.configure)
+      end
+
+      if defined?(RSpec.configure)
         RSpec.configure do |config|
-          config.after(:suite) { yield }
+          config.after(:suite) do
+            yield unless @shiba_done
+            @shiba_done = true
+          end
         end
         @done_hook = :rspec
-      else
+      end
+
+      if !@done_hook
         $stderr.puts "Warning: shiba could not find Minitest or RSpec."
         $stderr.puts "If tests are running with one of these libraries, ensure shiba is required after them."
         at_exit { yield }
