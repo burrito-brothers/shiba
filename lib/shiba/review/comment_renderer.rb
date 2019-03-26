@@ -16,13 +16,15 @@ module Shiba
         explain["messages"].each do |message|
           tag = message['tag']
           data = present(message)
+          data.merge!(explain["global"])
+          body << " * "
           body << @templates[tag]["title"]
           body << ": "
           body << render_template(@templates[tag]["summary"], data)
           body << "\n"
         end
 
-        body << "Estimated query time: %.2fs" % explain['cost']
+        body << " * Estimated query time: %.2fs" % explain['cost']
         body
       end
 

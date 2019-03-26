@@ -48,10 +48,17 @@ module Shiba
         table: @query.from_table,
         md5: @query.md5,
         messages: @result.messages,
+        global: global,
         cost: @result.cost,
         severity: severity,
         raw_explain: humanized_explain,
         backtrace: @backtrace
+      }
+    end
+
+    def global
+      {
+        server: Shiba.connection.mysql? ? 'mysql' : 'postgres'
       }
     end
 

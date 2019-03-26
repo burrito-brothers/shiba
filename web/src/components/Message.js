@@ -94,7 +94,7 @@ export default function (tag, title, summary) {
 
   Vue.component(`tag-${tag}`, {
     template: tmpl,
-    props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables', 'rows_read', 'result_bytes' ],
+    props: [ 'table_size', 'result_size', 'table', 'cost', 'index', 'join_to', 'index_used', 'running_cost', 'tables', 'rows_read', 'result_bytes', 'server' ],
     computed: templateComputedFunctions,
     data: function () {
       return { lastRunnningCost: undefined };

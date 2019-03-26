@@ -15,13 +15,13 @@ module Shiba
 
     Table = Struct.new(:name, :count, :indexes) do
       def encode_with(coder)
-        coder.map = self.to_h.stringify_keys
-        coder.map.delete('name')
-
         if self.count.nil?
           #uuuugly.  No unique keys.  we'll take our best guess.
           self.count = indexes.map { |i, parts| parts.columns.map { |v| v.raw_cardinality } }.flatten.max
         end
+
+        coder.map = self.to_h.stringify_keys
+        coder.map.delete('name')
 
         coder.map['column_sizes'] = column_sizes
         coder.tag = nil

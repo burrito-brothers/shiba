@@ -34,7 +34,7 @@
         </div>
         <a name="lowExapnded"></a>
         <div class="queries" v-if="lowExpanded">
-          <query v-for="query in queriesLow" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags" v-bind:url="url"></query>
+          <query v-for="query in queriesLow" v-bind:query="query" v-bind:key="query.sql" v-bind:tags="tags" v-bind:url="url" v-bind:global="global"></query>
         </div>
       </div>
       <div style="height:50px"></div>
@@ -90,6 +90,7 @@ export default {
     highQ: [],
     lowQ: [],
     tags: {},
+    global: {},
     lowExpanded: false,
     hasFuzzed: false,
     search: '',
@@ -112,6 +113,7 @@ export default {
     setupData: function(data) {
       this.url = data.url;
       this.tags = data.tags;
+      this.global = data.global;
 
       Object.keys(this.tags).forEach((k) => {
         registerMessage(k, this.tags[k].title, this.tags[k].summary);
