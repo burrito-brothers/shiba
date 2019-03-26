@@ -9,8 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Ben Osheroff", "Eric Chapweske"]
   spec.email         = ["ben@gimbo.net", "ben.osheroff@gmail.com", "ericis@gmail.com"]
 
-  spec.summary       = %q{A gem that attempts to find bad queries before you shoot self in foot}
-  spec.description   = %q{}
+  spec.summary       = %q{Catch bad SQL queries before they cause problems in production}
+  spec.description   = %q{Use production statistics for realistic SQL query analysis. Finds code that may take down production, including missing indexes, overly broad indexes, and queries that return too much data.
+  }
   spec.homepage      = "https://github.com/burrito-brothers/shiba"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
