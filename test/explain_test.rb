@@ -56,5 +56,21 @@ describe "Explain" do
       it_includes_tag("join_type_ref")
     end
   end
+
+  describe "a select on a table without indexes" do
+    before do
+      Shiba.connection.query("create table no_index ( i int )")
+    end
+
+    after do
+      Shiba.connection.query("drop table if exists no_index")
+    end
+
+    let(:sql) { "select * from no_index " }
+    it "doesn't crash" do
+      ret = explain.messages
+      puts ret
+    end
+  end
 end
 
