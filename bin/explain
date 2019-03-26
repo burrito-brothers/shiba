@@ -42,7 +42,7 @@ file = $stdin if file.nil?
 
 if options["verbose"]
   $stderr.puts "Reading queries from '#{file.inspect}'..."
-  $stderr.puts "Analyzing SQL to '#{json.inspect}'..."
+  $stderr.puts "Analyzing SQL to '#{options["json"].inspect}'..."
 end
 
 table_stats = Shiba::TableStats.new(Shiba.index_config, Shiba.connection, {})

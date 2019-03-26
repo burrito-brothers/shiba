@@ -7,9 +7,7 @@ require 'shiba/reviewer'
 
 module Shiba
   # Provides a 'shiba' command to analyze queries from the console.
-  # If required in IRB or Pry, the shiba command will automatically be available,
-  # as it's injected into those consoles at the bottom of this file.
-  #
+  # If required in IRB or Pry, the 'shiba' command will become available.
   # Example:
   # require 'shiba/console'
   #

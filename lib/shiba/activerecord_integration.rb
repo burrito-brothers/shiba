@@ -39,7 +39,7 @@ module Shiba
         {
           'host' =>     c[:host],
           'database' => c[:database],
-          'user' =>     c[:username],
+          'username' => c[:username],
           'password' => c[:password],
           'port' =>     c[:port],
           'server' =>   c[:server],
