@@ -110,7 +110,7 @@ module Shiba
           ratio_threshold = 0.1
         elsif count <= 1_000_000
           ratio_threshold = 0.01
-        elsif count <= 1_000_000_000
+        else
           ratio_threshold = 0.001
         end
 
