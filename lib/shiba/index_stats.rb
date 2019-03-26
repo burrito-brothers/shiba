@@ -165,7 +165,6 @@ module Shiba
     end
 
     def set_column_size(table_name, column, size)
-
       if !@tables[table_name]
         # we get here when a table has no indices.  Should really do something smarter long term,
         # as we'll have zero-counts, stuff like that.
@@ -173,9 +172,6 @@ module Shiba
       end
 
       table = @tables[table_name]
-
-      raise "couldn't find table: #{table_name}" unless table
-
       table.column_sizes[column] = size
     end
 
