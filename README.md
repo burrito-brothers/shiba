@@ -8,7 +8,7 @@ Shiba is a tool (currently in alpha) that automatically reviews SQL queries befo
 
 ## Installation
 
-Install using bundler. Note: this gem is not designed to be run on production. It should be required after minitest/rspec.
+Install in a Rails / ActiveRecord project using bundler. Note: this gem is not designed to be run on production. It should be required after minitest/rspec.
 
 ```ruby
 # Gemfile
@@ -39,11 +39,16 @@ SHIBA_DEBUG=true ruby test/controllers/users_controller_test.rb
 # Report available at /tmp/shiba-explain.log-1550099512
 ```
 
+### Postgres Support
+
+Note: Postgres support is under development. For hopefully reliable results, test tables should have at least 1,000 rows.
+
 ## Next steps
 * [Integrate with Github pull requests](#automatic-pull-request-reviews)
 * [Add production stats for realistic analysis](#going-beyond-table-scans)
 * [Preview queries from the developer console](#analyze-queries-from-the-developer-console)
 * [Read more about typical query problems](#typical-query-problems)
+* [Using with languages other than Ruby](#language-support)
 
 
 
@@ -206,3 +211,28 @@ users.size
 Normally a query like this would only become a problem as the app grows in popularity. Fixes include adding `limit` or `find_each`.
 
 With more data, Shiba can help detect this issue when it appears in a pull request.
+
+### Language support
+
+Shiba commands can be used to analyze non Ruby / Rails projects when given a query log file. The log file is a list of queries with the query's backtrace as a SQL comment. The backtrace comment must begin with the word 'shiba' followed by a JSON array of backtrace lines:
+
+```
+SELECT `users`.* FROM `users` WHERE `users`.`email` = 'squirrel@example.com' /*shiba["test/app/app.rb:29:in `<main>'", "Rakefile:0:in `<run>'"]*/
+SELECT  `users`.* FROM `users` ORDER BY `users`.`id` ASC LIMIT 1 /*shiba["test/app/app.rb:30:in `<main>'", "Rakefile:0:in `<run>'"]*/
+```
+
+The generated log file can then be analyzed after installing Ruby.
+
+```console
+gem install bundler
+
+git clone https://github.com/burrito-brothers/shiba.git
+cd shiba
+bundle
+bin/explain -f query.log --database <DB_NAME> --server mysql --json explain.log.json
+bin/review -f explain.log.json
+
+# When no problem queries are found, the command will exit with status 0.
+$ echo $?
+$ 0
+```
