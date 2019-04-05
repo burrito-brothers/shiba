@@ -17,19 +17,18 @@ module Shiba
 
       def transform_node(node, array)
         case node['Node Type']
-        when "Limit", "LockRows", "Aggregate", "Unique", "Sort", "Hash", "ProjectSet"
+        when "Limit", "LockRows", "Aggregate", "Unique", "Sort", "Hash", "ProjectSet", "Materialize"
           recurse_plans(node, array)
-        when "Nested Loop"
-          with_state(join_type: node["Join Type"]) do
-            recurse_plans(node, array)
-          end
-        when "Hash Join"
-          join_fields = extract_join_key_parts(node['Hash Cond'])
-          with_state(join_fields: join_fields, join_type: "Hash") do
+        when "Hash Join", "Merge Join", "Nested Loop", "BitmapOr"
+          with_state(join_type: node['Node Type']) do
             recurse_plans(node, array)
           end
         when "Bitmap Heap Scan"
           with_state(table: node['Relation Name']) do
+            recurse_plans(node, array)
+          end
+        when "Subquery Scan"
+          with_state(subquery: true) do
             recurse_plans(node, array)
           end
         when "Seq Scan"
@@ -48,9 +47,15 @@ module Shiba
             used_key_parts = []
           end
 
+          if @state[:join_type] == 'BitmapOr'
+            access_type = "intersect"
+          else
+            access_type = "ref"
+          end
+
           h = {
             "table" => node["Relation Name"] || @state[:table],
-            "access_type" => "ref",
+            "access_type" => access_type,
             "key" => node["Index Name"],
             "used_key_parts" => used_key_parts
           }
@@ -60,20 +65,36 @@ module Shiba
           end
 
           array << h
+        when "Result"
+          # TBD: What the hell is here?  seems like queries that short-circuit end up here?
+          array << {
+            "extra" => "No tables used"
+          }
         else
+          debugger
           raise "unhandled node: #{node}"
         end
         array
       end
 
       def extract_used_key_parts(cond)
-        conds = Parsers::PostgresExplainIndexConditions.new(cond)
-        conds.fields
+        begin
+          conds = Parsers::PostgresExplainIndexConditions.new(cond)
+          conds.fields
+        rescue Parsers::BadParse => e
+          debugger
+          {}
+        end
       end
 
       def extract_join_key_parts(cond)
-        conds = Parsers::PostgresExplainIndexConditions.new(cond)
-        conds.join_fields
+        begin
+          conds = Parsers::PostgresExplainIndexConditions.new(cond)
+          conds.join_fields
+        rescue Parsers::BadParse => e
+          debugger
+          {}
+        end
       end
 
       def recurse_plans(node, array)
