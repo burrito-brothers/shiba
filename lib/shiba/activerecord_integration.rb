@@ -74,11 +74,11 @@ module Shiba
 
       # define both minitest and rspec hooks -- it can be
       # unclear in some envs which one is active.  maybe even both could run in one process?  not sure.
-      @shiba_done = false
+      shiba_done = false
       if defined?(Minitest.after_run)
         MiniTest.after_run do
-          yield unless @shiba_done
-          @shiba_done = true
+          yield unless shiba_done
+          shiba_done = true
         end
         @done_hook = :minitest
       end
@@ -86,8 +86,8 @@ module Shiba
       if defined?(RSpec.configure)
         RSpec.configure do |config|
           config.after(:suite) do
-            yield unless @shiba_done
-            @shiba_done = true
+            yield unless shiba_done
+            shiba_done = true
           end
         end
         @done_hook = :rspec
