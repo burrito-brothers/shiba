@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/ruby:2.4.1-stretch
+      - image: rvshare/circleci-ruby
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -26,9 +26,6 @@ jobs:
             - v1-dependencies-{{ checksum "Gemfile.lock" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-
-      - run: sudo apt update
-      - run: sudo apt install -y mysql-client --ignore-missing
 
       - run:
           name: Configure Bundler
