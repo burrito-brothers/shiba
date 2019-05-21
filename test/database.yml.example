@@ -14,7 +14,7 @@ test_mysql: &test_mysql
   database: shiba_test_mysql
   host: 127.0.0.1
   username: root
-  password: ""
+  password: not_blank
   encoding: utf8
 
 test:
