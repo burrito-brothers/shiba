@@ -47,10 +47,10 @@ jobs:
       - run:
           name: run tests
           command: |
-            TEST_FILES="$(circleci tests glob "spec/**/*_spec.rb" | \
+            TEST_FILES="$(circleci tests glob "test/**/*_test.rb" | \
               circleci tests split --split-by=timings)"
 
             SHIBA_TEST_ENV=test_postgres bundle exec testrbl $TEST_FILES
       - run:
           name: Review SQL queries
-          command: bundle exec shiba review --submit
+          command: bundle exec shiba review --submit --verbose
