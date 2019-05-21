@@ -38,6 +38,7 @@ jobs:
           command: |
             bundle install --jobs=4 --retry=3 --path vendor/bundle
 
+      - run: sudo apt update
       - run: sudo apt install -y postgresql-client || true
 
       - save_cache:
