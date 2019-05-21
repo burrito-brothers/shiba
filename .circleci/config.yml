@@ -29,7 +29,8 @@ jobs:
       - run:
           name: Configure Bundler
           command: |
-            BUNDLER_VERSION=$(cat Gemfile.lock | tail -1 | tr -d " ") gem install bundler
+            export BUNDLER_VERSION=$(cat Gemfile.lock | tail -1 | tr -d " ")
+            gem install bundler
 
       - run:
           name: install dependencies
