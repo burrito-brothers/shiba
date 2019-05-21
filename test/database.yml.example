@@ -3,7 +3,7 @@ test_postgres: &test_postgres
   server: postgres
   adapter: postgresql
   database: shiba_test_postgres
-  host: localhost
+  host: 127.0.0.1
   username: postgres
   password: ""
   encoding: utf8
@@ -12,11 +12,10 @@ test_mysql: &test_mysql
   server: mysql
   adapter: mysql2
   database: shiba_test_mysql
-  host: localhost
+  host: 127.0.0.1
   username: root
   password: ""
   encoding: utf8
 
 test:
   <<: *test_mysql
-
