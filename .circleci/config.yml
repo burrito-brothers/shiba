@@ -1,0 +1,66 @@
+# Ruby CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-ruby/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/ruby:2.4-node
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      - image: circleci/mysql:8
+        command: [--default-authentication-plugin=mysql_native_password]
+        env:
+          - MYSQL_ALLOW_EMPTY_PASSWORD=true
+          - MYSQL_ROOT_HOST=%
+          - MYSQL_ROOT_PASSWORD=not_blank
+
+    working_directory: ~/repo
+    parallelism: 2
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v2-dependencies-{{ checksum "Gemfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
+
+      - run: sudo apt-get update && sudo apt-get install -y mysql-client
+      - run: cp .travis/my.cnf ~/.my.cnf
+      - run:
+          name: Configure Bundler
+          command: |
+            echo 'export BUNDLER_VERSION=$(cat Gemfile.lock | tail -1 | tr -d " ")' >> $BASH_ENV
+            source $BASH_ENV
+            gem install bundler
+
+      - run:
+          name: install dependencies
+          command: |
+            bundle install --jobs=4 --retry=3 --path vendor/bundle
+
+      - save_cache:
+          paths:
+            - ./vendor/bundle
+          key: v2-dependencies-{{ checksum "Gemfile.lock" }}
+
+      # wait
+      - run: while ! nc -z 127.0.0.1 3306 ; do sleep 0.1 ; done
+
+      # run tests!
+      - run:
+          name: run tests
+          command: |
+            TEST_FILES="$(circleci tests glob "test/**/*_test.rb" | \
+              circleci tests split --split-by=timings)"
+
+            SHIBA_TEST_ENV=test_mysql bundle exec testrbl $TEST_FILES
+      - run:
+          name: Review SQL queries
+          command: bundle exec shiba review --verbose
