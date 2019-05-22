@@ -26,7 +26,7 @@ ActiveRecord::Base.establish_connection(connection[test_env])
 
 org = Organization.create!(name: 'test')
 org.users.create!(email: 'squirrel@example.com')
-users = User.where(email: 'squirrel@example.com').to_a # bumpity
+users = User.where(email: 'squirrel@example.com').to_a # bumpity-bump
 user  = User.first
 10.times do |i|
   user.comments.create!(body: "text #{i}")

@@ -63,4 +63,4 @@ jobs:
             SHIBA_TEST_ENV=test_mysql bundle exec testrbl $TEST_FILES
       - run:
           name: Review SQL queries
-          command: bundle exec shiba review --submit --verbose
+          command: bundle exec shiba review --verbose
