@@ -33,6 +33,14 @@ module Shiba
 
       if Shiba.connection.mysql?
         @rows = Shiba::Explain::MysqlExplain.new.transform_json(@explain_json['query_block'])
+
+        # For simple queries, use original table name rather than the alias
+        if @select_fields.keys.size == 1
+          table = @select_fields.keys.first
+          if @rows.first['table'] != table
+            @rows.first['table'] = table
+          end
+        end
       else
         @rows = Shiba::Explain::PostgresExplain.new(@explain_json).transform
       end

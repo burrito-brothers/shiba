@@ -36,7 +36,14 @@ describe "Parsing" do
 
     it "handles collation strings" do
       ret = parse_sql("/* select#1 */ select (`tbl`.`name` collate utf8_tolower_ci) AS `TABLE_NAME` from `mysql`.`tables`")
+      assert_equal({"tbl"=>["name"]}, ret)
+    end
+
+    it "handles table  aliases" do
+      ret = parse_sql("/* select#1 */ select `db`.`f`.`bar` AS `foobar` from `db`.`foo` `f`")
+      assert_equal({"foo"=>["bar"]}, ret)
+      ret = parse_sql("/* select#1 */ select `db`.`f`.`bar` AS `foobar` from `db`.`foo` `f` where ('`foo`.`bar` = 'value')")
+      assert_equal({"foo"=>["bar"]}, ret)
     end
   end
 end
-

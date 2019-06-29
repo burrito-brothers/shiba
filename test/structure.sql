@@ -26,3 +26,9 @@ CREATE TABLE `comments` (
   PRIMARY KEY (`id`),
   KEY `index_comments_on_user_id` (`user_id`)
 );
+
+CREATE TABLE `MSDos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `body` mediumtext NOT NULL,
+  PRIMARY KEY (`id`)
+);

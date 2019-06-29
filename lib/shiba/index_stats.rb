@@ -13,6 +13,15 @@ module Shiba
       @tables.any?
     end
 
+    # case insenstive table match
+    def find_table(name)
+      table = @tables[name]
+      return table if table
+
+      _, table = @tables.detect { |k,_| k.casecmp(name).zero? }
+      return table
+    end
+
     Table = Struct.new(:name, :count, :indexes) do
       def encode_with(coder)
         if self.count.nil?
@@ -138,11 +147,11 @@ module Shiba
     attr_reader :tables
 
     def table_count(table)
-      return @tables[table].count if @tables[table]
+      return find_table(table).count if find_table(table)
     end
 
     def fetch_index(table, name)
-      tbl = @tables[table]
+      tbl = find_table(table)
       return nil unless tbl
 
       tbl.indexes[name]
@@ -158,7 +167,7 @@ module Shiba
     end
 
     def get_column_size(table_name, column)
-      table = @tables[table_name]
+      table = find_table(table_name)
       return nil unless table
 
       table.column_sizes[column]
