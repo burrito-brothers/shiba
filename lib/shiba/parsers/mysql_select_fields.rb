@@ -2,6 +2,7 @@ require 'shiba/parsers/shiba_string_scanner'
 
 module Shiba
   module Parsers
+    # Extracts table name and columns from queries formatted by 'show warnings'.
     class MysqlSelectFields
       def initialize(sql)
         @sql = sql
@@ -66,6 +67,18 @@ module Shiba
 
           sc.scan(/,/)
         end
+
+        # resolve table aliases
+        if sc.scan(/ `.*?`\.`(.*?)` `(.*?)`/)
+          table       = sc[1]
+          table_alias = sc[2]
+
+          if tables[table_alias]
+            tables[table] = tables[table_alias]
+            tables.delete(table_alias)
+          end
+        end
+
         tables
       end
     end

@@ -35,6 +35,32 @@ describe "Explain" do
     end
   end
 
+  if Shiba.connection.mysql?
+    describe "a table scan with aliases" do
+      let(:sql) { "select * from MSDos ms" }
+
+      it "should detect the table size" do
+        msg = explain.messages.detect { |m| m[:tag] == "access_type_tablescan" }
+        assert msg, "Expected a table scan"
+        assert msg[:table_size], "Table size missing for aliased table"
+      end
+    end
+
+    # technically mysql's case sensitivity flag should be honored,
+    # but in practice going case insensitive is hopefully fine.
+    # unless you're reading this, in which case, I'm sorry.
+    # https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_lower_case_table_names
+    describe "a table scan with cased tables" do
+      let(:sql) { "select * from MSDos" }
+
+      it "should detect the table size" do
+        msg = explain.messages.detect { |m| m[:tag] == "access_type_tablescan" }
+        assert msg, "Expected a table scan"
+        assert msg[:table_size], "Table size missing for cased table"
+      end
+    end
+  end
+
   describe "with a SELECT * / limit 1" do
     let(:sql) { "select * from users limit 1" }
     it_includes_tag("limited_scan")
@@ -73,4 +99,3 @@ describe "Explain" do
     end
   end
 end
-
