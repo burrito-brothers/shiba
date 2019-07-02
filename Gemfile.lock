@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    shiba (0.9.3)
+    shiba (0.9.4)
       activesupport
 
 GEM
