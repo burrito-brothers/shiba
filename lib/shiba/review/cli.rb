@@ -271,7 +271,7 @@ module Shiba
       end
 
       def ci_branch
-        ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['CIRCLE_SHA1']
+        ENV['TRAVIS_PULL_REQUEST_SHA'] || ENV['TRAVIS_COMMIT'] || ENV['CIRCLE_SHA1']
       end
 
       def ci_pull_request
